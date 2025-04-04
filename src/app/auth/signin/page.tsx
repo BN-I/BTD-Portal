@@ -56,10 +56,10 @@ export default function SignInPage() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <Image
-            src="/logo.svg"
+            src="/logo.png"
             alt="Logo"
-            width={64}
-            height={64}
+            width={82}
+            height={82}
             className="mx-auto"
           />
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">

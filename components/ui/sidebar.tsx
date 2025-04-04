@@ -44,24 +44,24 @@ const sidebarItems = [
     title: "Orders",
     href: "/dashboard/orders",
     icon: ShoppingCart,
-    children: [
-      {
-        title: "New Orders",
-        href: "/dashboard/orders/new",
-        icon: Plus,
-      },
-      {
-        title: "Completed Orders",
-        href: "/dashboard/orders/completed",
-        icon: List,
-      },
-    ],
+    // children: [
+    //   {
+    //     title: "New Orders",
+    //     href: "/dashboard/orders/new",
+    //     icon: Plus,
+    //   },
+    //   {
+    //     title: "Completed Orders",
+    //     href: "/dashboard/orders/completed",
+    //     icon: List,
+    //   },
+    // ],
   },
-  {
-    title: "Sales & Reports",
-    href: "/dashboard/sales",
-    icon: BarChart2,
-  },
+  // {
+  //   title: "Sales & Reports",
+  //   href: "/dashboard/sales",
+  //   icon: BarChart2,
+  // },
   // {
   //   title: "Reviews & Ratings",
   //   href: "/dashboard/reviews",
@@ -72,11 +72,11 @@ const sidebarItems = [
     href: "/dashboard/payment",
     icon: CreditCard,
   },
-  {
-    title: "Settings",
-    href: "/dashboard/settings",
-    icon: Settings,
-  },
+  // {
+  //   title: "Settings",
+  //   href: "/dashboard/settings",
+  //   icon: Settings,
+  // },
 ];
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
@@ -98,7 +98,7 @@ export function Sidebar({ className }: SidebarProps) {
       <div className="space-y-4 py-4">
         <div className="px-3 py-2">
           <Link href="/dashboard" className="flex items-center px-4 mb-6">
-            <img src="/logo.svg" alt="Logo" className="h-8 w-8" />
+            <img src="/logo.png" alt="Logo" className="h-12 w-12" />
             <span className="ml-2 text-xl font-bold">Before the Dates</span>
           </Link>
           <nav className="space-y-1">

@@ -83,7 +83,7 @@ export function AdminSidebar() {
     >
       <div className="p-6">
         <Link href="/admin" className="flex items-center gap-2">
-          <img src="/logo.svg" alt="Logo" className="h-8 w-8" />
+          <img src="/logo.png" alt="Logo" className="h-12 w-12" />
           {!isCollapsed && <span className="font-bold text-xl">Admin</span>}
         </Link>
       </div>

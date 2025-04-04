@@ -358,9 +358,13 @@ export default function OrdersPage() {
                               </div>
                             </div>
                           </TableCell>
-                          {/* <TableCell>{gift.quantity}</TableCell>
-                          <TableCell>${gift.product.price.toFixed(2)}</TableCell>
-                          <TableCell>${(gift.quantity * gift.product.price).toFixed(2)}</TableCell> */}
+                          <TableCell>1</TableCell>
+                          <TableCell>
+                            ${gift.product.price.toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            ${(1 * gift.product.price).toFixed(2)}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -430,7 +434,6 @@ export default function OrdersPage() {
                     <SelectItem value="processing">Processing</SelectItem>
                     <SelectItem value="shipped">Shipped</SelectItem>
                     <SelectItem value="delivered">Delivered</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
