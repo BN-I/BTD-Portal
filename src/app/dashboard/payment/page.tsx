@@ -42,6 +42,7 @@ import axios from "axios";
 import type { User } from "@/lib/auth-types";
 import { formatDate } from "@/app/common";
 import { DateRangePicker } from "../../../../components/date-range-picker";
+import { set } from "date-fns";
 
 interface Payment {
   _id: string;
@@ -68,7 +69,6 @@ interface Payment {
 }
 
 interface PaymentStats {
-  totalPending: number;
   totalReceived: number;
   totalAmount: number;
   pendingAmount: number;
@@ -76,10 +76,9 @@ interface PaymentStats {
 }
 
 export default function PaymentsPage() {
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
   const [filteredPayments, setFilteredPayments] = useState<Payment[]>([]);
   const [stats, setStats] = useState<PaymentStats>({
-    totalPending: 0,
     totalReceived: 0,
     totalAmount: 0,
     pendingAmount: 0,
@@ -93,7 +92,7 @@ export default function PaymentsPage() {
   const [activeTab, setActiveTab] = useState("pending");
 
   useEffect(() => {
-    fetchPayments();
+    fetchPaymentsStats();
   }, []);
 
   useEffect(() => {
@@ -115,7 +114,7 @@ export default function PaymentsPage() {
         (p) =>
           p.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
           p.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.products.some((product) =>
+          p.products.some((product: any) =>
             product.title.toLowerCase().includes(searchTerm.toLowerCase())
           )
       );
@@ -129,137 +128,136 @@ export default function PaymentsPage() {
     setFilteredPayments(filtered);
   }, [payments, searchTerm, statusFilter, activeTab]);
 
-  const fetchPayments = async () => {
+  // const fetchPayments = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const user = localStorage.getItem("user");
+  //     if (!user) return;
+
+  //     const userObj = JSON.parse(user) as User;
+
+  //     // Fetch payments data
+  //     const response = await axios.get(
+  //       `${process.env.NEXT_PUBLIC_API_URL}/payments/vendor/${userObj._id}`
+  //     );
+
+  //     console.log("fetchPayments -->", response.data);
+  //     // This is mock data - in a real app, you'd use the API response
+  //     const mockPayments: Payment[] = [
+  //       {
+  //         _id: "pay_123456",
+  //         orderId: "ord_123456",
+  //         amount: 129.99,
+  //         status: "pending",
+  //         createdAt: "2024-03-15T10:30:00Z",
+  //         expectedPaymentDate: "2024-03-30T10:30:00Z",
+  //         products: [
+  //           {
+  //             _id: "prod_1",
+  //             title: "Premium Gift Box",
+  //             price: 129.99,
+  //             image:
+  //               "https://static.nike.com/a/images/w_1280,q_auto,f_auto/b4bbffd7-1fe1-4a92-970e-49e1a3a54ac4/air-jordan-6-white-and-university-red-ct8529-162-release-date.jpg",
+  //           },
+  //         ],
+  //         customer: {
+  //           name: "John Doe",
+  //           email: "john@example.com",
+  //         },
+  //         order: {
+  //           _id: "ord_123456",
+  //           status: "delivered",
+  //           createdAt: "2024-03-10T10:30:00Z",
+  //         },
+  //       },
+  //       {
+  //         _id: "pay_123457",
+  //         orderId: "ord_123457",
+  //         amount: 249.99,
+  //         status: "processing",
+  //         createdAt: "2024-03-12T14:20:00Z",
+  //         expectedPaymentDate: "2024-03-27T14:20:00Z",
+  //         products: [
+  //           {
+  //             _id: "prod_2",
+  //             title: "Luxury Watch",
+  //             price: 249.99,
+  //             image:
+  //               "https://static.nike.com/a/images/w_1280,q_auto,f_auto/b4bbffd7-1fe1-4a92-970e-49e1a3a54ac4/air-jordan-6-white-and-university-red-ct8529-162-release-date.jpg",
+  //           },
+  //         ],
+  //         customer: {
+  //           name: "Jane Smith",
+  //           email: "jane@example.com",
+  //         },
+  //         order: {
+  //           _id: "ord_123457",
+  //           status: "delivered",
+  //           createdAt: "2024-03-08T14:20:00Z",
+  //         },
+  //       },
+  //       {
+  //         _id: "pay_123458",
+  //         orderId: "ord_123458",
+  //         amount: 89.99,
+  //         status: "completed",
+  //         createdAt: "2024-03-01T09:15:00Z",
+  //         expectedPaymentDate: "2024-03-16T09:15:00Z",
+  //         products: [
+  //           {
+  //             _id: "prod_3",
+  //             title: "Birthday Special Pack",
+  //             price: 89.99,
+  //             image:
+  //               "https://static.nike.com/a/images/w_1280,q_auto,f_auto/b4bbffd7-1fe1-4a92-970e-49e1a3a54ac4/air-jordan-6-white-and-university-red-ct8529-162-release-date.jpg",
+  //           },
+  //         ],
+  //         customer: {
+  //           name: "Robert Johnson",
+  //           email: "robert@example.com",
+  //         },
+  //         order: {
+  //           _id: "ord_123458",
+  //           status: "delivered",
+  //           createdAt: "2024-02-25T09:15:00Z",
+  //         },
+  //       },
+  //     ];
+
+  //     setPayments(mockPayments);
+  //   } catch (error) {
+  //     console.error("Error fetching payments:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const fetchPaymentsStats = async () => {
     setLoading(true);
     try {
       const user = localStorage.getItem("user");
       if (!user) return;
-
       const userObj = JSON.parse(user) as User;
 
-      // Fetch payments data
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/payments/vendor/${userObj._id}`
+        `${process.env.NEXT_PUBLIC_API_URL}/paymentsStats/${userObj._id}`
       );
 
-      // This is mock data - in a real app, you'd use the API response
-      const mockPayments: Payment[] = [
-        {
-          _id: "pay_123456",
-          orderId: "ord_123456",
-          amount: 129.99,
-          status: "pending",
-          createdAt: "2024-03-15T10:30:00Z",
-          expectedPaymentDate: "2024-03-30T10:30:00Z",
-          products: [
-            {
-              _id: "prod_1",
-              title: "Premium Gift Box",
-              price: 129.99,
-              image:
-                "https://static.nike.com/a/images/w_1280,q_auto,f_auto/b4bbffd7-1fe1-4a92-970e-49e1a3a54ac4/air-jordan-6-white-and-university-red-ct8529-162-release-date.jpg",
-            },
-          ],
-          customer: {
-            name: "John Doe",
-            email: "john@example.com",
-          },
-          order: {
-            _id: "ord_123456",
-            status: "delivered",
-            createdAt: "2024-03-10T10:30:00Z",
-          },
-        },
-        {
-          _id: "pay_123457",
-          orderId: "ord_123457",
-          amount: 249.99,
-          status: "processing",
-          createdAt: "2024-03-12T14:20:00Z",
-          expectedPaymentDate: "2024-03-27T14:20:00Z",
-          products: [
-            {
-              _id: "prod_2",
-              title: "Luxury Watch",
-              price: 249.99,
-              image:
-                "https://static.nike.com/a/images/w_1280,q_auto,f_auto/b4bbffd7-1fe1-4a92-970e-49e1a3a54ac4/air-jordan-6-white-and-university-red-ct8529-162-release-date.jpg",
-            },
-          ],
-          customer: {
-            name: "Jane Smith",
-            email: "jane@example.com",
-          },
-          order: {
-            _id: "ord_123457",
-            status: "delivered",
-            createdAt: "2024-03-08T14:20:00Z",
-          },
-        },
-        {
-          _id: "pay_123458",
-          orderId: "ord_123458",
-          amount: 89.99,
-          status: "completed",
-          createdAt: "2024-03-01T09:15:00Z",
-          expectedPaymentDate: "2024-03-16T09:15:00Z",
-          products: [
-            {
-              _id: "prod_3",
-              title: "Birthday Special Pack",
-              price: 89.99,
-              image:
-                "https://static.nike.com/a/images/w_1280,q_auto,f_auto/b4bbffd7-1fe1-4a92-970e-49e1a3a54ac4/air-jordan-6-white-and-university-red-ct8529-162-release-date.jpg",
-            },
-          ],
-          customer: {
-            name: "Robert Johnson",
-            email: "robert@example.com",
-          },
-          order: {
-            _id: "ord_123458",
-            status: "delivered",
-            createdAt: "2024-02-25T09:15:00Z",
-          },
-        },
-      ];
-
-      setPayments(mockPayments);
-
-      // Calculate stats
-      const totalPending = mockPayments.filter(
-        (p) => p.status === "pending"
-      ).length;
-      const totalReceived = mockPayments.filter(
-        (p) => p.status === "completed"
-      ).length;
-      const totalAmount = mockPayments.reduce((sum, p) => sum + p.amount, 0);
-      const pendingAmount = mockPayments
-        .filter((p) => p.status === "pending")
-        .reduce((sum, p) => sum + p.amount, 0);
-
-      // Calculate this month's amount
-      const now = new Date();
-      const thisMonth = now.getMonth();
-      const thisYear = now.getFullYear();
-      const thisMonthAmount = mockPayments
-        .filter((p) => {
-          const date = new Date(p.createdAt);
-          return (
-            date.getMonth() === thisMonth && date.getFullYear() === thisYear
-          );
-        })
-        .reduce((sum, p) => sum + p.amount, 0);
+      console.log("fetchPaymentsStats", response.data);
 
       setStats({
-        totalPending,
-        totalReceived,
-        totalAmount,
-        pendingAmount,
-        thisMonthAmount,
+        totalReceived: response.data.totalReceivedPaymentOrders || 0.0,
+        totalAmount: response.data.totalEarnings || 0.0,
+        pendingAmount: response.data.pendingPaymentOrdersAmount || 0.0,
+        thisMonthAmount: response.data.thisMonthAmount || 0.0,
       });
+
+      setPayments([
+        ...(response.data.pendingPaymentOrders || []),
+        ...(response.data.receivedPaymentOrders || []),
+      ]);
     } catch (error) {
-      console.error("Error fetching payments:", error);
+      console.error("Error fetching payments stats:", error);
     } finally {
       setLoading(false);
     }
@@ -388,7 +386,6 @@ export default function PaymentsPage() {
           </SelectContent>
         </Select>
       </div>
-
       {/* Tabs and Payments Table */}
       <Tabs
         defaultValue="pending"
@@ -421,28 +418,23 @@ export default function PaymentsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Payment ID</TableHead>
-                    <TableHead>Order ID</TableHead>
                     <TableHead>Customer</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Created Date</TableHead>
-                    <TableHead>Expected Payment</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPayments.map((payment) => (
+                  {payments.map((payment) => (
                     <TableRow key={payment._id}>
                       <TableCell className="font-medium">
                         {payment._id}
                       </TableCell>
-                      <TableCell>{payment.orderId}</TableCell>
-                      <TableCell>{payment.customer.name}</TableCell>
+                      <TableCell>{payment.user.name}</TableCell>
                       <TableCell>{formatCurrency(payment.amount)}</TableCell>
                       <TableCell>{formatDate(payment.createdAt)}</TableCell>
-                      <TableCell>
-                        {formatDate(payment.expectedPaymentDate)}
-                      </TableCell>
+
                       <TableCell>
                         <div className="flex items-center gap-1">
                           {getStatusIcon(payment.status)}

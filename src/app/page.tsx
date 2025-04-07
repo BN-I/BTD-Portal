@@ -42,6 +42,9 @@ export default function HomePage() {
                 <Link href="/auth/signin">
                   <Button>Log In</Button>
                 </Link>
+                <Link href="/auth/register">
+                  <Button>Get Started</Button>
+                </Link>
               </div>
             </div>
           </div>
