@@ -61,7 +61,7 @@ export function Header() {
               onClick={() => {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
-                window.location.href = "/login";
+                window.location.href = "/auth/signin";
               }}
             >
               Log out

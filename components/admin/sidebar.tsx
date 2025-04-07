@@ -28,11 +28,11 @@ const sidebarItems = [
     href: "/admin/users",
     icon: Users,
   },
-  {
-    title: "Event Management",
-    href: "/admin/events",
-    icon: Calendar,
-  },
+  // {
+  //   title: "Event Management",
+  //   href: "/admin/events",
+  //   icon: Calendar,
+  // },
   {
     title: "Vendor Management",
     href: "/admin/vendors",
@@ -43,31 +43,31 @@ const sidebarItems = [
     href: "/admin/payments",
     icon: CreditCard,
   },
-  {
-    title: "Gift Management",
-    href: "/admin/gifts",
-    icon: ShoppingBag,
-  },
-  {
-    title: "Tracking Management",
-    href: "/admin/tracking",
-    icon: Truck,
-  },
-  {
-    title: "Notifications",
-    href: "/admin/notifications",
-    icon: Bell,
-  },
-  {
-    title: "Reports & Analytics",
-    href: "/admin/reports",
-    icon: BarChart2,
-  },
-  {
-    title: "Settings",
-    href: "/admin/settings",
-    icon: Settings,
-  },
+  // {
+  //   title: "Gift Management",
+  //   href: "/admin/gifts",
+  //   icon: ShoppingBag,
+  // },
+  // {
+  //   title: "Tracking Management",
+  //   href: "/admin/tracking",
+  //   icon: Truck,
+  // },
+  // {
+  //   title: "Notifications",
+  //   href: "/admin/notifications",
+  //   icon: Bell,
+  // },
+  // {
+  //   title: "Reports & Analytics",
+  //   href: "/admin/reports",
+  //   icon: BarChart2,
+  // },
+  // {
+  //   title: "Settings",
+  //   href: "/admin/settings",
+  //   icon: Settings,
+  // },
 ];
 
 export function AdminSidebar() {

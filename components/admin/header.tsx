@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+import Image from "next/image";
 
 export function AdminHeader() {
   return (
@@ -26,11 +27,8 @@ export function AdminHeader() {
             className="pl-8 bg-gray-50 border-none"
           />
         </div>
-        <Button variant="outline" size="icon" className="relative">
-          <Globe className="h-4 w-4" />
-          <span className="sr-only">Toggle language</span>
-        </Button>{" "}
-        <Link href="/dashboard/notifications">
+
+        <Link href="/admin/notifications">
           <Button variant="outline" size="icon" className="relative">
             {" "}
             <Bell className="h-4 w-4" />
@@ -43,7 +41,14 @@ export function AdminHeader() {
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
                 <AvatarImage src="/placeholder-avatar.jpg" alt="Admin avatar" />
-                <AvatarFallback>A</AvatarFallback>
+                <AvatarFallback className="">
+                  <Image
+                    width={40}
+                    height={40}
+                    src="/logo.png"
+                    alt="Admin avatar"
+                  />
+                </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
