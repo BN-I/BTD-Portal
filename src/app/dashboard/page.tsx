@@ -45,7 +45,16 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">Data Refreshed</span>
           <RefreshCcw className="h-4 w-4 text-[#00BFA6]" />
-          <span className="text-sm">September 28, 2023 12:45 PM</span>
+          <span className="text-sm">
+            {new Date().toLocaleString("en-US", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+              hour: "numeric",
+              minute: "numeric",
+              hour12: true,
+            })}
+          </span>
         </div>
       </div>
 
