@@ -52,7 +52,7 @@ export default function OrdersPage() {
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [filterStatus, setFilterStatus] = useState("");
+  const [filterStatus, setFilterStatus] = useState("All");
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -178,13 +178,33 @@ export default function OrdersPage() {
   };
 
   useEffect(() => {
-    if (searchTerm) {
-      const filtered = filterOrders(searchTerm);
-      setDisplayOrders(filtered);
-    } else {
-      setDisplayOrders(orders);
+    let filtered = orders;
+
+    if (filterStatus !== "All") {
+      filtered = filtered.filter((order) => order.status === filterStatus);
     }
-  }, [searchTerm]);
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (order) =>
+          order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.gifts.some((gift: Gift) =>
+            gift.product.title.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+      );
+    }
+
+    setDisplayOrders(filtered);
+
+    // if (searchTerm) {
+    //   const filtered = filterOrders(searchTerm);
+    //   setDisplayOrders(filtered);
+    // } else {
+    //   setDisplayOrders(orders);
+    // }
+  }, [searchTerm, filterStatus]);
 
   const filterOrders = (searchTerm: string) => {
     return orders.filter(
@@ -259,7 +279,7 @@ export default function OrdersPage() {
                 <TableCell>
                   {order.gifts.map((gift) => gift.product.title).join(", ")}
                 </TableCell>
-                <TableCell>${order.amount.toFixed(2)}</TableCell>
+                <TableCell>${order.totalAmount.toFixed(2)}</TableCell>
                 <TableCell>
                   <button
                     onClick={() => {
@@ -444,11 +464,13 @@ export default function OrdersPage() {
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Processing">Processing</SelectItem>
-                  <SelectItem value="Shipped">Shipped</SelectItem>
-                  <SelectItem value="Delivered">Delivered</SelectItem>
-                  <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  <SelectItem value="All">All</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="processing">Processing</SelectItem>
+                  <SelectItem value="shipped">Shipped</SelectItem>
+                  <SelectItem value="delivered">Delivered</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
             </div>

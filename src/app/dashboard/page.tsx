@@ -14,6 +14,10 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import axios from "axios";
+import { User } from "@/lib/auth-types";
+import { useEffect, useState } from "react";
+import { SalesRecord } from "../types";
 
 const salesData = [
   { month: "Jan", revenue: 65000, expense: 45000 },
@@ -30,14 +34,160 @@ const salesData = [
   { month: "Dec", revenue: 175000, expense: 100000 },
 ];
 
-const orderStats = [
-  { title: "Orders Completed", value: "2345", icon: Package2 },
-  { title: "Orders Cancelled", value: "17", icon: RefreshCcw },
-  { title: "Orders Completed", value: "2345", icon: Package2 },
-  { title: "Orders Cancelled", value: "17", icon: RefreshCcw },
+type Order = {
+  totalAmount: number;
+  createdAt: string;
+};
+
+type SalesDataItem = {
+  month: string;
+  revenue: number;
+  expense: number;
+};
+
+const monthLabels = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
+function generateSalesData(orders: Order[]): SalesDataItem[] {
+  const monthlyTotals = Array(12).fill(0);
+
+  for (const order of orders) {
+    const date = new Date(order.createdAt);
+    const monthIndex = date.getMonth(); // 0 (Jan) to 11 (Dec)
+    monthlyTotals[monthIndex] += order.totalAmount;
+  }
+
+  return monthlyTotals.map((total, index) => ({
+    month: monthLabels[index],
+    revenue: Math.round(total),
+    expense: Math.round(0), // Adjust as needed
+  }));
+}
+
+function calculateRevenueIncrements(data: SalesRecord[]) {
+  return data.map((entry, index) => {
+    if (index === 0) {
+      return { month: entry.month, incrementPercent: 0 };
+    }
+
+    const prevRevenue = data[index - 1].revenue;
+    const increment = ((entry.revenue - prevRevenue) / prevRevenue) * 100;
+
+    return {
+      month: entry.month,
+      incrementPercent: parseFloat(increment.toFixed(2)),
+    };
+  });
+}
+
 export default function DashboardPage() {
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [averageOrderValue, setAverageOrderValue] = useState(0);
+  const [totalBalance, setTotalBalance] = useState(0);
+  const [ordersCompleted, setOrdersCompleted] = useState(0);
+  const [orderCancelled, setOrderCancelled] = useState(0);
+  const [orderProcessing, setOrderProcessing] = useState(0);
+  const [orderShipped, setOrderShipped] = useState(0);
+  const [deliveryPercentage, setDeliveryPercentage] = useState(0);
+  const [salesData, setSalesData] = useState<SalesDataItem[]>([]);
+  const [totalRevenueIncresement, setTotalRevenueIncresement] = useState(0);
+  const [averageOrderValueIncresement, setAverageOrderValueIncresement] =
+    useState(0);
+
+  const orderStats = [
+    { title: "Orders Completed", value: ordersCompleted, icon: Package2 },
+    { title: "Orders Cancelled", value: orderCancelled, icon: RefreshCcw },
+    { title: "Orders Processing", value: orderProcessing, icon: Package2 },
+    { title: "Orders Shipped", value: orderShipped, icon: RefreshCcw },
+  ];
+
+  useEffect(() => {
+    getAllStats();
+  }, []);
+
+  const getAllStats = async () => {
+    try {
+      var user = localStorage.getItem("user") as string | null;
+      var userObj = null;
+      if (user) {
+        userObj = JSON.parse(user) as User;
+      }
+
+      await axios
+        .get(
+          `${process.env.NEXT_PUBLIC_API_URL}/orders/vendor/${userObj?._id}?perPage=999999`
+        )
+        .then((response) => {
+          const allOrder = response.data;
+
+          const totalRevenue = allOrder.reduce((acc: number, order: any) => {
+            return acc + order.totalAmount;
+          }, 0);
+
+          const averageOrderValue = totalRevenue / allOrder.length;
+
+          const totalBalance = allOrder.reduce((acc: number, order: any) => {
+            if (!order.amountDispatched) {
+              return acc + order.totalAmount;
+            } else {
+              return acc;
+            }
+          }, 0);
+
+          const ordersCompleted = allOrder.filter((order: any) => {
+            return order.status === "delivered";
+          }).length;
+
+          const orderCancelled = allOrder.filter((order: any) => {
+            return order.status === "cancelled";
+          }).length;
+
+          const orderProcessing = allOrder.filter((order: any) => {
+            return order.status === "processing";
+          }).length;
+
+          const orderShipped = allOrder.filter((order: any) => {
+            return order.status === "shipped";
+          }).length;
+
+          const deliveryPercentage = (ordersCompleted / allOrder.length) * 100;
+
+          const salesData = generateSalesData(allOrder);
+
+          const revenueIncrements = calculateRevenueIncrements(salesData);
+
+          setTotalRevenue(totalRevenue);
+          setAverageOrderValue(averageOrderValue);
+          setTotalBalance(totalBalance);
+          setOrdersCompleted(ordersCompleted);
+          setOrderCancelled(orderCancelled);
+          setOrderProcessing(orderProcessing);
+          setOrderShipped(orderShipped);
+          setDeliveryPercentage(deliveryPercentage);
+          setSalesData(salesData);
+          setTotalRevenueIncresement(
+            revenueIncrements[revenueIncrements.length - 1].incrementPercent
+          );
+          setAverageOrderValueIncresement(
+            revenueIncrements[revenueIncrements.length - 1].incrementPercent
+          );
+        });
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -62,13 +212,13 @@ export default function DashboardPage() {
         <StatsCard
           icon={<Diamond className="h-6 w-6 text-[#00BFA6]" />}
           title="Total Revenue"
-          value="$123k"
-          change={{ value: "+45.00%", trend: "up" }}
+          value={`$${totalRevenue.toFixed(2)}`}
+          change={{ value: `+45.00%`, trend: "up" }}
         />
         <StatsCard
           icon={<CreditCard className="h-6 w-6 text-[#00BFA6]" />}
           title="Average Order Value"
-          value="$52.89k"
+          value={`$${averageOrderValue.toFixed(2)}`}
           change={{ value: "-12.45%", trend: "down" }}
         />
         <div className="lg:col-span-1 md:col-span-2">
@@ -79,7 +229,10 @@ export default function DashboardPage() {
             <CardContent className="flex justify-center">
               <div className="w-48 h-48 bg-gray-100 rounded-full flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-3xl font-bold">$476.3k</div>
+                  <div className="text-3xl font-bold">
+                    {"$"}
+                    {totalBalance.toFixed(2)}
+                  </div>
                   <div className="text-sm text-gray-500">Total Balance</div>
                 </div>
               </div>
@@ -109,7 +262,7 @@ export default function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>Sales Statistic 2022</CardTitle>
+            <CardTitle>Sales Statistic {new Date().getFullYear()}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -131,7 +284,10 @@ export default function DashboardPage() {
             <CardTitle>Delivery Percentage</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <CircularProgress value={77} label="Delivery Rate" />
+            <CircularProgress
+              value={deliveryPercentage}
+              label="Delivery Rate"
+            />
           </CardContent>
         </Card>
       </div>

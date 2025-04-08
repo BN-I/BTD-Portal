@@ -84,3 +84,9 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
 }
+
+export type SalesRecord = {
+  month: string;
+  revenue: number;
+  expense: number;
+};
