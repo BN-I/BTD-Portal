@@ -1,18 +1,49 @@
 import { User } from "@/lib/auth-types";
 
-export interface Product {
-  _id: number | undefined;
+interface Product {
+  _id: string;
   title: string;
   description: string;
-  price: number;
-  discountedPrice?: number;
   category: string;
+  price: number;
+  discountedPrice: number;
+  images: string[];
+  isFeatured: boolean;
+  colorVariations: string[];
+  sizeVariations: string[];
+  vendor: Vendor;
+  status: string;
+  link: string;
+  orders: number;
   orderMinDays: number;
   orderMaxDays: number;
-  colorVariations?: string[];
-  sizeVariations?: string[];
-  images?: string[];
-  files?: File[];
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+interface Vendor {
+  activePackage: string;
+  _id: string;
+  name: string;
+  email: string;
+  password: string;
+  token: string;
+  loginProvider: string;
+  role: string;
+  streetAddress: string;
+  apartmentNumber: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  phoneNumber: string;
+  emailVerified: boolean;
+  stripeCustomerId: string;
+  FCMToken: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
 }
 
 export interface Gift {

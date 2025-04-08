@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Package2, Search } from "lucide-react";
 import axios from "axios";
 import type { User } from "@/lib/auth-types";
-import type { Order } from "@/app/types";
+import type { Gift, Order } from "@/app/types";
 import { formatDate } from "@/app/common";
 import {
   Dialog,
@@ -44,6 +44,7 @@ export default function OrdersPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
+  const [displayOrders, setDisplayOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState<StatsCardProps[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
@@ -109,6 +110,7 @@ export default function OrdersPage() {
         )
         .then((response) => {
           setOrders(response.data);
+          setDisplayOrders(response.data);
         });
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -173,6 +175,26 @@ export default function OrdersPage() {
     }
   };
 
+  useEffect(() => {
+    if (searchTerm) {
+      const filtered = filterOrders(searchTerm);
+      setDisplayOrders(filtered);
+    } else {
+      setDisplayOrders(orders);
+    }
+  }, [searchTerm]);
+
+  const filterOrders = (searchTerm: string) => {
+    return orders.filter(
+      (order) =>
+        order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.gifts.some((gift: Gift) =>
+          gift.product.title.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Stats Section */}
@@ -208,7 +230,6 @@ export default function OrdersPage() {
           Filter
         </Button>
       </div>
-
       {/* Orders Table */}
       <div className="rounded-lg border bg-white">
         <Table>
@@ -224,7 +245,7 @@ export default function OrdersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders.map((order) => (
+            {displayOrders.map((order) => (
               <TableRow key={order._id}>
                 <TableCell className="font-medium">{order._id}</TableCell>
                 <TableCell>{order.user.name}</TableCell>

@@ -123,9 +123,9 @@ export default function ProductsPage() {
 
     formData.append("category", updatedProduct.category);
 
-    setProducts(
-      products.map((p) => (p._id === updatedProduct?._id ? updatedProduct : p))
-    );
+    // setProducts(
+    //   products.map((p) => (p._id === updatedProduct?._id ? updatedProduct : p))
+    // );
     setEditingProduct(null);
 
     axios
@@ -192,7 +192,7 @@ export default function ProductsPage() {
           });
         });
     }
-  }, [shouldUpdate]);
+  }, [shouldUpdate, dialogOpen, editDialogOpen]);
 
   return (
     <div className="space-y-4">

@@ -15,24 +15,16 @@ export async function register(data: {
   role: "Admin" | "Vendor";
   loginProvider: "Local";
 }) {
-  // Simulating API call
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // Simulate validation
-  if (data.password.length < 6) {
-    throw new Error("Password must be at least 6 characters");
-  }
-
-  // Simulate successful response
-  return {
-    user: {
-      id: "1",
-      name: data.name,
-      email: data.email,
-      role: data.role,
-    },
-    token: "dummy_token_" + Math.random(),
-  };
+  return new Promise(async (resolve, reject) => {
+    await axios
+      .post(`${process.env.NEXT_PUBLIC_API_URL}/signup`, data)
+      .then((response) => {
+        resolve(response.data.user);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
 }
 
 export async function login(data: {

@@ -16,6 +16,7 @@ import {
 import { Product } from "@/app/types";
 import { Block } from "@uiw/react-color";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { parse } from "path";
 interface ProductFormProps {
   product?: Product;
   onSubmit: (product: Product) => void;
@@ -29,11 +30,11 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     product?.discountedPrice?.toString() || ""
   );
   const [category, setCategory] = useState(product?.category || "");
-  const [orderMaxDays, setOrderMaxDays] = useState(
-    product?.orderMaxDays.toString() || ""
+  const [orderMaxDays, setOrderMaxDays] = useState<number>(
+    product?.orderMaxDays || 0
   );
-  const [orderMinDays, setOrderMinDays] = useState(
-    product?.orderMinDays.toString() || ""
+  const [orderMinDays, setOrderMinDays] = useState<number>(
+    product?.orderMinDays || 0
   );
 
   const [colors, setColors] = useState<{ hex: string; isOpen: boolean }[]>(
@@ -49,9 +50,31 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   );
   const sizeOptions = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
   const [files, setFiles] = useState<FileList | null>();
+  const [error, setError] = useState<string>("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log(typeof orderMaxDays);
+    if (discountedPrice && parseFloat(discountedPrice) > parseFloat(price)) {
+      setError("Discounted price cannot be greater than price");
+      return;
+    }
+
+    if (!category) {
+      setError("Category is required");
+      return;
+    }
+
+    if (!orderMaxDays || !orderMinDays) {
+      setError("Order min and max days are required");
+      return;
+    }
+
+    if (orderMaxDays < orderMinDays) {
+      setError("Order max days cannot be less than order min days");
+      return;
+    }
+
     onSubmit({
       _id: product?._id ? product._id : undefined,
       title: name,
@@ -61,8 +84,8 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         ? parseFloat(discountedPrice)
         : undefined,
       category,
-      orderMinDays: parseInt(orderMinDays, 10),
-      orderMaxDays: parseInt(orderMaxDays, 10),
+      orderMinDays: orderMinDays,
+      orderMaxDays: orderMaxDays,
       colorVariations: colors.map((color) => color.hex),
       sizeVariations: selectedSizes,
       files: files ? Array.from(files) : undefined,
@@ -102,6 +125,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           placeholder="Enter product name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          maxLength={50}
           required
         />
       </div>
@@ -112,6 +136,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           placeholder="Enter product description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          maxLength={1000}
           required
         />
       </div>
@@ -153,7 +178,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
             id="picture"
             type="file"
             multiple
-            required
+            required={product ? false : true}
             onChange={(e) => {
               setFiles(e.target.files);
             }}
@@ -194,7 +219,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
             type="number"
             placeholder="Enter Min days to order"
             value={orderMinDays}
-            onChange={(e) => setOrderMinDays(e.target.value)}
+            onChange={(e) => setOrderMinDays(parseInt(e.target.value))}
             required
           />
         </div>
@@ -206,7 +231,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
             type="number"
             placeholder="Enter Max days to order"
             value={orderMaxDays}
-            onChange={(e) => setOrderMaxDays(e.target.value)}
+            onChange={(e) => setOrderMaxDays(parseInt(e.target.value))}
             required
           />
         </div>
@@ -288,6 +313,9 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       <Button type="submit">
         {product ? "Update Product" : "Add Product"}
       </Button>
+      <div>
+        <Label className="text-red-500">{error}</Label>
+      </div>
     </form>
   );
 }

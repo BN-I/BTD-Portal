@@ -37,14 +37,25 @@ export default function RegisterPage() {
         ...formData,
         role: "Vendor",
         loginProvider: "Local",
-      });
-      localStorage.setItem("auth_token", response.token);
-      localStorage.setItem("user", JSON.stringify(response.user));
-      toast({
-        title: "Registration successful",
-        description: "Welcome to the dashboard!",
-      });
-      router.push("/dashboard");
+      })
+        .then((response) => {
+          toast({
+            title: "Registration successful",
+            description: "Welcome to the dashboard!",
+          });
+          alert("Registration successful");
+          router.push("/auth/signin");
+        })
+        .catch((error) => {
+          console.error("Registration failed", error);
+          alert(error);
+          toast({
+            variant: "destructive",
+            title: "Registration failed",
+            description:
+              error instanceof Error ? error.message : "Something went wrong",
+          });
+        });
     } catch (error) {
       toast({
         variant: "destructive",

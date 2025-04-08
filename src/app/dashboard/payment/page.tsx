@@ -43,29 +43,22 @@ import type { User } from "@/lib/auth-types";
 import { formatDate } from "@/app/common";
 import { DateRangePicker } from "../../../../components/date-range-picker";
 import { set } from "date-fns";
+import { Gift } from "@/app/types";
+import { DateRange } from "react-day-picker";
 
 interface Payment {
   _id: string;
-  orderId: string;
+  gifts: Gift[];
+  vendor: User;
   amount: number;
+  totalAmount: number;
   status: string;
+  user: User;
+  event: Event;
+  amountDispatched: boolean;
   createdAt: string;
-  expectedPaymentDate: string;
-  products: Array<{
-    _id: string;
-    title: string;
-    price: number;
-    image?: string;
-  }>;
-  customer: {
-    name: string;
-    email: string;
-  };
-  order: {
-    _id: string;
-    status: string;
-    createdAt: string;
-  };
+  updatedAt: string;
+  __v: number;
 }
 
 interface PaymentStats {
@@ -87,47 +80,68 @@ export default function PaymentsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<any | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState("all");
+  const [fromDate, setFromDate] = useState<Date | undefined>();
+  const [toDate, setToDate] = useState<Date | undefined>();
 
   useEffect(() => {
     fetchPaymentsStats();
   }, []);
 
   useEffect(() => {
+    console.log("activeTab", activeTab);
     // Filter payments based on search term and status filter
-    let filtered = [...payments];
+    let filtered = [...payments] as Payment[];
 
     // Filter by tab
     if (activeTab === "pending") {
-      filtered = filtered.filter((p) => p.status === "pending");
-    } else if (activeTab === "completed") {
-      filtered = filtered.filter((p) => p.status === "completed");
-    } else if (activeTab === "processing") {
-      filtered = filtered.filter((p) => p.status === "processing");
+      filtered = filtered.filter((p) => p.amountDispatched === false);
+    } else if (activeTab === "received") {
+      filtered = filtered.filter((p) => p.amountDispatched === true);
     }
 
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(
         (p) =>
-          p.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.products.some((product: any) =>
-            product.title.toLowerCase().includes(searchTerm.toLowerCase())
+          p._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          p.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          p.gifts.some((gift: Gift) =>
+            gift.product.title.toLowerCase().includes(searchTerm.toLowerCase())
           )
       );
     }
 
-    // Filter by status if not already filtered by tab
-    if (statusFilter !== "all" && activeTab === "all") {
-      filtered = filtered.filter((p) => p.status === statusFilter);
+    // Filter by date range
+    if (fromDate && toDate) {
+      filtered = filtered.filter((p) => {
+        const paymentDate = new Date(p.createdAt);
+
+        // Strip time from all dates
+        const paymentDateOnly = new Date(paymentDate.toDateString());
+        const fromDateOnly = new Date(fromDate.toDateString());
+        const toDateOnly = new Date(toDate.toDateString());
+
+        return paymentDateOnly >= fromDateOnly && paymentDateOnly <= toDateOnly;
+      });
     }
 
     setFilteredPayments(filtered);
-  }, [payments, searchTerm, statusFilter, activeTab]);
+  }, [payments, searchTerm, statusFilter, activeTab, fromDate, toDate]);
 
+  const handleDateChange = (dateRange: DateRange | undefined) => {
+    console.log(dateRange);
+    if (dateRange) {
+      const startDate = dateRange.from; // Use the start date from the DateRange object
+      const endDate = dateRange.to; // Use the end date from the DateRange object
+
+      setFromDate(startDate);
+      setToDate(endDate);
+    }
+    // ...
+  };
   // const fetchPayments = async () => {
   //   setLoading(true);
   //   try {
@@ -372,31 +386,29 @@ export default function PaymentsPage() {
           />
         </div>
 
-        <DateRangePicker />
+        <DateRangePicker
+          onChange={(e) => {
+            handleDateChange(e as DateRange);
+          }}
+        />
 
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={activeTab} onValueChange={setActiveTab}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="processing">Processing</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="received">Received</SelectItem>
           </SelectContent>
         </Select>
       </div>
       {/* Tabs and Payments Table */}
-      <Tabs
-        defaultValue="pending"
-        value={activeTab}
-        onValueChange={setActiveTab}
-      >
+      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="all">All Payments</TabsTrigger>
           <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="processing">Processing</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="received">Received</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-6">
@@ -426,10 +438,10 @@ export default function PaymentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {payments.map((payment) => (
+                  {filteredPayments.map((payment) => (
                     <TableRow key={payment._id}>
                       <TableCell className="font-medium">
-                        {payment._id}
+                        PI_{payment._id}
                       </TableCell>
                       <TableCell>{payment.user.name}</TableCell>
                       <TableCell>{formatCurrency(payment.amount)}</TableCell>
@@ -486,23 +498,23 @@ export default function PaymentsPage() {
                   <h3 className="text-sm font-medium text-gray-500">
                     Payment ID
                   </h3>
-                  <p className="mt-1">{selectedPayment._id}</p>
+                  <p className="mt-1">PI_{selectedPayment._id}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">
                     Order ID
                   </h3>
-                  <p className="mt-1">{selectedPayment.orderId}</p>
+                  <p className="mt-1">{selectedPayment._id}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">
                     Customer
                   </h3>
-                  <p className="mt-1">{selectedPayment.customer.name}</p>
+                  <p className="mt-1">{selectedPayment.user.name}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Email</h3>
-                  <p className="mt-1">{selectedPayment.customer.email}</p>
+                  <p className="mt-1">{selectedPayment.user.email}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Status</h3>
@@ -538,7 +550,7 @@ export default function PaymentsPage() {
                     Expected Payment Date
                   </h3>
                   <p className="mt-1">
-                    {formatDate(selectedPayment.expectedPaymentDate)}
+                    {formatDate(selectedPayment.createdAt)}
                   </p>
                 </div>
               </div>
@@ -556,23 +568,29 @@ export default function PaymentsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {selectedPayment.products.map((product, index) => (
+                      {selectedPayment.gifts.map((gift: Gift, index: any) => (
                         <TableRow key={index}>
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              {product.image && (
+                              {gift.product.images && (
                                 <img
-                                  src={product.image || "/placeholder.svg"}
-                                  alt={product.title}
+                                  src={
+                                    gift.product.images[0] || "/placeholder.svg"
+                                  }
+                                  alt={gift.product.title}
                                   className="h-10 w-10 rounded-md object-cover"
                                 />
                               )}
                               <div>
-                                <p className="font-medium">{product.title}</p>
+                                <p className="font-medium">
+                                  {gift.product.title}
+                                </p>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell>{formatCurrency(product.price)}</TableCell>
+                          <TableCell>
+                            {formatCurrency(gift.product.price)}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -590,19 +608,19 @@ export default function PaymentsPage() {
                       <h4 className="text-xs font-medium text-gray-500">
                         Order ID
                       </h4>
-                      <p>{selectedPayment.order._id}</p>
+                      <p>{selectedPayment._id}</p>
                     </div>
                     <div>
                       <h4 className="text-xs font-medium text-gray-500">
                         Order Date
                       </h4>
-                      <p>{formatDate(selectedPayment.order.createdAt)}</p>
+                      <p>{formatDate(selectedPayment.createdAt)}</p>
                     </div>
                     <div>
                       <h4 className="text-xs font-medium text-gray-500">
                         Order Status
                       </h4>
-                      <p>{selectedPayment.order.status}</p>
+                      <p>{selectedPayment.status}</p>
                     </div>
                   </div>
                 </div>
