@@ -61,7 +61,7 @@ export default function ProductsPage() {
       formData.append("colorVariations", color);
     });
 
-    newProduct.files?.forEach((image) => {
+    newProduct.files?.forEach((image: any) => {
       formData.append("files", image);
     });
 

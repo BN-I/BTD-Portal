@@ -1,12 +1,12 @@
 import { User } from "@/lib/auth-types";
 
-interface Product {
-  _id: string;
+export interface Product {
+  _id: string | undefined;
   title: string;
   description: string;
   category: string;
   price: number;
-  discountedPrice: number;
+  discountedPrice: number | undefined;
   images: string[];
   isFeatured: boolean;
   colorVariations: string[];
@@ -19,6 +19,7 @@ interface Product {
   orderMaxDays: number;
   createdAt: string;
   updatedAt: string;
+  files: File[] | undefined;
   __v: number;
 }
 
