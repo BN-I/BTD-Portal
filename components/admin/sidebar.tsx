@@ -24,7 +24,7 @@ const sidebarItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "User Management",
+    title: "Users",
     href: "/admin/users",
     icon: Users,
   },
@@ -34,12 +34,12 @@ const sidebarItems = [
   //   icon: Calendar,
   // },
   {
-    title: "Vendor Management",
+    title: "Vendors",
     href: "/admin/vendors",
     icon: Store,
   },
   {
-    title: "Payment Management",
+    title: "Payments",
     href: "/admin/payments",
     icon: CreditCard,
   },

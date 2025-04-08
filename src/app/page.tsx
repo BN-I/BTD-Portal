@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 export default function HomePage() {
   return (
@@ -27,7 +28,13 @@ export default function HomePage() {
         <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center space-y-4 text-center">
-              <div className="space-y-2">
+              <div className="space-y-2 flex flex-col justify-center items-center">
+                <Image
+                  src="/logo.png"
+                  alt="BTD Logo"
+                  width={100}
+                  height={100}
+                />
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
                   Welcome to Before the Dates
                 </h1>
