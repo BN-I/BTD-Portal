@@ -1,7 +1,7 @@
 import { User } from "@/lib/auth-types";
 
 export interface Product {
-  _id: string | undefined;
+  _id: string;
   title: string;
   description: string;
   category: string;
@@ -21,6 +21,21 @@ export interface Product {
   updatedAt: string;
   files: File[] | undefined;
   __v: number;
+}
+
+export interface productForm {
+  _id: string | undefined;
+  title: string;
+  description: string;
+  price: number;
+  discountedPrice?: number;
+  category: string;
+  orderMinDays: number;
+  orderMaxDays: number;
+  colorVariations?: string[];
+  sizeVariations?: string[];
+  images?: string[];
+  files?: File[];
 }
 
 interface Vendor {
