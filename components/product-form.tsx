@@ -13,13 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Product } from "@/app/types";
+import type { Product, ProductForm } from "@/app/types";
 import { Block } from "@uiw/react-color";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { parse } from "path";
 interface ProductFormProps {
   product?: Product;
-  onSubmit: (product: Product) => void;
+  onSubmit: (product: ProductForm) => void;
 }
 
 export function ProductForm({ product, onSubmit }: ProductFormProps) {

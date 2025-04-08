@@ -22,6 +22,21 @@ export interface Product {
   __v: number;
 }
 
+export interface ProductForm {
+  _id: string | undefined;
+  title: string;
+  description: string;
+  price: number;
+  discountedPrice?: number;
+  category: string;
+  orderMinDays: number;
+  orderMaxDays: number;
+  colorVariations?: string[];
+  sizeVariations?: string[];
+  images?: string[];
+  files?: File[];
+}
+
 export interface Vendor {
   activePackage: string;
   _id: string;
