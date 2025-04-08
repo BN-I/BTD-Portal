@@ -76,19 +76,17 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     }
 
     onSubmit({
-      _id: product?._id ? product._id : undefined,
+      _id: product?._id ? product._id : "",
       title: name,
       description,
       price: parseFloat(price),
-      discountedPrice: discountedPrice
-        ? parseFloat(discountedPrice)
-        : undefined,
+      discountedPrice: discountedPrice ? parseFloat(discountedPrice) : 0,
       category,
       orderMinDays: orderMinDays,
       orderMaxDays: orderMaxDays,
       colorVariations: colors.map((color) => color.hex),
       sizeVariations: selectedSizes,
-      files: files ? Array.from(files) : undefined,
+      files: files ? Array.from(files) : [],
     });
   };
 

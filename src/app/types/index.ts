@@ -1,6 +1,6 @@
 import { User } from "@/lib/auth-types";
 
-interface Product {
+export interface Product {
   _id: string;
   title: string;
   description: string;
@@ -22,7 +22,7 @@ interface Product {
   __v: number;
 }
 
-interface Vendor {
+export interface Vendor {
   activePackage: string;
   _id: string;
   name: string;
