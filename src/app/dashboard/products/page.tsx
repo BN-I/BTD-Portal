@@ -17,11 +17,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ProductForm } from "../../../../components/product-form";
-import { Product } from "@/app/types";
+import { Product, ProductForm } from "@/app/types";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@/lib/auth-types";
+import { ProductForm as ProductFormComponent } from "../../../../components/product-form";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -31,7 +31,7 @@ export default function ProductsPage() {
   const [shouldUpdate, setShouldUpdate] = useState(false);
   const { toast } = useToast();
 
-  const handleAddProduct = (newProduct: Product) => {
+  const handleAddProduct = (newProduct: ProductForm) => {
     console.log(newProduct);
     var user = localStorage.getItem("user") as string | null;
     var userObj = null;
@@ -91,7 +91,7 @@ export default function ProductsPage() {
     }, 1000);
   };
 
-  const handleEditProduct = (updatedProduct: Product) => {
+  const handleEditProduct = (updatedProduct: ProductForm) => {
     const formData = new FormData();
 
     formData.append("title", updatedProduct.title);
@@ -152,7 +152,7 @@ export default function ProductsPage() {
     setShouldUpdate(!shouldUpdate);
   };
 
-  const handleDeleteProduct = (id: number | undefined) => {
+  const handleDeleteProduct = (id: string | undefined) => {
     setProducts(products.filter((p) => p._id !== id));
 
     axios
@@ -206,7 +206,7 @@ export default function ProductsPage() {
             <DialogHeader>
               <DialogTitle>Add New Product</DialogTitle>
             </DialogHeader>
-            <ProductForm onSubmit={handleAddProduct} />
+            <ProductFormComponent onSubmit={handleAddProduct} />
           </DialogContent>
         </Dialog>
       </div>
@@ -242,7 +242,7 @@ export default function ProductsPage() {
                       <DialogTitle>Edit Product</DialogTitle>
                     </DialogHeader>
                     {editingProduct && (
-                      <ProductForm
+                      <ProductFormComponent
                         product={editingProduct}
                         onSubmit={handleEditProduct}
                       />
