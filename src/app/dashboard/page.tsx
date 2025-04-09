@@ -72,7 +72,7 @@ function generateSalesData(orders: Order[]): SalesDataItem[] {
   return monthlyTotals.map((total, index) => ({
     month: monthLabels[index],
     revenue: Math.round(total),
-    expense: Math.round(0), // Adjust as needed
+    expense: Math.round(0), // Adjust as needed...
   }));
 }
 

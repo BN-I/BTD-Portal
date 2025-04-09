@@ -13,13 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Product, productForm } from "@/app/types";
+import type { Product, ProductForm } from "@/app/types";
 import { Block } from "@uiw/react-color";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { parse } from "path";
 interface ProductFormProps {
   product?: Product;
-  onSubmit: (product: productForm) => void;
+  onSubmit: (product: ProductForm) => void;
 }
 
 export function ProductForm({ product, onSubmit }: ProductFormProps) {
@@ -76,19 +76,17 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     }
 
     onSubmit({
-      _id: product?._id ? product._id : undefined,
+      _id: product?._id ? product._id : "",
       title: name,
       description,
       price: parseFloat(price),
-      discountedPrice: discountedPrice
-        ? parseFloat(discountedPrice)
-        : undefined,
+      discountedPrice: discountedPrice ? parseFloat(discountedPrice) : 0,
       category,
       orderMinDays: orderMinDays,
       orderMaxDays: orderMaxDays,
       colorVariations: colors.map((color) => color.hex),
       sizeVariations: selectedSizes,
-      files: files ? Array.from(files) : undefined,
+      files: files ? Array.from(files) : [],
     });
   };
 
