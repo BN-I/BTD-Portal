@@ -483,7 +483,7 @@ export default function PaymentsPage() {
 
       {/* Payment Details Modal */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Payment Details</DialogTitle>
             <DialogDescription>
@@ -528,6 +528,17 @@ export default function PaymentsPage() {
                       {selectedPayment.status}
                     </span>
                   </div>
+                  {/* request payment button */}
+                  {selectedPayment.status === "delivered" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-[#00BFA6] border-[#00BFA6] mt-2 hover:bg-[#00BFA6] hover:text-white"
+                      // onClick={''}
+                    >
+                      Request Payment
+                    </Button>
+                  )}
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">
