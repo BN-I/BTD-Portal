@@ -44,6 +44,7 @@ import {
   Users,
 } from "lucide-react";
 import type { User as UserType } from "@/lib/auth-types";
+import axios from "axios";
 
 // Business categories for vendors
 const businessCategories = [
@@ -144,39 +145,58 @@ export default function VendorAccountPage() {
         const userData = JSON.parse(userJson) as UserType;
         setVendor(userData);
 
+        const storeInformation = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/store/storeInformation/${userData._id}`
+        );
+
+        const businessInformation = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/store/businessInformation/${userData._id}`
+        );
+
+        const paymentInformation = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/store/paymentInformation/${userData._id}`
+        );
+
+        console.log("storeInformation", storeInformation.data);
+
         // Mock vendor data for demonstration
         const mockVendorData = {
-          storeName: "Luxury Gifts Co.",
+          storeName: storeInformation.data.storeInformation.storeName,
           storeDescription:
-            "We specialize in premium gift items for all occasions. Our curated selection includes handcrafted items from around the world.",
-          category: "Jewelry & Accessories",
-          companySize: "2-10 employees",
-          yearFounded: "2018",
-          website: "https://luxurygifts.example.com",
-          instagram: "luxurygifts",
-          facebook: "luxurygiftsco",
-          twitter: "luxurygifts",
-          businessType: "Limited Liability Company (LLC)",
-          taxId: "12-3456789",
-          businessEmail: "contact@luxurygifts.example.com",
-          businessPhone: "(555) 123-4567",
-          streetAddress: "123 Commerce St",
-          city: "New York",
-          state: "NY",
-          postalCode: "10001",
-          country: "United States",
+            storeInformation.data.storeInformation.storeDescription,
+          category: storeInformation.data.storeInformation.businessCategory,
+          companySize: storeInformation.data.storeInformation.companySize,
+          yearFounded: storeInformation.data.storeInformation.yearFounded,
+          website: storeInformation.data.storeInformation.website,
+          instagram: storeInformation.data.storeInformation.instagram,
+          facebook: storeInformation.data.storeInformation.facebook,
+          twitter: storeInformation.data.storeInformation.twitter,
+          businessType:
+            businessInformation.data.businessInformation.businessType,
+          taxId: businessInformation.data.businessInformation.taxID,
+          businessEmail:
+            businessInformation.data.businessInformation.businessEmail,
+          businessPhone:
+            businessInformation.data.businessInformation.businessPhone,
+          streetAddress:
+            businessInformation.data.businessInformation.businessAddress,
+          city: businessInformation.data.businessInformation.city,
+          state: businessInformation.data.businessInformation.state,
+          postalCode: businessInformation.data.businessInformation.postalCode,
+          country: businessInformation.data.businessInformation.country,
           shippingPolicy:
-            "We offer standard shipping (5-7 business days) and express shipping (2-3 business days). International shipping available for select countries.",
+            businessInformation.data.businessInformation.storePolicy,
           returnPolicy:
-            "Items can be returned within 30 days of delivery for a full refund. Items must be unused and in original packaging.",
-          bankName: "First National Bank",
-          accountNumber: "****6789",
-          routingNumber: "****5678",
-          accountHolderName: "Luxury Gifts LLC",
+            businessInformation.data.businessInformation.returnPolicy,
+          bankName: paymentInformation.data.paymentInformation.bankName,
+          accountNumber:
+            paymentInformation.data.paymentInformation.accountNumber,
+          routingNumber:
+            paymentInformation.data.paymentInformation.routingNumber,
+          accountHolderName:
+            paymentInformation.data.paymentInformation.accountHolderName,
         };
-
         setFormData(mockVendorData);
-
         // Set store logo if available
         setStoreLogo("/placeholder.svg");
       }
@@ -393,7 +413,7 @@ export default function VendorAccountPage() {
         <TabsList className="mb-6">
           <TabsTrigger value="store">Store Information</TabsTrigger>
           <TabsTrigger value="business">Business Details</TabsTrigger>
-          {/* <TabsTrigger value="payment">Payment Information</TabsTrigger> */}
+          <TabsTrigger value="payment">Payment Information</TabsTrigger>
           {/* <TabsTrigger value="settings">Store Settings</TabsTrigger> */}
         </TabsList>
 

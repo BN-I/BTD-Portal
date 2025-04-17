@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { login } from "@/lib/auth-service";
+import { error } from "console";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -20,10 +21,12 @@ export default function SignInPage() {
     email: "",
     password: "",
   });
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrorMessage("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,7 +42,10 @@ export default function SignInPage() {
         });
         router.push("/dashboard");
       });
+      setErrorMessage("");
     } catch (error) {
+      console.error("Login failed", JSON.stringify(error));
+      setErrorMessage(error as string);
       toast({
         variant: "destructive",
         title: "Login failed",
@@ -146,6 +152,11 @@ export default function SignInPage() {
               )}
             </Button>
           </form>
+          <div>
+            <p className="mt-2 text-sm  text-red-600">
+              {errorMessage ? errorMessage : ""}
+            </p>
+          </div>
         </div>
       </div>
     </div>
