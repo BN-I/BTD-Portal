@@ -281,7 +281,7 @@ export default function OrdersPage() {
                 <TableCell>{order.user.name}</TableCell>
                 <TableCell>{formatDate(order.createdAt)}</TableCell>
                 <TableCell>
-                  {order.gifts.map((gift) => gift.product.title).join(", ")}
+                  {order.gifts.map((gift) => gift.product?.title).join(", ")}
                 </TableCell>
                 <TableCell>${order.totalAmount.toFixed(2)}</TableCell>
                 <TableCell>
@@ -390,31 +390,32 @@ export default function OrdersPage() {
                         <TableRow key={index}>
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              {gift.product.images && (
+                              {gift.product?.images && (
                                 <img
                                   src={
-                                    gift.product.images[0] || "/placeholder.svg"
+                                    gift.product?.images[0] ||
+                                    "/placeholder.svg"
                                   }
-                                  alt={gift.product.title}
+                                  alt={gift.product?.title}
                                   className="h-10 w-10 rounded-md object-cover"
                                 />
                               )}
                               <div>
                                 <p className="font-medium">
-                                  {gift.product.title}
+                                  {gift.product?.title}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  {gift.product.category}
+                                  {gift.product?.category}
                                 </p>
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>1</TableCell>
                           <TableCell>
-                            ${gift.product.price.toFixed(2)}
+                            ${gift.product?.price.toFixed(2)}
                           </TableCell>
                           <TableCell>
-                            ${(1 * gift.product.price).toFixed(2)}
+                            ${(1 * gift.product?.price).toFixed(2)}
                           </TableCell>
                         </TableRow>
                       ))}

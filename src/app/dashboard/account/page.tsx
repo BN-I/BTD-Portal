@@ -161,44 +161,44 @@ export default function VendorAccountPage() {
 
         // Mock vendor data for demonstration
         const mockVendorData = {
-          storeName: storeInformation.data.storeInformation.storeName,
+          storeName: storeInformation.data.storeInformation?.storeName,
           storeDescription:
-            storeInformation.data.storeInformation.storeDescription,
-          category: storeInformation.data.storeInformation.businessCategory,
-          companySize: storeInformation.data.storeInformation.companySize,
-          yearFounded: storeInformation.data.storeInformation.yearFounded,
-          website: storeInformation.data.storeInformation.website,
-          instagram: storeInformation.data.storeInformation.instagram,
-          facebook: storeInformation.data.storeInformation.facebook,
-          twitter: storeInformation.data.storeInformation.twitter,
+            storeInformation.data.storeInformation?.storeDescription,
+          category: storeInformation.data.storeInformation?.businessCategory,
+          companySize: storeInformation.data.storeInformation?.companySize,
+          yearFounded: storeInformation.data.storeInformation?.yearFounded,
+          website: storeInformation.data.storeInformation?.website,
+          instagram: storeInformation.data.storeInformation?.instagram,
+          facebook: storeInformation.data.storeInformation?.facebook,
+          twitter: storeInformation.data.storeInformation?.twitter,
           businessType:
-            businessInformation.data.businessInformation.businessType,
-          taxId: businessInformation.data.businessInformation.taxID,
+            businessInformation.data.businessInformation?.businessType,
+          taxId: businessInformation.data.businessInformation?.taxID,
           businessEmail:
-            businessInformation.data.businessInformation.businessEmail,
+            businessInformation.data.businessInformation?.businessEmail,
           businessPhone:
-            businessInformation.data.businessInformation.businessPhone,
+            businessInformation.data.businessInformation?.businessPhone,
           streetAddress:
-            businessInformation.data.businessInformation.businessAddress,
-          city: businessInformation.data.businessInformation.city,
-          state: businessInformation.data.businessInformation.state,
-          postalCode: businessInformation.data.businessInformation.postalCode,
-          country: businessInformation.data.businessInformation.country,
+            businessInformation.data.businessInformation?.businessAddress,
+          city: businessInformation.data.businessInformation?.city,
+          state: businessInformation.data.businessInformation?.state,
+          postalCode: businessInformation.data.businessInformation?.postalCode,
+          country: businessInformation.data.businessInformation?.country,
           shippingPolicy:
-            businessInformation.data.businessInformation.storePolicy,
+            businessInformation.data.businessInformation?.storePolicy,
           returnPolicy:
-            businessInformation.data.businessInformation.returnPolicy,
-          bankName: paymentInformation.data.paymentInformation.bankName,
+            businessInformation.data.businessInformation?.returnPolicy,
+          bankName: paymentInformation.data.paymentInformation?.bankName,
           accountNumber:
-            paymentInformation.data.paymentInformation.accountNumber,
+            paymentInformation.data.paymentInformation?.accountNumber,
           routingNumber:
-            paymentInformation.data.paymentInformation.routingNumber,
+            paymentInformation.data.paymentInformation?.routingNumber,
           accountHolderName:
-            paymentInformation.data.paymentInformation.accountHolderName,
+            paymentInformation.data.paymentInformation?.accountHolderName,
         };
         setFormData(mockVendorData);
         // Set store logo if available
-        setStoreLogo(storeInformation.data.storeInformation.storeImage);
+        setStoreLogo(storeInformation.data.storeInformation?.storeImage);
       }
     } catch (error) {
       console.error("Error fetching vendor data:", error);
