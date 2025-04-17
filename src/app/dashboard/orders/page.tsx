@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
 
 type StatsCardProps = {
   title: string;
@@ -53,6 +54,9 @@ export default function OrdersPage() {
   const [newStatus, setNewStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filterStatus, setFilterStatus] = useState("All");
+  const [trackingId, setTrackingId] = useState("");
+  const [deliveryService, setDeliveryService] = useState("");
+  const [otherDeliveryService, setOtherDeliveryService] = useState("");
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -525,6 +529,55 @@ export default function OrdersPage() {
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+          )}
+
+          {newStatus === "shipped" && (
+            <div className="space-y-4 border-t pt-4 mt-4">
+              <h3 className="text-sm font-medium">Shipping Information</h3>
+
+              <div className="space-y-2">
+                <Label htmlFor="deliveryService">Delivery Service</Label>
+                <Select
+                  value={deliveryService}
+                  onValueChange={setDeliveryService}
+                >
+                  <SelectTrigger id="deliveryService">
+                    <SelectValue placeholder="Select delivery service" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fedex">FedEx</SelectItem>
+                    <SelectItem value="ups">UPS</SelectItem>
+                    <SelectItem value="usps">USPS</SelectItem>
+                    <SelectItem value="dhl">DHL</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {deliveryService === "other" && (
+                <div className="space-y-2">
+                  <Label htmlFor="other-delivery-service">
+                    Delivery Service Name
+                  </Label>
+                  <Input
+                    id="other-delivery-service"
+                    placeholder="Enter delivery service name"
+                    value={otherDeliveryService}
+                    onChange={(e) => setOtherDeliveryService(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="trackingId">Tracking ID</Label>
+                <Input
+                  id="trackingId"
+                  placeholder="Enter tracking number"
+                  value={trackingId}
+                  onChange={(e) => setTrackingId(e.target.value)}
+                />
               </div>
             </div>
           )}

@@ -23,6 +23,12 @@ export interface Product {
   __v: number;
 }
 
+export interface DeletingProduct {
+  _id: string;
+  title: string;
+  __v: number;
+}
+
 export interface productForm {
   _id: string | undefined;
   title: string;

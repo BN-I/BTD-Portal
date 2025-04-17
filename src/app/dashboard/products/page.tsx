@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Product, ProductForm } from "@/app/types";
+import { Product, ProductForm, DeletingProduct } from "@/app/types";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@/lib/auth-types";
@@ -29,6 +29,9 @@ export default function ProductsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [shouldUpdate, setShouldUpdate] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingProduct, setDeletingProduct] =
+    useState<DeletingProduct | null>();
   const { toast } = useToast();
 
   const handleAddProduct = (newProduct: ProductForm) => {
@@ -163,6 +166,7 @@ export default function ProductsPage() {
           title: "Success",
           description: "Product deleted successfully",
         });
+        setDeleteDialogOpen(false);
       })
       .catch((error) => {
         toast({
@@ -170,6 +174,7 @@ export default function ProductsPage() {
           title: "Error",
           description: error.message,
         });
+        setDeleteDialogOpen(false);
       });
   };
 
@@ -249,13 +254,58 @@ export default function ProductsPage() {
                     )}
                   </DialogContent>
                 </Dialog>
-                <Button
+                <Dialog
+                  open={deleteDialogOpen}
+                  onOpenChange={setDeleteDialogOpen}
+                >
+                  <DialogTrigger>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="mr-2"
+                      onClick={() => setDeletingProduct(product)}
+                    >
+                      Delete
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Confirm Deletion</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                      <p>
+                        Are you sure you want to delete{" "}
+                        <span className="font-semibold">
+                          {deletingProduct?.title}
+                        </span>
+                        ?
+                      </p>
+                      <p className="text-sm text-gray-500 mt-2">
+                        This action is irreversible.
+                      </p>
+                    </div>
+                    <div className="flex justify-end gap-3">
+                      <DialogTrigger asChild>
+                        <Button variant="outline">Cancel</Button>
+                      </DialogTrigger>
+                      <Button
+                        variant="destructive"
+                        onClick={() =>
+                          handleDeleteProduct(deletingProduct?._id)
+                        }
+                      >
+                        Confirm Delete
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                {/* <Button
                   variant="destructive"
                   size="sm"
                   onClick={() => handleDeleteProduct(product._id)}
                 >
                   Delete
-                </Button>
+                </Button> */}
               </TableCell>
             </TableRow>
           ))}
