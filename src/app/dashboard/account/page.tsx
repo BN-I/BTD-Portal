@@ -198,7 +198,7 @@ export default function VendorAccountPage() {
         };
         setFormData(mockVendorData);
         // Set store logo if available
-        setStoreLogo("/placeholder.svg");
+        setStoreLogo(storeInformation.data.storeInformation.storeImage);
       }
     } catch (error) {
       console.error("Error fetching vendor data:", error);
@@ -232,9 +232,23 @@ export default function VendorAccountPage() {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    console.log(file);
+    const userJson = localStorage.getItem("user");
+    if (!userJson) return;
+    const formData = new FormData();
+
+    formData.append("file", file);
+    formData.append("vendorID", JSON.parse(userJson)._id);
+
+    const response = await axios.post(
+      `${process.env.NEXT_PUBLIC_API_URL}/store/logo`,
+      formData
+    );
+
+    console.log("response", response);
 
     // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
@@ -271,6 +285,10 @@ export default function VendorAccountPage() {
   const handleSaveStoreInfo = async () => {
     setSaving(true);
     try {
+      const userJson = localStorage.getItem("user");
+      if (!userJson) {
+        return;
+      }
       // Validate form data
       if (!formData.storeName.trim()) {
         throw new Error("Store name is required");
@@ -280,13 +298,51 @@ export default function VendorAccountPage() {
         throw new Error("Please select a business category");
       }
 
-      // In a real app, you'd send this to your API
-      // const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/vendors/${vendor?._id}`, {
-      //   storeName: formData.storeName,
-      //   storeDescription: formData.storeDescription,
-      //   category: formData.category,
-      //   // ... other fields
-      // });
+      if (!formData.companySize) {
+        throw new Error("Please select a company size");
+      }
+
+      if (!formData.yearFounded) {
+        throw new Error("Please select a year founded");
+      }
+
+      if (!formData.website.trim()) {
+        throw new Error("Website URL is required");
+      }
+
+      if (!formData.instagram.trim()) {
+        throw new Error("Instagram URL is required");
+      }
+
+      if (!formData.facebook.trim()) {
+        throw new Error("Facebook URL is required");
+      }
+
+      if (!formData.twitter.trim()) {
+        throw new Error("Twitter URL is required");
+      }
+
+      if (!formData.storeDescription.trim()) {
+        throw new Error("Store description is required");
+      }
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/store/storeInformation`,
+        {
+          vendorID: JSON.parse(userJson)._id,
+          storeName: formData.storeName,
+          storeDescription: formData.storeDescription,
+          businessCategory: formData.category,
+          companySize: formData.companySize,
+          yearFounded: formData.yearFounded,
+          website: formData.website,
+          instagram: formData.instagram,
+          facebook: formData.facebook,
+          twitter: formData.twitter,
+        }
+      );
+
+      console.log(response);
 
       // For demo purposes, we'll just show a success message
       toast({
@@ -311,9 +367,17 @@ export default function VendorAccountPage() {
   const handleSaveBusinessDetails = async () => {
     setSaving(true);
     try {
-      // Validate form data
-      if (!formData.businessType) {
-        throw new Error("Business type is required");
+      const userJson = localStorage.getItem("user");
+      if (!userJson) {
+        return;
+      }
+
+      if (!formData.businessType.trim()) {
+        throw new Error("Store name is required");
+      }
+
+      if (!formData.taxId.trim()) {
+        throw new Error("Please select a business category");
       }
 
       if (
@@ -322,6 +386,58 @@ export default function VendorAccountPage() {
       ) {
         throw new Error("Valid business email is required");
       }
+
+      if (!formData.businessPhone.trim()) {
+        throw new Error("Please select a year founded");
+      }
+
+      if (!formData.streetAddress.trim()) {
+        throw new Error("Website URL is required");
+      }
+
+      if (!formData.city.trim()) {
+        throw new Error("Instagram URL is required");
+      }
+
+      if (!formData.state.trim()) {
+        throw new Error("Facebook URL is required");
+      }
+
+      if (!formData.postalCode.trim()) {
+        throw new Error("Twitter URL is required");
+      }
+
+      if (!formData.country.trim()) {
+        throw new Error("Store description is required");
+      }
+
+      if (!formData.shippingPolicy.trim()) {
+        throw new Error("Store description is required");
+      }
+
+      if (!formData.returnPolicy.trim()) {
+        throw new Error("Store description is required");
+      }
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/store/businessInformation`,
+        {
+          vendorID: JSON.parse(userJson)._id,
+          businessType: formData.businessType,
+          taxID: formData.taxId,
+          businessEmail: formData.businessEmail,
+          businessPhone: formData.businessPhone,
+          businessAddress: formData.streetAddress,
+          city: formData.city,
+          state: formData.state,
+          postalCode: formData.postalCode,
+          country: formData.country,
+          storePolicy: formData.shippingPolicy,
+          returnPolicy: formData.returnPolicy,
+        }
+      );
+
+      console.log(response);
 
       // For demo purposes, we'll just show a success message
       toast({
@@ -346,6 +462,11 @@ export default function VendorAccountPage() {
   const handleSavePaymentInfo = async () => {
     setSaving(true);
     try {
+      const userJson = localStorage.getItem("user");
+      if (!userJson) {
+        return;
+      }
+
       // Validate form data
       if (!formData.bankName.trim()) {
         throw new Error("Bank name is required");
@@ -354,6 +475,27 @@ export default function VendorAccountPage() {
       if (!formData.accountHolderName.trim()) {
         throw new Error("Account holder name is required");
       }
+
+      if (!formData.accountNumber.trim()) {
+        throw new Error("Account number is required");
+      }
+
+      if (!formData.routingNumber.trim()) {
+        throw new Error("Routing number is required");
+      }
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/store/paymentInformation`,
+        {
+          vendorID: JSON.parse(userJson)._id,
+          bankName: formData.bankName,
+          accountHolderName: formData.accountHolderName,
+          accountNumber: formData.accountNumber,
+          routingNumber: formData.routingNumber,
+        }
+      );
+
+      console.log(response);
 
       // For demo purposes, we'll just show a success message
       toast({
@@ -436,7 +578,7 @@ export default function VendorAccountPage() {
                   >
                     {storeLogo ? (
                       <img
-                        src={storeLogo || "/placeholder.svg"}
+                        src={storeLogo}
                         alt="Store Logo"
                         className="h-full w-full object-cover"
                       />

@@ -37,7 +37,18 @@ interface Notification {
 }
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([
+    {
+      _id: "1",
+      title: "added a new product",
+      message: " Product name",
+      type: " order",
+      isRead: false,
+      createdAt: "2025-04-06T20:39:27.605+00:00",
+      updatedAt: "2025-04-06T20:39:27.605+00:00",
+      user: "yousuf",
+    },
+  ]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -64,7 +75,7 @@ export default function NotificationsPage() {
 
       const response = await axios.get(url);
 
-      setNotifications(response.data.notifications || response.data);
+      // setNotifications(response.data.notifications || response.data);
 
       // If the API returns pagination info
       if (response.data.totalPages) {
