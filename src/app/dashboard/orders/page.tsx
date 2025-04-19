@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -16,7 +16,7 @@ import { Package2, Search } from "lucide-react";
 import axios from "axios";
 import type { User } from "@/lib/auth-types";
 import type { Gift, Order } from "@/app/types";
-import { formatDate } from "@/app/common";
+import { formatDate, isValidHttpUrl } from "@/app/common";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
+import { isValid } from "date-fns";
 
 type StatsCardProps = {
   title: string;
@@ -55,8 +56,10 @@ export default function OrdersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filterStatus, setFilterStatus] = useState("All");
   const [trackingId, setTrackingId] = useState("");
+  const [trackingURL, setTrackingURL] = useState("");
   const [deliveryService, setDeliveryService] = useState("");
   const [otherDeliveryService, setOtherDeliveryService] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -142,14 +145,41 @@ export default function OrdersPage() {
 
   const handleStatusChange = async () => {
     if (!selectedOrder || !newStatus) return;
+    console.log(trackingId, trackingURL, deliveryService, otherDeliveryService);
+
+    if (deliveryService === "other") {
+      if (!otherDeliveryService) {
+        setError("Please enter other delivery service");
+        return;
+      }
+    }
+
+    if (newStatus === "shipped") {
+      if (!trackingId || !deliveryService || !trackingURL) {
+        setError("Please enter tracking ID, tracking URL and delivery service");
+        return;
+      }
+
+      if (!isValidHttpUrl(trackingURL)) {
+        setError("Please enter a valid tracking URL");
+        return;
+      }
+    }
 
     setIsSubmitting(true);
+
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/orders/change-status`,
         {
           orderID: selectedOrder._id,
           status: newStatus,
+          trackingID: trackingId,
+          trackingURL: trackingURL,
+          shippingService:
+            deliveryService === "other"
+              ? otherDeliveryService
+              : deliveryService,
         }
       );
 
@@ -221,6 +251,28 @@ export default function OrdersPage() {
     );
   };
 
+  const deliveryServices = {
+    fedex: "FedEx",
+    usps: "USPS",
+    ups: "UPS",
+    dhl: "DHL",
+    other: "Other",
+  };
+
+  const statuses = [
+    "pending",
+    "paid",
+    "processing",
+    "shipped",
+    "delivered",
+    "cancelled",
+  ];
+
+  const currentStatusIndex = useMemo(
+    () => statuses.indexOf(selectedOrder?.status || "pending"),
+    [selectedOrder]
+  );
+
   return (
     <div className="space-y-6">
       {/* Stats Section */}
@@ -289,6 +341,28 @@ export default function OrdersPage() {
                     onClick={() => {
                       setSelectedOrder(order);
                       setNewStatus(order.status);
+                      order.trackingID && setTrackingId(order.trackingID);
+                      order.trackingURL && setTrackingURL(order.trackingURL);
+                      console.log(
+                        deliveryServices[
+                          order.shippingService as keyof typeof deliveryServices
+                        ]
+                      );
+
+                      //
+                      if (order.shippingService) {
+                        if (
+                          deliveryServices[
+                            order.shippingService as keyof typeof deliveryServices
+                          ] !== undefined
+                        ) {
+                          setDeliveryService(order.shippingService);
+                        } else {
+                          setDeliveryService("other");
+                          setOtherDeliveryService(order.shippingService);
+                        }
+                      }
+
                       setIsStatusDialogOpen(true);
                     }}
                     className={`px-3 py-1 rounded-full text-xs hover:scale-105 uppercase w-full font-medium cursor-pointer ${getStatusColor(
@@ -522,12 +596,15 @@ export default function OrdersPage() {
                     <SelectValue placeholder="Select new status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="processing">Processing</SelectItem>
-                    <SelectItem value="shipped">Shipped</SelectItem>
-                    <SelectItem value="delivered">Delivered</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    {statuses.map((status, index) => (
+                      <SelectItem
+                        key={status}
+                        value={status}
+                        disabled={index < currentStatusIndex} // Disable if it's before current
+                      >
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -539,20 +616,21 @@ export default function OrdersPage() {
               <h3 className="text-sm font-medium">Shipping Information</h3>
 
               <div className="space-y-2">
-                <Label htmlFor="deliveryService">Delivery Service</Label>
+                <Label htmlFor="deliveryService">Delivery Service *</Label>
                 <Select
                   value={deliveryService}
                   onValueChange={setDeliveryService}
+                  required={deliveryService === "shipped"}
                 >
                   <SelectTrigger id="deliveryService">
                     <SelectValue placeholder="Select delivery service" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="fedex">FedEx</SelectItem>
-                    <SelectItem value="ups">UPS</SelectItem>
-                    <SelectItem value="usps">USPS</SelectItem>
-                    <SelectItem value="dhl">DHL</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    {Object.entries(deliveryServices).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -560,7 +638,7 @@ export default function OrdersPage() {
               {deliveryService === "other" && (
                 <div className="space-y-2">
                   <Label htmlFor="other-delivery-service">
-                    Delivery Service Name
+                    Delivery Service Name *
                   </Label>
                   <Input
                     id="other-delivery-service"
@@ -572,18 +650,34 @@ export default function OrdersPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="trackingId">Tracking ID</Label>
+                <Label htmlFor="trackingId">Tracking ID *</Label>
                 <Input
                   id="trackingId"
+                  required={deliveryService === "shipped"}
                   placeholder="Enter tracking number"
                   value={trackingId}
                   onChange={(e) => setTrackingId(e.target.value)}
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="trackingId">Tracking URL *</Label>
+                <Input
+                  id="trackingURL"
+                  placeholder="Enter tracking URL"
+                  required={deliveryService === "shipped"}
+                  value={trackingURL}
+                  onChange={(e) => setTrackingURL(e.target.value)}
+                />
+              </div>
             </div>
           )}
-
+          <p className="text-xs text-red-500">{error}</p>
           <DialogFooter>
+            <p className="text-xs text-muted-foreground">
+              Clicking update will update the status of this order and send an
+              email to the customer.
+            </p>
             <Button
               variant="outline"
               onClick={() => setIsStatusDialogOpen(false)}

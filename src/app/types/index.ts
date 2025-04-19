@@ -118,6 +118,9 @@ export interface Order {
   status: string;
   user: User;
   event: Event;
+  shippingService: string | undefined;
+  trackingID: string | undefined;
+  trackingURL: string | undefined;
   createdAt: string;
   updatedAt: string;
 }
