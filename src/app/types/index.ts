@@ -130,3 +130,14 @@ export type SalesRecord = {
   revenue: number;
   expense: number;
 };
+
+export interface Notification {
+  _id: string;
+  title: string;
+  description: string;
+  type: string;
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
+  user: string;
+}

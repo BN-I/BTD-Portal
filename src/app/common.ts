@@ -22,3 +22,7 @@ export function isValidHttpUrl(url: string) {
 
   return validURL.protocol === "http:" || validURL.protocol === "https:";
 }
+
+export function trimWithEllipsis(str: string, maxLength: number) {
+  return str.length > maxLength ? str.slice(0, maxLength - 3) + "..." : str;
+}
