@@ -271,28 +271,25 @@ export default function VendorAccountPage() {
   const handleSaveStoreInfo = async () => {
     setSaving(true);
     try {
-      // Validate form data
-      if (!formData.storeName.trim()) {
-        throw new Error("Store name is required");
-      }
-
-      if (!formData.category) {
-        throw new Error("Please select a business category");
-      }
-
-      // In a real app, you'd send this to your API
-      // const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/vendors/${vendor?._id}`, {
-      //   storeName: formData.storeName,
-      //   storeDescription: formData.storeDescription,
-      //   category: formData.category,
-      //   // ... other fields
-      // });
-
       // For demo purposes, we'll just show a success message
       toast({
         title: "Store information updated",
         description: "Your store information has been updated successfully.",
       });
+
+      // Save store data to localStorage
+      const storeData = {
+        storeName: formData.storeName,
+        storeDescription: formData.storeDescription,
+        category: formData.category,
+        companySize: formData.companySize,
+        yearFounded: formData.yearFounded,
+        website: formData.website,
+        instagram: formData.instagram,
+        facebook: formData.facebook,
+        twitter: formData.twitter,
+      };
+      localStorage.setItem("store_data", JSON.stringify(storeData));
     } catch (error) {
       console.error("Error saving store information:", error);
       toast({
@@ -311,23 +308,31 @@ export default function VendorAccountPage() {
   const handleSaveBusinessDetails = async () => {
     setSaving(true);
     try {
-      // Validate form data
-      if (!formData.businessType) {
-        throw new Error("Business type is required");
-      }
-
-      if (
-        !formData.businessEmail ||
-        !/\S+@\S+\.\S+/.test(formData.businessEmail)
-      ) {
-        throw new Error("Valid business email is required");
-      }
-
       // For demo purposes, we'll just show a success message
       toast({
         title: "Business details updated",
         description: "Your business details have been updated successfully.",
       });
+
+      // Update store data in localStorage
+      const existingStoreData = JSON.parse(
+        localStorage.getItem("store_data") || "{}"
+      );
+      const updatedStoreData = {
+        ...existingStoreData,
+        businessType: formData.businessType,
+        taxId: formData.taxId,
+        businessEmail: formData.businessEmail,
+        businessPhone: formData.businessPhone,
+        streetAddress: formData.streetAddress,
+        city: formData.city,
+        state: formData.state,
+        postalCode: formData.postalCode,
+        country: formData.country,
+        shippingPolicy: formData.shippingPolicy,
+        returnPolicy: formData.returnPolicy,
+      };
+      localStorage.setItem("store_data", JSON.stringify(updatedStoreData));
     } catch (error) {
       console.error("Error saving business details:", error);
       toast({
@@ -346,20 +351,24 @@ export default function VendorAccountPage() {
   const handleSavePaymentInfo = async () => {
     setSaving(true);
     try {
-      // Validate form data
-      if (!formData.bankName.trim()) {
-        throw new Error("Bank name is required");
-      }
-
-      if (!formData.accountHolderName.trim()) {
-        throw new Error("Account holder name is required");
-      }
-
       // For demo purposes, we'll just show a success message
       toast({
         title: "Payment information updated",
         description: "Your payment information has been updated successfully.",
       });
+
+      // Update store data in localStorage
+      const existingStoreData = JSON.parse(
+        localStorage.getItem("store_data") || "{}"
+      );
+      const updatedStoreData = {
+        ...existingStoreData,
+        bankName: formData.bankName,
+        accountNumber: formData.accountNumber,
+        routingNumber: formData.routingNumber,
+        accountHolderName: formData.accountHolderName,
+      };
+      localStorage.setItem("store_data", JSON.stringify(updatedStoreData));
     } catch (error) {
       console.error("Error saving payment information:", error);
       toast({
@@ -383,12 +392,25 @@ export default function VendorAccountPage() {
         title: "Store settings updated",
         description: "Your store settings have been updated successfully.",
       });
+
+      // Update store data in localStorage
+      const existingStoreData = JSON.parse(
+        localStorage.getItem("store_data") || "{}"
+      );
+      const updatedStoreData = {
+        ...existingStoreData,
+        storeSettings,
+      };
+      localStorage.setItem("store_data", JSON.stringify(updatedStoreData));
     } catch (error) {
       console.error("Error saving store settings:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update your store settings. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to update your store settings. Please try again.",
       });
     } finally {
       setSaving(false);

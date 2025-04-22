@@ -22,6 +22,7 @@ import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@/lib/auth-types";
 import { ProductForm as ProductFormComponent } from "../../../../components/product-form";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -201,6 +202,7 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-4">
+      <Toaster />
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Products</h2>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

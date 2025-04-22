@@ -31,3 +31,12 @@ export async function signOut() {
   window.location.href = '/auth/signin'
 }
 
+export function hasStoreData(user: User | null): boolean {
+  if (!user) return false;
+  if (user.role !== 'Vendor') return true;
+  
+  // Check if vendor has store data
+  const storeData = localStorage.getItem('store_data');
+  return !!storeData;
+}
+
