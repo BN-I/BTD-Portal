@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
+import Image from "next/image";
 
 export default function SuccessPage() {
   const [status, setStatus] = useState("loading");
@@ -47,7 +50,11 @@ export default function SuccessPage() {
   }
 
   if (status === "loading") {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex justify-center">
+        <Loader2 className="animate-spin text-4xl" />
+      </div>
+    );
   }
 
   if (status === "failed") {
@@ -56,11 +63,39 @@ export default function SuccessPage() {
 
   return (
     <div>
-      <h1>Subscription Successful!</h1>
+      {/* <h1>Subscription Successful!</h1>
       <p>
         Thank you for your subscription. A confirmation email has been sent to{" "}
         {customerEmail}.
-      </p>
+      </p> */}
+      <Card>
+        <CardHeader className="flex flex-col items-center">
+          <CardTitle className="text-green-500 font-bold text-center">
+            Success!
+          </CardTitle>
+          <Image
+            src={"/logo.png"}
+            alt="logo"
+            className="w-48 h-48 rounded-full"
+            width={48}
+            height={48}
+          />
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <div className="flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-base font-semibold">
+                Welcome to Before The Dates!
+              </div>
+              <div className="text-base font-normal">
+                Thank you for your subscription. A confirmation email has been
+                sent to <span className="font-semibold">{customerEmail}</span>
+              </div>
+              {/* <div className="text-sm text-gray-500">Total Balance</div> */}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
