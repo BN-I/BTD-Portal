@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { User } from "@/lib/auth-types";
 import { hasStoreData } from "@/lib/auth";
 
+// sdasda
+
 export default function DashboardLayout({
   children,
 }: {
