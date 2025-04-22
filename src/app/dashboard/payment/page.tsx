@@ -109,7 +109,7 @@ export default function PaymentsPage() {
           p._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
           p.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           p.gifts.some((gift: Gift) =>
-            gift.product.title.toLowerCase().includes(searchTerm.toLowerCase())
+            gift.product?.title.toLowerCase().includes(searchTerm.toLowerCase())
           )
       );
     }
@@ -379,7 +379,7 @@ export default function PaymentsPage() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             type="search"
-            placeholder="Search by order ID, customer, or product..."
+            placeholder="Search by order ID, customer, or product?..."
             className="pl-8 bg-white"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -583,24 +583,25 @@ export default function PaymentsPage() {
                         <TableRow key={index}>
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              {gift.product.images && (
+                              {gift.product?.images && (
                                 <img
                                   src={
-                                    gift.product.images[0] || "/placeholder.svg"
+                                    gift.product?.images[0] ||
+                                    "/placeholder.svg"
                                   }
-                                  alt={gift.product.title}
+                                  alt={gift.product?.title}
                                   className="h-10 w-10 rounded-md object-cover"
                                 />
                               )}
                               <div>
                                 <p className="font-medium">
-                                  {gift.product.title}
+                                  {gift.product?.title}
                                 </p>
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            {formatCurrency(gift.product.price)}
+                            {formatCurrency(gift.product?.price)}
                           </TableCell>
                         </TableRow>
                       ))}

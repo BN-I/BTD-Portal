@@ -294,12 +294,12 @@ export default function VendorAccountPage() {
       }
     } catch (error) {
       console.error("Error fetching vendor data:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description:
-          "Failed to load your vendor information. Please try again.",
-      });
+      // toast({
+      //   variant: "destructive",
+      //   title: "Error",
+      //   description:
+      //     "Failed to load your vendor information. Please try again.",
+      // });
     } finally {
       setLoading(false);
     }
@@ -1390,7 +1390,7 @@ export default function VendorAccountPage() {
             <CardHeader>
               <CardTitle>Subscription</CardTitle>
               <CardDescription>
-                Subscribe to a plan to get started
+                Subscribe to a plan to get started with BTD
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -1400,9 +1400,22 @@ export default function VendorAccountPage() {
                   never store complete bank account numbers.
                 </p>
               </div>
-              <button onClick={handleManageSubscription} disabled={isLoading}>
-                {isLoading ? "Loading..." : "Manage Subscription"}
-              </button>
+              {isSubscribed && (
+                <Button
+                  onClick={handleManageSubscription}
+                  disabled={isLoading}
+                  className="bg-[#00BFA6] hover:bg-[#00BFA6]/90"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Manage Subscription"
+                  )}
+                </Button>
+              )}
               {isSubscribed && (
                 <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
                   <p className="text-sm text-green-800">
@@ -1412,45 +1425,55 @@ export default function VendorAccountPage() {
                 </div>
               )}
 
-              <div>
-                <div>
-                  <h1>Choose a Subscription Plan</h1>
-                  {plans.map((plan) => (
-                    <div key={plan.id}>
-                      <h2>{plan.name}</h2>
-                      <p>{plan.description}</p>
-                      <p>
-                        Price: ${plan.price / 100} / {plan.interval}
-                      </p>
-                      <button
-                        disabled={isSubscribed}
-                        onClick={() =>
-                          handleSubscribe(plan.price_id, plan.name)
-                        }
+              <div className="space-y-6">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {plans
+                    .sort((a, b) => a.price - b.price)
+                    .map((plan) => (
+                      <Card
+                        key={plan.id}
+                        className="flex flex-col justify-between"
                       >
-                        Subscribe
-                      </button>
-                    </div>
-                  ))}
+                        <CardHeader className="flex flex-col items-center gap-2">
+                          <CardTitle>{plan.name}</CardTitle>
+                          <CardDescription className="w-9/12">
+                            {plan.description}
+                          </CardDescription>
+                        </CardHeader>
+                        <div>
+                          <CardContent className="flex flex-col items-center">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-betwee">
+                                <span className="text-2xl font-bold">
+                                  ${plan.price / 100}
+                                </span>
+                                <span className="text-sm text-gray-500">
+                                  /{plan.interval}
+                                </span>
+                              </div>
+                            </div>
+                          </CardContent>
+                          <CardFooter>
+                            <Button
+                              className={`w-full ${
+                                isSubscribed
+                                  ? "bg-gray-700 cursor-not-allowed opacity-40"
+                                  : "bg-[#00BFA6] hover:bg-[#00BFA6]/90 "
+                              }`}
+                              disabled={isSubscribed}
+                              onClick={() =>
+                                handleSubscribe(plan.price_id, plan.name)
+                              }
+                            >
+                              {isSubscribed ? "Current Plan" : "Subscribe"}
+                            </Button>
+                          </CardFooter>
+                        </div>
+                      </Card>
+                    ))}
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button
-                onClick={handleSavePaymentInfo}
-                className="bg-[#00BFA6] hover:bg-[#00BFA6]/90"
-                disabled={saving}
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Payment Information"
-                )}
-              </Button>
-            </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>
