@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,8 +43,11 @@ import {
   Truck,
   Users,
 } from "lucide-react";
-import type { User as UserType } from "@/lib/auth-types";
+import type { User, User as UserType } from "@/lib/auth-types";
 import axios from "axios";
+import { loadStripe } from "@stripe/stripe-js";
+import Stripe from "stripe";
+import { sub } from "date-fns";
 
 // Business categories for vendors
 const businessCategories = [
@@ -120,7 +123,91 @@ export default function VendorAccountPage() {
     accountNumber: "",
     routingNumber: "",
     accountHolderName: "",
+
+    // Subscription
+
+    subscription: {
+      _id: "",
+      vendorID: "",
+      plan: "",
+      amount: 0,
+      startDate: "",
+      endDate: "",
+      status: "",
+      createdAt: "",
+      updatedAt: "",
+    },
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [plans, setPlans] = useState<
+    Array<{
+      id: string;
+      name: string;
+      description: string;
+      price: number;
+      interval: string;
+      price_id: string;
+    }>
+  >([]);
+
+  const stripePromise = loadStripe(
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string
+  );
+  const handleManageSubscription = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/create-portal-session`
+      );
+      const { url } = response.data;
+      window.location.href = url;
+    } catch (error) {
+      console.error("Failed to create portal session:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/subscription-plans`
+        );
+        console.log("fetchPlans", response.data.plans);
+        setPlans(response.data.plans);
+      } catch (error) {
+        console.error("Error fetching subscription plans:", error);
+      }
+    };
+
+    fetchPlans();
+  }, []);
+
+  const handleSubscribe = async (priceId: string, planName: string) => {
+    const stripe = await stripePromise;
+    const user = localStorage.getItem("user");
+    if (!user) return;
+
+    const userObj = JSON.parse(user) as User;
+    const { sessionId } = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/create-checkout-session`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ priceId, vendorID: userObj._id, planName }),
+      }
+    ).then((res) => res.json());
+
+    if (!stripe) return;
+    const result = await stripe.redirectToCheckout({ sessionId });
+
+    if (result.error) {
+      console.error(result.error);
+    }
+  };
 
   const [storeSettings, setStoreSettings] = useState({
     acceptCreditCards: true,
@@ -155,6 +242,10 @@ export default function VendorAccountPage() {
 
         const paymentInformation = await axios.get(
           `${process.env.NEXT_PUBLIC_API_URL}/store/paymentInformation/${userData._id}`
+        );
+
+        const subscriptionInformation = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/subscriptions/${userData._id}`
         );
 
         console.log("storeInformation", storeInformation.data);
@@ -195,6 +286,7 @@ export default function VendorAccountPage() {
             paymentInformation.data.paymentInformation?.routingNumber,
           accountHolderName:
             paymentInformation.data.paymentInformation?.accountHolderName,
+          subscription: subscriptionInformation.data.subscription,
         };
         setFormData(mockVendorData);
         // Set store logo if available
@@ -537,6 +629,13 @@ export default function VendorAccountPage() {
     }
   };
 
+  const isSubscribed = useMemo(() => {
+    return (
+      formData.subscription?.status === "active" &&
+      new Date(formData.subscription?.endDate) > new Date()
+    );
+  }, [formData.subscription]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-200px)]">
@@ -556,6 +655,7 @@ export default function VendorAccountPage() {
           <TabsTrigger value="store">Store Information</TabsTrigger>
           <TabsTrigger value="business">Business Details</TabsTrigger>
           <TabsTrigger value="payment">Payment Information</TabsTrigger>
+          <TabsTrigger value="subscription">Subscription</TabsTrigger>
           {/* <TabsTrigger value="settings">Store Settings</TabsTrigger> */}
         </TabsList>
 
@@ -1219,6 +1319,75 @@ export default function VendorAccountPage() {
                   </>
                 ) : (
                   "Save Settings"
+                )}
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="subscription">
+          <Card>
+            <CardHeader>
+              <CardTitle>Subscription</CardTitle>
+              <CardDescription>
+                Subscribe to a plan to get started
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
+                <p className="text-sm text-yellow-800">
+                  Your payment information is securely stored and processed. We
+                  never store complete bank account numbers.
+                </p>
+              </div>
+              <button onClick={handleManageSubscription} disabled={isLoading}>
+                {isLoading ? "Loading..." : "Manage Subscription"}
+              </button>
+              {isSubscribed && (
+                <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
+                  <p className="text-sm text-green-800">
+                    You are currently subscribed to a plan.
+                    <div>Current plan : {formData.subscription.plan}</div>
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <div>
+                  <h1>Choose a Subscription Plan</h1>
+                  {plans.map((plan) => (
+                    <div key={plan.id}>
+                      <h2>{plan.name}</h2>
+                      <p>{plan.description}</p>
+                      <p>
+                        Price: ${plan.price / 100} / {plan.interval}
+                      </p>
+                      <button
+                        disabled={isSubscribed}
+                        onClick={() =>
+                          handleSubscribe(plan.price_id, plan.name)
+                        }
+                      >
+                        Subscribe
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end">
+              <Button
+                onClick={handleSavePaymentInfo}
+                className="bg-[#00BFA6] hover:bg-[#00BFA6]/90"
+                disabled={saving}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Payment Information"
                 )}
               </Button>
             </CardFooter>

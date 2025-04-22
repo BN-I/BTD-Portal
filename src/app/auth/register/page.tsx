@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { register } from "@/lib/auth-service";
+import { set } from "date-fns";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
   });
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -33,6 +35,19 @@ export default function RegisterPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
+      if (formData.password !== formData.confirmPassword) {
+        throw new Error("Passwords do not match");
+      }
+
+      if (
+        !formData.name ||
+        !formData.email ||
+        !formData.password ||
+        !formData.confirmPassword
+      ) {
+        throw new Error("All fields are required");
+      }
+
       const response = await register({
         ...formData,
         role: "Vendor",
@@ -47,8 +62,9 @@ export default function RegisterPage() {
           router.push("/auth/signin");
         })
         .catch((error) => {
-          console.error("Registration failed", error);
-          alert(error);
+          setErrorMessage(
+            error.response?.data?.message || " Something went wrong"
+          );
           toast({
             variant: "destructive",
             title: "Registration failed",
@@ -63,6 +79,8 @@ export default function RegisterPage() {
         description:
           error instanceof Error ? error.message : "Something went wrong",
       });
+
+      setErrorMessage((error as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -177,6 +195,10 @@ export default function RegisterPage() {
                   )}
                 </Button>
               </div>
+            </div>
+
+            <div>
+              <p className="text-sm text-red-600"> {errorMessage}</p>
             </div>
             <Button
               type="submit"
