@@ -232,21 +232,54 @@ export default function VendorAccountPage() {
         const userData = JSON.parse(userJson) as UserType;
         setVendor(userData);
 
-        const storeInformation = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/store/storeInformation/${userData._id}`
-        );
+        let storeInformation: any = {};
+        let businessInformation: any = {};
+        let paymentInformation: any = {};
+        let subscriptionInformation: any = {};
 
-        const businessInformation = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/store/businessInformation/${userData._id}`
-        );
+        await axios
+          .get(
+            `${process.env.NEXT_PUBLIC_API_URL}/store/storeInformation/${userData._id}`
+          )
+          .then((res) => {
+            storeInformation = res;
+          })
+          .catch((err) => {
+            console.log(err);
+          });
 
-        const paymentInformation = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/store/paymentInformation/${userData._id}`
-        );
+        await axios
+          .get(
+            `${process.env.NEXT_PUBLIC_API_URL}/store/businessInformation/${userData._id}`
+          )
+          .then((res) => {
+            businessInformation = res;
+          })
+          .catch((err) => {
+            console.log(err);
+          });
 
-        const subscriptionInformation = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/subscriptions/${userData._id}`
-        );
+        await axios
+          .get(
+            `${process.env.NEXT_PUBLIC_API_URL}/store/paymentInformation/${userData._id}`
+          )
+          .then((res) => {
+            paymentInformation = res;
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+
+        await axios
+          .get(
+            `${process.env.NEXT_PUBLIC_API_URL}/subscriptions/${userData._id}`
+          )
+          .then((res) => {
+            subscriptionInformation = res;
+          })
+          .catch((err) => {
+            console.log(err);
+          });
 
         console.log("storeInformation", storeInformation.data);
 
@@ -286,8 +319,10 @@ export default function VendorAccountPage() {
             paymentInformation.data.paymentInformation?.routingNumber,
           accountHolderName:
             paymentInformation.data.paymentInformation?.accountHolderName,
-          subscription: subscriptionInformation.data.subscription,
+          subscription: subscriptionInformation.data?.subscription,
         };
+
+        console.log("store indormation", storeInformation);
         setFormData(mockVendorData);
         // Set store logo if available
         setStoreLogo(storeInformation.data.storeInformation?.storeImage);
