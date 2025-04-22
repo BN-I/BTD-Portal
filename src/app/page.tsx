@@ -12,13 +12,13 @@ export default function HomePage() {
         <nav className="ml-auto flex gap-4 sm:gap-6">
           <Link
             className="text-sm font-medium hover:underline underline-offset-4"
-            href="#"
+            href="https://beforethedates.com/about-us/"
           >
             About
           </Link>
           <Link
             className="text-sm font-medium hover:underline underline-offset-4"
-            href="#"
+            href="mailto:info@beforethedates.com"
           >
             Contact
           </Link>
@@ -62,10 +62,16 @@ export default function HomePage() {
           © {new Date().getFullYear()} Before the Dates. All rights reserved.
         </p>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
-          <Link className="text-xs hover:underline underline-offset-4" href="#">
+          <Link
+            className="text-xs hover:underline underline-offset-4"
+            href="https://beforethedates.com/TermsConditions"
+          >
             Terms of Service
           </Link>
-          <Link className="text-xs hover:underline underline-offset-4" href="#">
+          <Link
+            className="text-xs hover:underline underline-offset-4"
+            href="https://beforethedates.com/privacy"
+          >
             Privacy
           </Link>
         </nav>

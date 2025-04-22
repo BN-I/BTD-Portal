@@ -10,3 +10,19 @@ export function formatDate(createdAt: string): string {
   const formattedDate = `${year}-${month}-${day}`;
   return formattedDate;
 }
+
+export function isValidHttpUrl(url: string) {
+  let validURL;
+
+  try {
+    validURL = new URL(url);
+  } catch (_) {
+    return false;
+  }
+
+  return validURL.protocol === "http:" || validURL.protocol === "https:";
+}
+
+export function trimWithEllipsis(str: string, maxLength: number) {
+  return str.length > maxLength ? str.slice(0, maxLength - 3) + "..." : str;
+}

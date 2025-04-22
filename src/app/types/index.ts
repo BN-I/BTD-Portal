@@ -118,6 +118,9 @@ export interface Order {
   status: string;
   user: User;
   event: Event;
+  shippingService: string | undefined;
+  trackingID: string | undefined;
+  trackingURL: string | undefined;
   createdAt: string;
   updatedAt: string;
 }
@@ -127,3 +130,14 @@ export type SalesRecord = {
   revenue: number;
   expense: number;
 };
+
+export interface Notification {
+  _id: string;
+  title: string;
+  description: string;
+  type: string;
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
+  user: string;
+}

@@ -23,31 +23,66 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import type { User } from "@/lib/auth-types";
-import { formatDistanceToNow } from "date-fns";
-
-interface Notification {
-  _id: string;
-  title: string;
-  message: string;
-  type: string;
-  isRead: boolean;
-  createdAt: string;
-  updatedAt: string;
-  user: string;
-}
+import { formatDistanceToNow, set } from "date-fns";
+import { trimWithEllipsis } from "@/app/common";
+import { Notification } from "@/app/types";
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const [filteredNotifications, setFilteredNotifications] = useState<
+    Notification[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [activeTab, setActiveTab] = useState("all");
-  const perPage = 10;
+  const perPage = 10000;
 
   useEffect(() => {
     fetchNotifications();
-  }, [currentPage, activeTab]);
+  }, [currentPage]);
 
+  useEffect(() => {
+    filterNotifications();
+  }, [activeTab]);
+
+  const filterNotifications = () => {
+    if (activeTab === "all") {
+      setFilteredNotifications(notifications);
+      return;
+    }
+
+    if (activeTab === "unread") {
+      setFilteredNotifications(
+        notifications.filter((notification) => !notification.isRead)
+      );
+      return;
+    }
+
+    if (activeTab === "order") {
+      setFilteredNotifications(
+        notifications.filter(
+          (notification) => notification.type === "new_order"
+        )
+      );
+      return;
+    }
+
+    if (activeTab === "event") {
+      setFilteredNotifications(
+        notifications.filter((notification) => notification.type === "event")
+      );
+      return;
+    }
+
+    if (activeTab === "payment") {
+      setFilteredNotifications(
+        notifications.filter((notification) => notification.type === "payment")
+      );
+      return;
+    }
+  };
   const fetchNotifications = async () => {
     setLoading(true);
     try {
@@ -58,22 +93,16 @@ export default function NotificationsPage() {
 
       // Add filter parameter if not showing all notifications
       let url = `${process.env.NEXT_PUBLIC_API_URL}/notifications/user/${userObj._id}?page=${currentPage}&perPage=${perPage}`;
-      if (activeTab !== "all") {
-        url += `&filter=${activeTab}`;
-      }
 
       const response = await axios.get(url);
 
       setNotifications(response.data.notifications || response.data);
-
+      setFilteredNotifications(response.data.notifications || response.data);
       // If the API returns pagination info
-      if (response.data.totalPages) {
-        setTotalPages(response.data.totalPages);
-      } else {
-        // Estimate total pages if not provided
-        const total = response.data.length;
-        setTotalPages(Math.ceil(total / perPage));
-      }
+
+      // Estimate total pages if not provided
+      const total = response.data.length;
+      setTotalPages(Math.ceil(total / perPage));
     } catch (error) {
       console.error("Error fetching notifications:", error);
     } finally {
@@ -83,20 +112,23 @@ export default function NotificationsPage() {
 
   const markAsRead = async (id: string) => {
     try {
-      const user = localStorage.getItem("user");
-      if (!user) return;
-
-      const userObj = JSON.parse(user) as User;
-
       await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/notifications/${id}/read`,
+        `${process.env.NEXT_PUBLIC_API_URL}/notifications/${id}`,
         {
-          userId: userObj._id,
+          isRead: true,
         }
       );
 
       // Update local state
       setNotifications(
+        notifications.map((notification) =>
+          notification._id === id
+            ? { ...notification, isRead: true }
+            : notification
+        )
+      );
+
+      setFilteredNotifications(
         notifications.map((notification) =>
           notification._id === id
             ? { ...notification, isRead: true }
@@ -110,20 +142,23 @@ export default function NotificationsPage() {
 
   const markAllAsRead = async () => {
     try {
-      const user = localStorage.getItem("user");
-      if (!user) return;
-
-      const userObj = JSON.parse(user) as User;
-
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/notifications/mark-all-read`,
-        {
-          userId: userObj._id,
+      notifications.forEach((notification) => {
+        if (!notification.isRead) {
+          axios.put(
+            `${process.env.NEXT_PUBLIC_API_URL}/notifications/${notification._id}`,
+            {
+              isRead: true,
+            }
+          );
         }
-      );
+      });
 
       // Update local state
       setNotifications(
+        notifications.map((notification) => ({ ...notification, isRead: true }))
+      );
+
+      setFilteredNotifications(
         notifications.map((notification) => ({ ...notification, isRead: true }))
       );
     } catch (error) {
@@ -133,7 +168,7 @@ export default function NotificationsPage() {
 
   const getNotificationIcon = (type: string) => {
     switch (type.toLowerCase()) {
-      case "order":
+      case "new_order":
         return <Package className="h-5 w-5 text-blue-500" />;
       case "event":
         return <Calendar className="h-5 w-5 text-purple-500" />;
@@ -184,7 +219,7 @@ export default function NotificationsPage() {
             <div className="flex justify-center items-center py-10">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00BFA6]"></div>
             </div>
-          ) : notifications.length === 0 ? (
+          ) : filteredNotifications.length === 0 ? (
             <div className="text-center py-10">
               <Bell className="mx-auto h-12 w-12 text-gray-300" />
               <h3 className="mt-2 text-lg font-medium">No notifications</h3>
@@ -193,7 +228,7 @@ export default function NotificationsPage() {
               </p>
             </div>
           ) : (
-            notifications.map((notification) => (
+            filteredNotifications.map((notification) => (
               <Card
                 key={notification._id}
                 className={`transition-colors ${
@@ -226,7 +261,7 @@ export default function NotificationsPage() {
                         </div>
                       </div>
                       <p className="text-gray-600 mt-1">
-                        {notification.message}
+                        {trimWithEllipsis(notification.description, 100)}
                       </p>
                     </div>
                   </div>
