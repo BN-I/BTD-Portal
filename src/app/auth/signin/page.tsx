@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { login } from "@/lib/auth-service";
-import { error } from "console";
+import { cookies } from "next/headers"; // Import this to access cookies
+import axios from "axios";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -33,9 +34,74 @@ export default function SignInPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await login(formData).then((response) => {
+      await login(formData).then(async (response) => {
+        const userCookie = JSON.stringify(response);
+        document.cookie = `user=${userCookie}; path=/; max-age=${
+          60 * 60 * 24 * 365
+        }`; // Expires in 365 days
         localStorage.setItem("auth_token", response.token);
         localStorage.setItem("user", JSON.stringify(response));
+
+        axios
+          .get(
+            `${process.env.NEXT_PUBLIC_API_URL}/store/storeInformation/${response._id}`
+          )
+          .then((res) => {
+            if (res.data.storeInformation) {
+              document.cookie = `storeData=${JSON.stringify(
+                res.data.storeInformation
+              )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+
+        axios
+          .get(
+            `${process.env.NEXT_PUBLIC_API_URL}/store/businessInformation/${response._id}`
+          )
+          .then((res) => {
+            if (res.data.businessInformation) {
+              document.cookie = `businessInformation=${JSON.stringify(
+                res.data.businessInformation
+              )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+
+        axios
+          .get(
+            `${process.env.NEXT_PUBLIC_API_URL}/store/paymentInformation/${response._id}`
+          )
+          .then((res) => {
+            if (res.data.paymentInformation) {
+              document.cookie = `paymentInformation=${JSON.stringify(
+                res.data.paymentInformation
+              )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+
+        axios
+          .get(
+            `${process.env.NEXT_PUBLIC_API_URL}/subscriptions/${response._id}`
+          )
+          .then((res) => {
+            if (res.data.subscription) {
+              document.cookie = `subscription=${JSON.stringify(
+                res.data.subscription
+              )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+
         toast({
           title: "Login successful",
           description: "Welcome back!",

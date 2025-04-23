@@ -130,6 +130,7 @@ export default function VendorAccountPage() {
       _id: "",
       vendorID: "",
       plan: "",
+      priceID: "",
       amount: 0,
       startDate: "",
       endDate: "",
@@ -477,19 +478,9 @@ export default function VendorAccountPage() {
         description: "Your store information has been updated successfully.",
       });
 
-      // Save store data to localStorage
-      const storeData = {
-        storeName: formData.storeName,
-        storeDescription: formData.storeDescription,
-        category: formData.category,
-        companySize: formData.companySize,
-        yearFounded: formData.yearFounded,
-        website: formData.website,
-        instagram: formData.instagram,
-        facebook: formData.facebook,
-        twitter: formData.twitter,
-      };
-      localStorage.setItem("store_data", JSON.stringify(storeData));
+      document.cookie = `storeData=${JSON.stringify(
+        response.data
+      )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
     } catch (error) {
       console.error("Error saving store information:", error);
       toast({
@@ -586,25 +577,9 @@ export default function VendorAccountPage() {
         description: "Your business details have been updated successfully.",
       });
 
-      // Update store data in localStorage
-      const existingStoreData = JSON.parse(
-        localStorage.getItem("store_data") || "{}"
-      );
-      const updatedStoreData = {
-        ...existingStoreData,
-        businessType: formData.businessType,
-        taxId: formData.taxId,
-        businessEmail: formData.businessEmail,
-        businessPhone: formData.businessPhone,
-        streetAddress: formData.streetAddress,
-        city: formData.city,
-        state: formData.state,
-        postalCode: formData.postalCode,
-        country: formData.country,
-        shippingPolicy: formData.shippingPolicy,
-        returnPolicy: formData.returnPolicy,
-      };
-      localStorage.setItem("store_data", JSON.stringify(updatedStoreData));
+      document.cookie = `businessInformation=${JSON.stringify(
+        response.data
+      )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
     } catch (error) {
       console.error("Error saving business details:", error);
       toast({
@@ -664,18 +639,9 @@ export default function VendorAccountPage() {
         description: "Your payment information has been updated successfully.",
       });
 
-      // Update store data in localStorage
-      const existingStoreData = JSON.parse(
-        localStorage.getItem("store_data") || "{}"
-      );
-      const updatedStoreData = {
-        ...existingStoreData,
-        bankName: formData.bankName,
-        accountNumber: formData.accountNumber,
-        routingNumber: formData.routingNumber,
-        accountHolderName: formData.accountHolderName,
-      };
-      localStorage.setItem("store_data", JSON.stringify(updatedStoreData));
+      document.cookie = `paymentInformation=${JSON.stringify(
+        response.data
+      )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
     } catch (error) {
       console.error("Error saving payment information:", error);
       toast({
@@ -691,38 +657,7 @@ export default function VendorAccountPage() {
     }
   };
 
-  const handleSaveStoreSettings = async () => {
-    setSaving(true);
-    try {
-      // For demo purposes, we'll just show a success message
-      toast({
-        title: "Store settings updated",
-        description: "Your store settings have been updated successfully.",
-      });
-
-      // Update store data in localStorage
-      const existingStoreData = JSON.parse(
-        localStorage.getItem("store_data") || "{}"
-      );
-      const updatedStoreData = {
-        ...existingStoreData,
-        storeSettings,
-      };
-      localStorage.setItem("store_data", JSON.stringify(updatedStoreData));
-    } catch (error) {
-      console.error("Error saving store settings:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to update your store settings. Please try again.",
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
+  const handleSaveStoreSettings = async () => {};
 
   const isSubscribed = useMemo(() => {
     return (
@@ -1500,7 +1435,10 @@ export default function VendorAccountPage() {
                                 handleSubscribe(plan.price_id, plan.name)
                               }
                             >
-                              {isSubscribed ? "Current Plan" : "Subscribe"}
+                              {isSubscribed &&
+                              plan.price_id == formData.subscription.priceID
+                                ? "Current Plan"
+                                : "Subscribe"}
                             </Button>
                           </CardFooter>
                         </div>
