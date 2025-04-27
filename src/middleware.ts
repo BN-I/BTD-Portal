@@ -38,7 +38,11 @@ export function middleware(request: NextRequest) {
       const businessInformation = request.cookies.get("businessInformation");
       const paymentInformation = request.cookies.get("paymentInformation");
       const subscription = request.cookies.get("subscription");
-
+      console.log("userData", userData);
+      console.log("storeData", storeData);
+      console.log("businessInformation", businessInformation);
+      console.log("paymentInformation", paymentInformation);
+      console.log("subscription", subscription ? "true" : "false");
       if (
         userData.role === "Vendor" &&
         (!storeData ||

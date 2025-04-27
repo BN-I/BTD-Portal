@@ -95,6 +95,17 @@ export default function SuccessPage() {
                 Thank you for your subscription. A confirmation email has been
                 sent to <span className="font-semibold">{customerEmail}</span>
               </div>
+              <div>
+                Proceed to your dashboard to get started.{" "}
+                <button
+                  className="text-[#00BFA6] underline"
+                  onClick={() => {
+                    window.location.href = "/dashboard";
+                  }}
+                >
+                  Dashboard
+                </button>
+              </div>
               {/* <div className="text-sm text-gray-500">Total Balance</div> */}
             </div>
           </div>

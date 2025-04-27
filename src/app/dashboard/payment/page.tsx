@@ -56,6 +56,7 @@ interface Payment {
   user: User;
   event: Event;
   amountDispatched: boolean;
+  deliveredAt: string | undefined;
   createdAt: string;
   updatedAt: string;
   __v: number;
@@ -310,6 +311,19 @@ export default function PaymentsPage() {
     }).format(amount);
   };
 
+  const handleRequestPayment = async (paymentId: string) => {
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/orders/request-payment/${paymentId}`
+      );
+      console.log("Request payment response:", response.data);
+      fetchPaymentsStats();
+      setIsDetailsOpen(false);
+    } catch (error) {
+      console.error("Error requesting payment:", error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -433,6 +447,7 @@ export default function PaymentsPage() {
                     <TableHead>Customer</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Created Date</TableHead>
+
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -528,17 +543,39 @@ export default function PaymentsPage() {
                       {selectedPayment.status}
                     </span>
                   </div>
-                  {/* request payment button */}
-                  {selectedPayment.status === "delivered" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-[#00BFA6] border-[#00BFA6] mt-2 hover:bg-[#00BFA6] hover:text-white"
-                      // onClick={''}
-                    >
-                      Request Payment
-                    </Button>
-                  )}
+
+                  <span>
+                    {selectedPayment.status === "delivered" && (
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          handleRequestPayment(selectedPayment._id);
+                        }}
+                        disabled={
+                          new Date().getTime() -
+                            new Date(selectedPayment.deliveredAt).getTime() <
+                            15 * 24 * 60 * 60 * 1000 ||
+                          selectedPayment.paymentRequestedAt
+                        }
+                        variant="outline"
+                        size="sm"
+                        className="text-[#00BFA6] border-[#00BFA6] mt-2 hover:bg-[#00BFA6] hover:text-white"
+                        // onClick={''}
+                      >
+                        {selectedPayment.paymentRequestedAt
+                          ? "Payment Requested"
+                          : "Request Payment"}
+                      </Button>
+                    )}
+
+                    {new Date().getTime() -
+                      new Date(selectedPayment.deliveredAt).getTime() <
+                      15 * 24 * 60 * 60 * 1000 && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        Cannot Request Payment before 15 days
+                      </p>
+                    )}
+                  </span>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">
@@ -562,6 +599,16 @@ export default function PaymentsPage() {
                   </h3>
                   <p className="mt-1">
                     {formatDate(selectedPayment.createdAt)}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">
+                    Delivery Date
+                  </h3>
+                  <p className="mt-1">
+                    {selectedPayment.deliveredAt
+                      ? formatDate(selectedPayment.deliveredAt)
+                      : "-"}
                   </p>
                 </div>
               </div>
@@ -644,9 +691,6 @@ export default function PaymentsPage() {
             <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>
               Close
             </Button>
-            {selectedPayment && selectedPayment.status === "pending" && (
-              <Button className="bg-[#00BFA6]">Request Payment</Button>
-            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -286,40 +286,44 @@ export default function VendorAccountPage() {
 
         // Mock vendor data for demonstration
         const mockVendorData = {
-          storeName: storeInformation.data.storeInformation?.storeName,
+          storeName: storeInformation.data.storeInformation?.storeName || "",
           storeDescription:
-            storeInformation.data.storeInformation?.storeDescription,
-          category: storeInformation.data.storeInformation?.businessCategory,
-          companySize: storeInformation.data.storeInformation?.companySize,
-          yearFounded: storeInformation.data.storeInformation?.yearFounded,
-          website: storeInformation.data.storeInformation?.website,
-          instagram: storeInformation.data.storeInformation?.instagram,
-          facebook: storeInformation.data.storeInformation?.facebook,
-          twitter: storeInformation.data.storeInformation?.twitter,
+            storeInformation.data.storeInformation?.storeDescription || "",
+          category:
+            storeInformation.data.storeInformation?.businessCategory || "",
+          companySize:
+            storeInformation.data.storeInformation?.companySize || "",
+          yearFounded:
+            storeInformation.data.storeInformation?.yearFounded || "",
+          website: storeInformation.data.storeInformation?.website || "",
+          instagram: storeInformation.data.storeInformation?.instagram || "",
+          facebook: storeInformation.data.storeInformation?.facebook || "",
+          twitter: storeInformation.data.storeInformation?.twitter || "",
           businessType:
-            businessInformation.data.businessInformation?.businessType,
-          taxId: businessInformation.data.businessInformation?.taxID,
+            businessInformation.data.businessInformation?.businessType || "",
+          taxId: businessInformation.data.businessInformation?.taxID || "",
           businessEmail:
-            businessInformation.data.businessInformation?.businessEmail,
+            businessInformation.data.businessInformation?.businessEmail || "",
           businessPhone:
-            businessInformation.data.businessInformation?.businessPhone,
+            businessInformation.data.businessInformation?.businessPhone || "",
           streetAddress:
-            businessInformation.data.businessInformation?.businessAddress,
-          city: businessInformation.data.businessInformation?.city,
-          state: businessInformation.data.businessInformation?.state,
-          postalCode: businessInformation.data.businessInformation?.postalCode,
-          country: businessInformation.data.businessInformation?.country,
+            businessInformation.data.businessInformation?.businessAddress || "",
+          city: businessInformation.data.businessInformation?.city || "",
+          state: businessInformation.data.businessInformation?.state || "",
+          postalCode:
+            businessInformation.data.businessInformation?.postalCode || "",
+          country: businessInformation.data.businessInformation?.country || "",
           shippingPolicy:
-            businessInformation.data.businessInformation?.storePolicy,
+            businessInformation.data.businessInformation?.storePolicy || "",
           returnPolicy:
-            businessInformation.data.businessInformation?.returnPolicy,
-          bankName: paymentInformation.data.paymentInformation?.bankName,
+            businessInformation.data.businessInformation?.returnPolicy || "",
+          bankName: paymentInformation.data.paymentInformation?.bankName || "",
           accountNumber:
-            paymentInformation.data.paymentInformation?.accountNumber,
+            paymentInformation.data.paymentInformation?.accountNumber || "",
           routingNumber:
-            paymentInformation.data.paymentInformation?.routingNumber,
+            paymentInformation.data.paymentInformation?.routingNumber || "",
           accountHolderName:
-            paymentInformation.data.paymentInformation?.accountHolderName,
+            paymentInformation.data.paymentInformation?.accountHolderName || "",
           subscription: subscriptionInformation.data?.subscription,
         };
 
@@ -505,11 +509,11 @@ export default function VendorAccountPage() {
       }
 
       if (!formData.businessType.trim()) {
-        throw new Error("Store name is required");
+        throw new Error("Business type is required");
       }
 
       if (!formData.taxId.trim()) {
-        throw new Error("Please select a business category");
+        throw new Error("Tax id is required");
       }
 
       if (
@@ -520,35 +524,35 @@ export default function VendorAccountPage() {
       }
 
       if (!formData.businessPhone.trim()) {
-        throw new Error("Please select a year founded");
+        throw new Error("Valid business phone is required");
       }
 
       if (!formData.streetAddress.trim()) {
-        throw new Error("Website URL is required");
+        throw new Error("Street address is required");
       }
 
       if (!formData.city.trim()) {
-        throw new Error("Instagram URL is required");
+        throw new Error("City is required");
       }
 
       if (!formData.state.trim()) {
-        throw new Error("Facebook URL is required");
+        throw new Error("State is required");
       }
 
       if (!formData.postalCode.trim()) {
-        throw new Error("Twitter URL is required");
+        throw new Error("Postal code is required");
       }
 
       if (!formData.country.trim()) {
-        throw new Error("Store description is required");
+        throw new Error("Country is required");
       }
 
       if (!formData.shippingPolicy.trim()) {
-        throw new Error("Store description is required");
+        throw new Error("Shipping policy is required");
       }
 
       if (!formData.returnPolicy.trim()) {
-        throw new Error("Store description is required");
+        throw new Error("Return policy is required");
       }
 
       const response = await axios.post(
@@ -677,7 +681,9 @@ export default function VendorAccountPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Vendor Account</h2>
+        <h2 className="text-2xl font-bold">
+          {isSubscribed ? "Vendor Account" : "Onboarding"}
+        </h2>
       </div>
 
       <Tabs defaultValue="store" className="w-full">
@@ -1166,6 +1172,7 @@ export default function VendorAccountPage() {
                     type="password"
                     value={formData.accountNumber}
                     onChange={handleInputChange}
+                    autoComplete="off"
                   />
                 </div>
 

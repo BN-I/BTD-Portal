@@ -17,6 +17,7 @@ import { use, useEffect, useState } from "react";
 import { User } from "@/lib/auth-types";
 import axios from "axios";
 import { Notification } from "@/app/types";
+import { deleteAllCookies } from "@/app/common";
 
 export function Header() {
   const perPage = 10000;
@@ -94,8 +95,10 @@ export function Header() {
             <DropdownMenuItem
               className="cursor-pointer"
               onClick={() => {
-                localStorage.removeItem("token");
+                localStorage.removeItem("auth_token");
                 localStorage.removeItem("user");
+                deleteAllCookies();
+
                 window.location.href = "/auth/signin";
               }}
             >

@@ -41,7 +41,7 @@ export async function login(data: {
           resolve(response.data.user);
         })
         .catch((error) => {
-          reject("Invalid credentials"); // Return a rejected promise with the error
+          reject(error.response.data.message || "Invalid credentials"); // Return a rejected promise with the error
         });
     } catch (error) {
       reject("Login failed"); // Return a rejected promise with the error
