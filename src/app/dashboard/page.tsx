@@ -136,7 +136,9 @@ export default function DashboardPage() {
             return acc + order.totalAmount;
           }, 0);
 
-          const averageOrderValue = totalRevenue / allOrder.length;
+          const averageOrderValue = allOrder.length
+            ? totalRevenue / allOrder.length
+            : 0;
 
           const totalBalance = allOrder.reduce((acc: number, order: any) => {
             if (!order.amountDispatched) {
@@ -162,7 +164,9 @@ export default function DashboardPage() {
             return order.status === "shipped";
           }).length;
 
-          const deliveryPercentage = (ordersCompleted / allOrder.length) * 100;
+          const deliveryPercentage = allOrder.length
+            ? (ordersCompleted / allOrder.length) * 100
+            : 0;
 
           const salesData = generateSalesData(allOrder);
 

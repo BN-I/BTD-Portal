@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { register } from "@/lib/auth-service";
 import { set } from "date-fns";
+import axios, { Axios, AxiosError } from "axios";
+import { isValidEmail } from "@/app/common";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -35,6 +37,9 @@ export default function RegisterPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
+      if (!isValidEmail(formData.email)) {
+        throw new Error("Please enter a valid email");
+      }
       if (formData.password !== formData.confirmPassword) {
         throw new Error("Passwords do not match");
       }
@@ -58,26 +63,28 @@ export default function RegisterPage() {
             title: "Registration successful",
             description: "Welcome to the dashboard!",
           });
-          alert("Registration successful");
           router.push("/auth/signin");
         })
         .catch((error) => {
+          console.log("error", error.response?.data?.message);
           setErrorMessage(
             error.response?.data?.message || " Something went wrong"
           );
           toast({
             variant: "destructive",
             title: "Registration failed",
-            description:
-              error instanceof Error ? error.message : "Something went wrong",
+            description: error
+              ? error.response?.data?.message
+              : "Something went wrong",
           });
         });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Registration failed",
-        description:
-          error instanceof Error ? error.message : "Something went wrong",
+        description: error
+          ? error.response?.data?.message || error.message
+          : "Something went wrong",
       });
 
       setErrorMessage((error as Error).message);

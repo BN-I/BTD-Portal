@@ -130,6 +130,7 @@ export default function VendorAccountPage() {
       _id: "",
       vendorID: "",
       plan: "",
+      priceID: "",
       amount: 0,
       startDate: "",
       endDate: "",
@@ -232,62 +233,101 @@ export default function VendorAccountPage() {
         const userData = JSON.parse(userJson) as UserType;
         setVendor(userData);
 
-        const storeInformation = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/store/storeInformation/${userData._id}`
-        );
+        let storeInformation: any = {};
+        let businessInformation: any = {};
+        let paymentInformation: any = {};
+        let subscriptionInformation: any = {};
 
-        const businessInformation = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/store/businessInformation/${userData._id}`
-        );
+        await axios
+          .get(
+            `${process.env.NEXT_PUBLIC_API_URL}/store/storeInformation/${userData._id}`
+          )
+          .then((res) => {
+            storeInformation = res;
+          })
+          .catch((err) => {
+            console.log(err);
+          });
 
-        const paymentInformation = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/store/paymentInformation/${userData._id}`
-        );
+        await axios
+          .get(
+            `${process.env.NEXT_PUBLIC_API_URL}/store/businessInformation/${userData._id}`
+          )
+          .then((res) => {
+            businessInformation = res;
+          })
+          .catch((err) => {
+            console.log(err);
+          });
 
-        const subscriptionInformation = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/subscriptions/${userData._id}`
-        );
+        await axios
+          .get(
+            `${process.env.NEXT_PUBLIC_API_URL}/store/paymentInformation/${userData._id}`
+          )
+          .then((res) => {
+            paymentInformation = res;
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+
+        await axios
+          .get(
+            `${process.env.NEXT_PUBLIC_API_URL}/subscriptions/${userData._id}`
+          )
+          .then((res) => {
+            subscriptionInformation = res;
+          })
+          .catch((err) => {
+            console.log(err);
+          });
 
         console.log("storeInformation", storeInformation.data);
 
         // Mock vendor data for demonstration
         const mockVendorData = {
-          storeName: storeInformation.data.storeInformation?.storeName,
+          storeName: storeInformation.data.storeInformation?.storeName || "",
           storeDescription:
-            storeInformation.data.storeInformation?.storeDescription,
-          category: storeInformation.data.storeInformation?.businessCategory,
-          companySize: storeInformation.data.storeInformation?.companySize,
-          yearFounded: storeInformation.data.storeInformation?.yearFounded,
-          website: storeInformation.data.storeInformation?.website,
-          instagram: storeInformation.data.storeInformation?.instagram,
-          facebook: storeInformation.data.storeInformation?.facebook,
-          twitter: storeInformation.data.storeInformation?.twitter,
+            storeInformation.data.storeInformation?.storeDescription || "",
+          category:
+            storeInformation.data.storeInformation?.businessCategory || "",
+          companySize:
+            storeInformation.data.storeInformation?.companySize || "",
+          yearFounded:
+            storeInformation.data.storeInformation?.yearFounded || "",
+          website: storeInformation.data.storeInformation?.website || "",
+          instagram: storeInformation.data.storeInformation?.instagram || "",
+          facebook: storeInformation.data.storeInformation?.facebook || "",
+          twitter: storeInformation.data.storeInformation?.twitter || "",
           businessType:
-            businessInformation.data.businessInformation?.businessType,
-          taxId: businessInformation.data.businessInformation?.taxID,
+            businessInformation.data.businessInformation?.businessType || "",
+          taxId: businessInformation.data.businessInformation?.taxID || "",
           businessEmail:
-            businessInformation.data.businessInformation?.businessEmail,
+            businessInformation.data.businessInformation?.businessEmail || "",
           businessPhone:
-            businessInformation.data.businessInformation?.businessPhone,
+            businessInformation.data.businessInformation?.businessPhone || "",
           streetAddress:
-            businessInformation.data.businessInformation?.businessAddress,
-          city: businessInformation.data.businessInformation?.city,
-          state: businessInformation.data.businessInformation?.state,
-          postalCode: businessInformation.data.businessInformation?.postalCode,
-          country: businessInformation.data.businessInformation?.country,
+            businessInformation.data.businessInformation?.businessAddress || "",
+          city: businessInformation.data.businessInformation?.city || "",
+          state: businessInformation.data.businessInformation?.state || "",
+          postalCode:
+            businessInformation.data.businessInformation?.postalCode || "",
+          country: businessInformation.data.businessInformation?.country || "",
           shippingPolicy:
-            businessInformation.data.businessInformation?.storePolicy,
+            businessInformation.data.businessInformation?.storePolicy || "",
           returnPolicy:
-            businessInformation.data.businessInformation?.returnPolicy,
-          bankName: paymentInformation.data.paymentInformation?.bankName,
+            businessInformation.data.businessInformation?.returnPolicy || "",
+          bankName: paymentInformation.data.paymentInformation?.bankName || "",
           accountNumber:
-            paymentInformation.data.paymentInformation?.accountNumber,
+            paymentInformation.data.paymentInformation?.accountNumber || "",
           routingNumber:
-            paymentInformation.data.paymentInformation?.routingNumber,
+            paymentInformation.data.paymentInformation?.routingNumber || "",
           accountHolderName:
-            paymentInformation.data.paymentInformation?.accountHolderName,
-          subscription: subscriptionInformation.data.subscription,
+            paymentInformation.data.paymentInformation?.accountHolderName || "",
+          subscription: subscriptionInformation.data?.subscription,
         };
+
+        console.log("store indormation", storeInformation);
         setFormData(mockVendorData);
         // Set store logo if available
         setStoreLogo(storeInformation.data.storeInformation?.storeImage);
@@ -442,19 +482,9 @@ export default function VendorAccountPage() {
         description: "Your store information has been updated successfully.",
       });
 
-      // Save store data to localStorage
-      const storeData = {
-        storeName: formData.storeName,
-        storeDescription: formData.storeDescription,
-        category: formData.category,
-        companySize: formData.companySize,
-        yearFounded: formData.yearFounded,
-        website: formData.website,
-        instagram: formData.instagram,
-        facebook: formData.facebook,
-        twitter: formData.twitter,
-      };
-      localStorage.setItem("store_data", JSON.stringify(storeData));
+      document.cookie = `storeData=${JSON.stringify(
+        response.data
+      )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
     } catch (error) {
       console.error("Error saving store information:", error);
       toast({
@@ -479,11 +509,11 @@ export default function VendorAccountPage() {
       }
 
       if (!formData.businessType.trim()) {
-        throw new Error("Store name is required");
+        throw new Error("Business type is required");
       }
 
       if (!formData.taxId.trim()) {
-        throw new Error("Please select a business category");
+        throw new Error("Tax id is required");
       }
 
       if (
@@ -494,35 +524,35 @@ export default function VendorAccountPage() {
       }
 
       if (!formData.businessPhone.trim()) {
-        throw new Error("Please select a year founded");
+        throw new Error("Valid business phone is required");
       }
 
       if (!formData.streetAddress.trim()) {
-        throw new Error("Website URL is required");
+        throw new Error("Street address is required");
       }
 
       if (!formData.city.trim()) {
-        throw new Error("Instagram URL is required");
+        throw new Error("City is required");
       }
 
       if (!formData.state.trim()) {
-        throw new Error("Facebook URL is required");
+        throw new Error("State is required");
       }
 
       if (!formData.postalCode.trim()) {
-        throw new Error("Twitter URL is required");
+        throw new Error("Postal code is required");
       }
 
       if (!formData.country.trim()) {
-        throw new Error("Store description is required");
+        throw new Error("Country is required");
       }
 
       if (!formData.shippingPolicy.trim()) {
-        throw new Error("Store description is required");
+        throw new Error("Shipping policy is required");
       }
 
       if (!formData.returnPolicy.trim()) {
-        throw new Error("Store description is required");
+        throw new Error("Return policy is required");
       }
 
       const response = await axios.post(
@@ -551,25 +581,9 @@ export default function VendorAccountPage() {
         description: "Your business details have been updated successfully.",
       });
 
-      // Update store data in localStorage
-      const existingStoreData = JSON.parse(
-        localStorage.getItem("store_data") || "{}"
-      );
-      const updatedStoreData = {
-        ...existingStoreData,
-        businessType: formData.businessType,
-        taxId: formData.taxId,
-        businessEmail: formData.businessEmail,
-        businessPhone: formData.businessPhone,
-        streetAddress: formData.streetAddress,
-        city: formData.city,
-        state: formData.state,
-        postalCode: formData.postalCode,
-        country: formData.country,
-        shippingPolicy: formData.shippingPolicy,
-        returnPolicy: formData.returnPolicy,
-      };
-      localStorage.setItem("store_data", JSON.stringify(updatedStoreData));
+      document.cookie = `businessInformation=${JSON.stringify(
+        response.data
+      )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
     } catch (error) {
       console.error("Error saving business details:", error);
       toast({
@@ -629,18 +643,9 @@ export default function VendorAccountPage() {
         description: "Your payment information has been updated successfully.",
       });
 
-      // Update store data in localStorage
-      const existingStoreData = JSON.parse(
-        localStorage.getItem("store_data") || "{}"
-      );
-      const updatedStoreData = {
-        ...existingStoreData,
-        bankName: formData.bankName,
-        accountNumber: formData.accountNumber,
-        routingNumber: formData.routingNumber,
-        accountHolderName: formData.accountHolderName,
-      };
-      localStorage.setItem("store_data", JSON.stringify(updatedStoreData));
+      document.cookie = `paymentInformation=${JSON.stringify(
+        response.data
+      )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
     } catch (error) {
       console.error("Error saving payment information:", error);
       toast({
@@ -656,38 +661,7 @@ export default function VendorAccountPage() {
     }
   };
 
-  const handleSaveStoreSettings = async () => {
-    setSaving(true);
-    try {
-      // For demo purposes, we'll just show a success message
-      toast({
-        title: "Store settings updated",
-        description: "Your store settings have been updated successfully.",
-      });
-
-      // Update store data in localStorage
-      const existingStoreData = JSON.parse(
-        localStorage.getItem("store_data") || "{}"
-      );
-      const updatedStoreData = {
-        ...existingStoreData,
-        storeSettings,
-      };
-      localStorage.setItem("store_data", JSON.stringify(updatedStoreData));
-    } catch (error) {
-      console.error("Error saving store settings:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to update your store settings. Please try again.",
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
+  const handleSaveStoreSettings = async () => {};
 
   const isSubscribed = useMemo(() => {
     return (
@@ -707,7 +681,9 @@ export default function VendorAccountPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Vendor Account</h2>
+        <h2 className="text-2xl font-bold">
+          {isSubscribed ? "Vendor Account" : "Onboarding"}
+        </h2>
       </div>
 
       <Tabs defaultValue="store" className="w-full">
@@ -1196,6 +1172,7 @@ export default function VendorAccountPage() {
                     type="password"
                     value={formData.accountNumber}
                     onChange={handleInputChange}
+                    autoComplete="off"
                   />
                 </div>
 
@@ -1465,7 +1442,10 @@ export default function VendorAccountPage() {
                                 handleSubscribe(plan.price_id, plan.name)
                               }
                             >
-                              {isSubscribed ? "Current Plan" : "Subscribe"}
+                              {isSubscribed &&
+                              plan.price_id == formData.subscription.priceID
+                                ? "Current Plan"
+                                : "Subscribe"}
                             </Button>
                           </CardFooter>
                         </div>

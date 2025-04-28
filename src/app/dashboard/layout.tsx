@@ -5,6 +5,8 @@ import { Header } from "../../../components/ui/header";
 import { useEffect, useState } from "react";
 import { User } from "@/lib/auth-types";
 import { hasStoreData } from "@/lib/auth";
+import { get } from "http";
+import { getCookie } from "../common";
 
 // sdasda
 
@@ -16,10 +18,32 @@ export default function DashboardLayout({
   const [showSidebar, setShowSidebar] = useState(true);
 
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (user) {
-      const userData = JSON.parse(user) as User;
-      setShowSidebar(hasStoreData(userData));
+    try {
+      const user = localStorage.getItem("user");
+
+      const storeData = getCookie("storeData");
+      const businessInformation = getCookie("businessInformation");
+      const paymentInformation = getCookie("paymentInformation");
+      const subscription = getCookie("subscription");
+      console.log("user", user);
+      console.log("storeData", storeData);
+      console.log("businessInformation", businessInformation);
+      console.log("paymentInformation", paymentInformation);
+      console.log("subscription", subscription ? "true" : "false");
+      if (
+        user &&
+        (!storeData ||
+          !businessInformation ||
+          !paymentInformation ||
+          !subscription)
+      ) {
+        const userData = JSON.parse(user) as User;
+        setShowSidebar(false);
+      } else {
+        setShowSidebar(true);
+      }
+    } catch (error) {
+      console.log(error);
     }
   }, []);
 

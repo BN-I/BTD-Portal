@@ -31,7 +31,11 @@ export default function SuccessPage() {
         }
       );
 
-      const { session, error } = response.data;
+      const { session, subscription, error } = response.data;
+
+      document.cookie = `subscription=${JSON.stringify(
+        subscription
+      )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
 
       if (error) {
         setStatus("failed");
@@ -90,6 +94,17 @@ export default function SuccessPage() {
               <div className="text-base font-normal">
                 Thank you for your subscription. A confirmation email has been
                 sent to <span className="font-semibold">{customerEmail}</span>
+              </div>
+              <div>
+                Proceed to your dashboard to get started.{" "}
+                <button
+                  className="text-[#00BFA6] underline"
+                  onClick={() => {
+                    window.location.href = "/dashboard";
+                  }}
+                >
+                  Dashboard
+                </button>
               </div>
               {/* <div className="text-sm text-gray-500">Total Balance</div> */}
             </div>
