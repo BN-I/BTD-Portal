@@ -15,6 +15,9 @@ import {
   Bell,
   Truck,
   Store,
+  Package,
+  ShieldCheck,
+  ClipboardList,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -37,6 +40,26 @@ const sidebarItems = [
     title: "Vendors",
     href: "/admin/vendors",
     icon: Store,
+  },
+  {
+    title: "Products",
+    href: "/admin/products",
+    icon: Package,
+  },
+  {
+    title: "Orders",
+    href: "/admin/orders",
+    icon: ClipboardList,
+  },
+  {
+    title: "Events",
+    href: "/admin/events",
+    icon: Calendar,
+  },
+  {
+    title: "Admins",
+    href: "/admin/admins",
+    icon: ShieldCheck,
   },
   {
     title: "Payments",
