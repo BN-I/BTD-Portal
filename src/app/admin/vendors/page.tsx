@@ -66,6 +66,8 @@ interface VendorBankDetails {
   bankName: string;
 }
 
+// adfasdfsadf
+
 interface Vendor {
   id: number;
   name: string;
