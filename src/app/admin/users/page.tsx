@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -29,22 +29,15 @@ import {
 import { Label } from "@/components/ui/label";
 import { Search, Eye, Ban, User, Mail, Calendar, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { User as IUser } from "@/lib/auth-types";
+import { resolve } from "path";
+import { rejects } from "assert";
+import axios from "axios";
+import { formatDate, formatPhoneNumber, formatTime } from "@/app/common";
 
 // Interface for user data
-interface UserData {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  status: string;
-  joinedDate: string;
-  phone?: string;
-  address?: string;
-  lastLogin?: string;
-}
-
 // Dummy data - replace with API call
-const users: UserData[] = [
+const users = [
   {
     id: 1,
     name: "John Doe",
@@ -74,8 +67,9 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+  const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [users, setUsers] = useState<Array<IUser>>([]);
   const { toast } = useToast();
 
   // Filter users based on search term, role, and status
@@ -90,8 +84,21 @@ export default function UsersPage() {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
+  const fetchUsers = (): Promise<Array<IUser>> => {
+    return new Promise((resolve, reject) => {
+      axios
+        .get(`${process.env.NEXT_PUBLIC_API_URL}/users`)
+        .then((res) => {
+          resolve(res.data);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  };
+
   // Handle opening user details
-  const handleOpenUserDetails = (user: UserData) => {
+  const handleOpenUserDetails = (user: IUser) => {
     setSelectedUser(user);
     setDialogOpen(true);
   };
@@ -111,6 +118,16 @@ export default function UsersPage() {
       setDialogOpen(false);
     }
   };
+
+  useEffect(() => {
+    fetchUsers()
+      .then((users) => {
+        setUsers(users);
+      })
+      .catch((e) => {
+        console.log(e);
+      });
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -166,14 +183,14 @@ export default function UsersPage() {
           </TableHeader>
           <TableBody>
             {filteredUsers.map((user) => (
-              <TableRow key={user.id}>
+              <TableRow key={user._id}>
                 <TableCell>{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
                   <span className="capitalize">{user.role}</span>
                 </TableCell>
                 <TableCell>
-                  <span
+                  {/* <span
                     className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                       user.status === "active"
                         ? "bg-green-100 text-green-700"
@@ -183,9 +200,9 @@ export default function UsersPage() {
                     }`}
                   >
                     {user.status}
-                  </span>
+                  </span> */}
                 </TableCell>
-                <TableCell>{user.joinedDate}</TableCell>
+                <TableCell>{formatDate(user.createdAt)}</TableCell>
                 <TableCell>
                   <Button
                     variant="outline"
@@ -212,7 +229,7 @@ export default function UsersPage() {
                   {selectedUser.name}
                 </DialogTitle>
                 <DialogDescription>
-                  User ID: {selectedUser.id}
+                  User ID: {selectedUser._id}
                 </DialogDescription>
               </DialogHeader>
 
@@ -235,7 +252,11 @@ export default function UsersPage() {
                         Phone Number
                       </Label>
                       <p className="font-medium">
-                        {selectedUser.phone || "Not provided"}
+                        {selectedUser.phoneNumber
+                          ? `${selectedUser.countryCode} ${formatPhoneNumber(
+                              selectedUser.phoneNumber
+                            )}`
+                          : "Not provided"}
                       </p>
                     </div>
                   </div>
@@ -256,7 +277,11 @@ export default function UsersPage() {
                       <Label className="text-sm text-gray-500">
                         Joined Date
                       </Label>
-                      <p className="font-medium">{selectedUser.joinedDate}</p>
+                      <p className="font-medium">
+                        {` ${formatDate(selectedUser.createdAt)} ${formatTime(
+                          selectedUser.createdAt
+                        )}`}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -264,13 +289,19 @@ export default function UsersPage() {
                 <div className="space-y-2">
                   <Label className="text-sm text-gray-500">Address</Label>
                   <p className="text-sm">
-                    {selectedUser.address || "Not provided"}
+                    {selectedUser.streetAddress || "Not provided"}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm text-gray-500">Last Login</Label>
-                  <p className="text-sm">{selectedUser.lastLogin || "Never"}</p>
+                  <p className="text-sm">
+                    {selectedUser.lastLogin
+                      ? `${formatDate(selectedUser.lastLogin)} ${formatTime(
+                          selectedUser.lastLogin
+                        )}`
+                      : "Never"}
+                  </p>
                 </div>
 
                 <div>
@@ -287,8 +318,8 @@ export default function UsersPage() {
                           : "bg-red-100 text-red-700"
                       }`}
                     >
-                      {selectedUser.status.charAt(0).toUpperCase() +
-                        selectedUser.status.slice(1)}
+                      {selectedUser.status?.charAt(0).toUpperCase() +
+                        selectedUser.status?.slice(1)}
                     </span>
                   </div>
                 </div>

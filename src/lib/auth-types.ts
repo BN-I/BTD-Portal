@@ -15,6 +15,8 @@ export interface User {
   state: string | undefined;
   streetAddress: string | undefined;
   token: string;
+  status: string;
+  lastLogin: string | undefined;
   updatedAt: string;
 }
 

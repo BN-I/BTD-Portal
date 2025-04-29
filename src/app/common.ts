@@ -11,6 +11,33 @@ export function formatDate(createdAt: string): string {
   return formattedDate;
 }
 
+export function formatTime(createdAt: string): string {
+  const date = new Date(createdAt);
+
+  // Get individual components of the time
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  // Combine them into the 'HH:MM:SS' format
+  const formattedTime = `${hours}:${minutes}:${seconds}`;
+  return formattedTime;
+}
+
+export function formatPhoneNumber(phone: string | number): string {
+  const cleaned = phone.toString().replace(/\D/g, ""); // Remove non-digit characters
+
+  if (cleaned.length !== 10) {
+    return phone.toString(); // Return original if not 10 digits
+  }
+
+  const areaCode = cleaned.slice(0, 3);
+  const centralOfficeCode = cleaned.slice(3, 6);
+  const lineNumber = cleaned.slice(6);
+
+  return `(${areaCode}) ${centralOfficeCode}-${lineNumber}`;
+}
+
 export function isValidHttpUrl(url: string) {
   let validURL;
 

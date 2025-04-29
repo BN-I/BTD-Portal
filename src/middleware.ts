@@ -13,7 +13,7 @@ export function middleware(request: NextRequest) {
 
     try {
       const userData = JSON.parse(user.value);
-      if (userData.role !== "admin") {
+      if (userData.role !== "Admin") {
         return NextResponse.redirect(new URL("/dashboard", request.url));
       }
     } catch (error) {
@@ -38,11 +38,7 @@ export function middleware(request: NextRequest) {
       const businessInformation = request.cookies.get("businessInformation");
       const paymentInformation = request.cookies.get("paymentInformation");
       const subscription = request.cookies.get("subscription");
-      console.log("userData", userData);
-      console.log("storeData", storeData);
-      console.log("businessInformation", businessInformation);
-      console.log("paymentInformation", paymentInformation);
-      console.log("subscription", subscription ? "true" : "false");
+
       if (
         userData.role === "Vendor" &&
         (!storeData ||
