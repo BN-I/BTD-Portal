@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,79 +32,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const stats = [
-  {
-    title: "Total Vendors",
-    value: "350",
-    icon: Store,
-    status: "Active",
-  },
-  {
-    title: "Pending Approval",
-    value: "5",
-    icon: Clock,
-    status: "Pending",
-  },
-  {
-    title: "Blocked Vendors",
-    value: "2",
-    icon: Ban,
-    status: "Blocked",
-  },
-  {
-    title: "Total Products",
-    value: "15,000",
-    icon: ShoppingBag,
-    status: "Listed",
-  },
-];
-
-interface VendorBankDetails {
-  accountName: string;
-  accountNumber: string;
-  bankName: string;
-}
-
-// adfasdfsadf
-
-interface Vendor {
-  id: number;
-  name: string;
-  email: string;
-  products: number;
-  revenue: number;
-  status: string;
-  joinDate: string;
-  address: string;
-  phone: string;
-  category: string;
-  description: string;
-  bankDetails: VendorBankDetails;
-}
-
-const vendors: Vendor[] = [
-  {
-    id: 1,
-    name: "Vendor Store A",
-    email: "vendor@example.com",
-    products: 150,
-    revenue: 25000,
-    status: "active",
-    joinDate: "2023-12-01",
-    address: "123 Vendor Street, City, Country",
-    phone: "+1234567890",
-    category: "Electronics",
-    description:
-      "A leading electronics vendor offering the latest gadgets and technology.",
-    bankDetails: {
-      accountName: "Vendor A Inc.",
-      accountNumber: "XXXX-XXXX-XXXX-1234",
-      bankName: "Global Bank",
-    },
-  },
-  // Add more dummy data
-];
+import {
+  IBusinessInformation,
+  IPaymentInformation,
+  IStoreInformation,
+  User as IUser,
+  UserStatus,
+} from "@/lib/auth-types";
+import { formatDate, formatTime } from "@/app/common";
+import axios from "axios";
+import { Order, Product } from "@/app/types";
 
 // Interface for the vendor form
 interface VendorFormData {
@@ -122,7 +59,22 @@ interface VendorFormData {
 
 export default function VendorsPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
+  const [selectedVendor, setSelectedVendor] = useState<IUser | null>(null);
+  const [vendors, setVendors] = useState<IUser[]>([]);
+  const [vendorProducts, setVendorProducts] = useState<
+    Record<string, Product[]>
+  >({});
+  const [vendorStores, setVendorStores] = useState<
+    Record<string, IStoreInformation>
+  >({});
+  const [vendorBusiness, setVendorBusiness] = useState<
+    Record<string, IBusinessInformation>
+  >({});
+  const [vendorPayment, setVendorPayment] = useState<
+    Record<string, IPaymentInformation>
+  >({});
+
+  const [vendorOrders, setVendorOrders] = useState<Record<string, Order[]>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -143,7 +95,41 @@ export default function VendorsPage() {
 
   const [formError, setFormError] = useState("");
 
-  const handleOpenVendorDetails = (vendor: Vendor) => {
+  const stats = useMemo(() => {
+    return [
+      {
+        title: "Total Vendors",
+        value: vendors.length,
+        icon: Store,
+        status: "Active",
+      },
+      {
+        title: "Pending Approval",
+        value: vendors.filter((vendor) => vendor.status === UserStatus.pending)
+          .length,
+        icon: Clock,
+        status: "Pending",
+      },
+      {
+        title: "Blocked Vendors",
+        value: vendors.filter((vendor) => vendor.status === UserStatus.blocked)
+          .length,
+        icon: Ban,
+        status: "Blocked",
+      },
+      {
+        title: "Total Products",
+        value: Object.values(vendorProducts).reduce(
+          (sum, products) => sum + products.length,
+          0
+        ),
+        icon: ShoppingBag,
+        status: "Listed",
+      },
+    ];
+  }, [vendors, vendorProducts]);
+
+  const handleOpenVendorDetails = (vendor: IUser) => {
     setSelectedVendor(vendor);
     setDialogOpen(true);
   };
@@ -204,6 +190,156 @@ export default function VendorsPage() {
       accountNumber: "",
     });
   };
+
+  const fetchVendors = async (): Promise<IUser[]> => {
+    return new Promise(async (resolve, reject) => {
+      await axios
+        .get(`${process.env.NEXT_PUBLIC_API_URL}/vendors`)
+        .then((res) => {
+          resolve(res.data);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  };
+
+  const fetchVendorProducts = async (vendorId: string): Promise<Product[]> => {
+    return new Promise(async (resolve, reject) => {
+      await axios
+        .get(`${process.env.NEXT_PUBLIC_API_URL}/product/vendor/${vendorId}`)
+        .then((res) => {
+          resolve(res.data);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  };
+
+  const fetchVendorStore = async (
+    vendorId: string
+  ): Promise<IStoreInformation> => {
+    return new Promise(async (resolve, reject) => {
+      await axios
+        .get(
+          `${process.env.NEXT_PUBLIC_API_URL}/store/storeInformation/${vendorId}`
+        )
+        .then((res) => {
+          resolve(res.data.storeInformation);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  };
+
+  const fetchVendorOrders = async (vendorId: string): Promise<any[]> => {
+    return new Promise(async (resolve, reject) => {
+      await axios
+        .get(`${process.env.NEXT_PUBLIC_API_URL}/orders/vendor/${vendorId}`)
+        .then((res) => {
+          resolve(res.data);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  };
+
+  const fetchVendorBusiness = async (
+    vendorId: string
+  ): Promise<IBusinessInformation> => {
+    return new Promise(async (resolve, reject) => {
+      await axios
+        .get(
+          `${process.env.NEXT_PUBLIC_API_URL}/store/businessInformation/${vendorId}`
+        )
+        .then((res) => {
+          resolve(res.data.businessInformation);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  };
+
+  const fetchVendorPayment = async (
+    vendorId: string
+  ): Promise<IPaymentInformation> => {
+    return new Promise(async (resolve, reject) => {
+      await axios
+        .get(
+          `${process.env.NEXT_PUBLIC_API_URL}/store/paymentInformation/${vendorId}`
+        )
+        .then((res) => {
+          resolve(res.data.paymentInformation);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  };
+
+  const filteredVendors = vendors.filter((vendor) => {
+    return (
+      vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vendor.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
+  useEffect(() => {
+    fetchVendors()
+      .then((data) => {
+        setVendors(data);
+
+        data.forEach(async (vendor) => {
+          await fetchVendorProducts(vendor._id)
+            .then((products) => {
+              setVendorProducts((prev) => ({
+                ...prev,
+                [vendor._id]: products,
+              }));
+            })
+            .catch(console.error);
+
+          await fetchVendorStore(vendor._id)
+            .then((store) => {
+              setVendorStores((prev) => ({
+                ...prev,
+                [vendor._id]: store,
+              }));
+            })
+            .catch(console.error);
+
+          await fetchVendorOrders(vendor._id).then((orders) => {
+            setVendorOrders((prev) => ({
+              ...prev,
+              [vendor._id]: orders,
+            }));
+          });
+
+          await fetchVendorBusiness(vendor._id)
+            .then((business) => {
+              setVendorBusiness((prev) => ({
+                ...prev,
+                [vendor._id]: business,
+              }));
+            })
+            .catch(console.error);
+
+          await fetchVendorPayment(vendor._id)
+            .then((payment) => {
+              setVendorPayment((prev) => ({
+                ...prev,
+                [vendor._id]: payment,
+              }));
+            })
+            .catch(console.error);
+        });
+      })
+      .catch(console.error);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -429,18 +565,31 @@ export default function VendorsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {vendors.map((vendor) => (
-              <TableRow key={vendor.id}>
+            {filteredVendors.map((vendor) => (
+              <TableRow key={vendor._id}>
                 <TableCell className="font-medium">{vendor.name}</TableCell>
                 <TableCell>{vendor.email}</TableCell>
-                <TableCell>{vendor.products}</TableCell>
-                <TableCell>${vendor.revenue.toLocaleString()}</TableCell>
+                <TableCell>
+                  {vendorProducts[vendor._id]
+                    ? vendorProducts[vendor._id].length
+                    : 0}
+                </TableCell>
+                <TableCell>
+                  $
+                  {`${(vendorOrders[vendor._id]
+                    ? vendorOrders[vendor._id].reduce((a, b: any) => {
+                        return Number(a) + Number(b.totalAmount);
+                      }, 0)
+                    : 0
+                  ).toLocaleString()}
+                  `}
+                </TableCell>
                 <TableCell>
                   <span
                     className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                      vendor.status === "active"
+                      vendor.status === UserStatus.active
                         ? "bg-green-100 text-green-700"
-                        : vendor.status === "pending"
+                        : vendor.status === UserStatus.pending
                         ? "bg-yellow-100 text-yellow-700"
                         : "bg-red-100 text-red-700"
                     }`}
@@ -448,7 +597,11 @@ export default function VendorsPage() {
                     {vendor.status}
                   </span>
                 </TableCell>
-                <TableCell>{vendor.joinDate}</TableCell>
+                <TableCell>
+                  {formatDate(vendor.createdAt) +
+                    " " +
+                    formatTime(vendor.createdAt)}
+                </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <Button
@@ -482,7 +635,7 @@ export default function VendorsPage() {
                   {selectedVendor.name}
                 </DialogTitle>
                 <DialogDescription>
-                  Vendor ID: {selectedVendor.id}
+                  Vendor ID: {selectedVendor._id}
                 </DialogDescription>
               </DialogHeader>
 
@@ -502,16 +655,17 @@ export default function VendorsPage() {
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-500">Phone:</span>
                         <span className="text-sm font-medium">
-                          {selectedVendor.phone}
+                          {vendorBusiness[selectedVendor._id]?.businessPhone ||
+                            "N/A"}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-500">Status:</span>
                         <span
                           className={`text-sm font-medium ${
-                            selectedVendor.status === "active"
+                            selectedVendor.status === UserStatus.active
                               ? "text-green-600"
-                              : selectedVendor.status === "pending"
+                              : selectedVendor.status === UserStatus.pending
                               ? "text-yellow-600"
                               : "text-red-600"
                           }`}
@@ -525,7 +679,9 @@ export default function VendorsPage() {
                           Join Date:
                         </span>
                         <span className="text-sm font-medium">
-                          {selectedVendor.joinDate}
+                          {formatDate(selectedVendor.createdAt) +
+                            " " +
+                            formatTime(selectedVendor.createdAt)}
                         </span>
                       </div>
                     </div>
@@ -537,15 +693,35 @@ export default function VendorsPage() {
                     </h3>
                     <div className="mt-2 space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-500">Category:</span>
-                        <span className="text-sm font-medium">
-                          {selectedVendor.category}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
                         <span className="text-sm text-gray-500">Address:</span>
                         <span className="text-sm font-medium">
-                          {selectedVendor.address}
+                          {vendorBusiness[selectedVendor._id]
+                            ?.businessAddress || "N/A"}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-500">
+                          Business Type:
+                        </span>
+                        <span className="text-sm font-medium">
+                          {vendorBusiness[selectedVendor._id]?.businessType ||
+                            "N/A"}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-500">Tax ID:</span>
+                        <span className="text-sm font-medium">
+                          {vendorBusiness[selectedVendor._id]?.taxID || "N/A"}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-500">Email:</span>
+                        <span className="text-sm font-medium">
+                          {vendorBusiness[selectedVendor._id]?.businessEmail ||
+                            "N/A"}
                         </span>
                       </div>
                     </div>
@@ -561,7 +737,9 @@ export default function VendorsPage() {
                           Total Products:
                         </span>
                         <span className="text-sm font-medium">
-                          {selectedVendor.products}
+                          {vendorProducts[selectedVendor._id]
+                            ? vendorProducts[selectedVendor._id].length
+                            : 0}
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -569,7 +747,17 @@ export default function VendorsPage() {
                           Total Revenue:
                         </span>
                         <span className="text-sm font-medium">
-                          ${selectedVendor.revenue.toLocaleString()}
+                          $
+                          {`${(vendorOrders[selectedVendor._id]
+                            ? vendorOrders[selectedVendor._id].reduce(
+                                (a, b: any) => {
+                                  return Number(a) + Number(b.totalAmount);
+                                },
+                                0
+                              )
+                            : 0
+                          ).toLocaleString()}
+                  `}
                         </span>
                       </div>
                     </div>
@@ -585,7 +773,8 @@ export default function VendorsPage() {
                           Account Name:
                         </span>
                         <span className="text-sm font-medium">
-                          {selectedVendor.bankDetails.accountName}
+                          {vendorPayment[selectedVendor._id]
+                            ?.accountHolderName || "N/A"}
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -593,7 +782,8 @@ export default function VendorsPage() {
                           Account Number:
                         </span>
                         <span className="text-sm font-medium">
-                          {selectedVendor.bankDetails.accountNumber}
+                          {vendorPayment[selectedVendor._id]?.accountNumber ||
+                            "N/A"}
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -601,7 +791,7 @@ export default function VendorsPage() {
                           Bank Name:
                         </span>
                         <span className="text-sm font-medium">
-                          {selectedVendor.bankDetails.bankName}
+                          {vendorPayment[selectedVendor._id]?.bankName || "N/A"}
                         </span>
                       </div>
                     </div>
@@ -611,7 +801,8 @@ export default function VendorsPage() {
                 <div className="col-span-1 md:col-span-2">
                   <h3 className="font-medium text-gray-700">Description</h3>
                   <p className="mt-2 text-sm text-gray-600">
-                    {selectedVendor.description}
+                    {vendorStores[selectedVendor._id]?.storeDescription ||
+                      "N/A"}
                   </p>
                 </div>
               </div>

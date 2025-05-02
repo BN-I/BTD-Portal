@@ -29,47 +29,19 @@ import {
 import { Label } from "@/components/ui/label";
 import { Search, Eye, Ban, User, Mail, Calendar, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { User as IUser } from "@/lib/auth-types";
+import { User as IUser, UserStatus } from "@/lib/auth-types";
 import { resolve } from "path";
 import { rejects } from "assert";
 import axios from "axios";
 import { formatDate, formatPhoneNumber, formatTime } from "@/app/common";
 
-// Interface for user data
-// Dummy data - replace with API call
-const users = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john@example.com",
-    role: "vendor",
-    status: "active",
-    joinedDate: "2023-01-15",
-    phone: "+1 (555) 123-4567",
-    address: "123 Vendor Street, New York, NY",
-    lastLogin: "2023-05-20 14:30",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane@example.com",
-    role: "user",
-    status: "active",
-    joinedDate: "2023-02-20",
-    phone: "+1 (555) 987-6543",
-    address: "456 Customer Ave, Los Angeles, CA",
-    lastLogin: "2023-05-21 09:15",
-  },
-  // Add more dummy data
-];
-
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRole, setSelectedRole] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [users, setUsers] = useState<Array<IUser>>([]);
+  const [shouldUpdate, setShouldUpdate] = useState(false);
   const { toast } = useToast();
 
   // Filter users based on search term, role, and status
@@ -77,11 +49,11 @@ export default function UsersPage() {
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = selectedRole === "all" || user.role === selectedRole;
+
     const matchesStatus =
       selectedStatus === "all" || user.status === selectedStatus;
 
-    return matchesSearch && matchesRole && matchesStatus;
+    return matchesSearch && matchesStatus;
   });
 
   const fetchUsers = (): Promise<Array<IUser>> => {
@@ -104,16 +76,31 @@ export default function UsersPage() {
   };
 
   // Handle inactivating user account
-  const handleInactivateUser = () => {
+  const handleInactivateUser = async (status: string) => {
     if (selectedUser) {
-      // In a real app, this would be an API call
-      const updatedUser = { ...selectedUser, status: "inactive" };
-
-      // For demo purposes, we'll just show a toast notification
-      toast({
-        title: "User Account Updated",
-        description: `${selectedUser.name}'s account has been inactivated.`,
-      });
+      await axios
+        .post(
+          `${process.env.NEXT_PUBLIC_API_URL}/user/updateStatus/${selectedUser._id}`,
+          {
+            status,
+          }
+        )
+        .then((res) => {
+          console.log(res);
+          toast({
+            title: "User Account Updated",
+            description: `${selectedUser.name}'s account has been ${status}.`,
+          });
+          setShouldUpdate(!shouldUpdate);
+        })
+        .catch((err) => {
+          console.log(JSON.stringify(err.response));
+          toast({
+            variant: "destructive",
+            title: "User Account Update Failed",
+            description: `${err.response.data.message}`,
+          });
+        });
 
       setDialogOpen(false);
     }
@@ -127,7 +114,7 @@ export default function UsersPage() {
       .catch((e) => {
         console.log(e);
       });
-  }, []);
+  }, [shouldUpdate]);
 
   return (
     <div className="space-y-6">
@@ -145,26 +132,16 @@ export default function UsersPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Select value={selectedRole} onValueChange={setSelectedRole}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Roles</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
-            <SelectItem value="vendor">Vendor</SelectItem>
-            <SelectItem value="user">User</SelectItem>
-          </SelectContent>
-        </Select>
+
         <Select value={selectedStatus} onValueChange={setSelectedStatus}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-            <SelectItem value="blocked">Blocked</SelectItem>
+            <SelectItem value="Active">Active</SelectItem>
+            <SelectItem value="Inactive">Inactive</SelectItem>
+            <SelectItem value="Blocked">Blocked</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -190,17 +167,17 @@ export default function UsersPage() {
                   <span className="capitalize">{user.role}</span>
                 </TableCell>
                 <TableCell>
-                  {/* <span
+                  <span
                     className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                      user.status === "active"
+                      user.status === UserStatus.active
                         ? "bg-green-100 text-green-700"
-                        : user.status === "inactive"
+                        : user.status === UserStatus.inactive
                         ? "bg-gray-100 text-gray-700"
                         : "bg-red-100 text-red-700"
                     }`}
                   >
                     {user.status}
-                  </span> */}
+                  </span>
                 </TableCell>
                 <TableCell>{formatDate(user.createdAt)}</TableCell>
                 <TableCell>
@@ -311,9 +288,9 @@ export default function UsersPage() {
                   <div className="mt-1">
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
-                        selectedUser.status === "active"
+                        selectedUser.status === UserStatus.active
                           ? "bg-green-100 text-green-700"
-                          : selectedUser.status === "inactive"
+                          : selectedUser.status === UserStatus.inactive
                           ? "bg-gray-100 text-gray-700"
                           : "bg-red-100 text-red-700"
                       }`}
@@ -329,16 +306,31 @@ export default function UsersPage() {
                 <Button onClick={() => setDialogOpen(false)} variant="outline">
                   Close
                 </Button>
-                {selectedUser.status === "active" && (
-                  <Button
-                    onClick={handleInactivateUser}
-                    variant="destructive"
-                    className="gap-1"
-                  >
-                    <Ban className="h-4 w-4" />
-                    Inactivate Account
-                  </Button>
-                )}
+
+                <Button
+                  onClick={() => {
+                    handleInactivateUser(
+                      selectedUser.status == UserStatus.active
+                        ? UserStatus.inactive
+                        : UserStatus.active
+                    );
+                  }}
+                  variant={
+                    selectedUser.status === UserStatus.active
+                      ? "destructive"
+                      : "secondary"
+                  }
+                  className="gap-1"
+                >
+                  {selectedUser.status &&
+                  selectedUser.status === UserStatus.active ? (
+                    <>
+                      <Ban className="h-4 w-4" /> Inactivate Account
+                    </>
+                  ) : (
+                    "Reactivate Account"
+                  )}
+                </Button>
               </DialogFooter>
             </>
           )}

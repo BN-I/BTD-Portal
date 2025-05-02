@@ -15,9 +15,17 @@ export interface User {
   state: string | undefined;
   streetAddress: string | undefined;
   token: string;
-  status: string;
+  status: UserStatus;
   lastLogin: string | undefined;
   updatedAt: string;
+}
+
+export enum UserStatus {
+  active = "Active",
+  inactive = "Inactive",
+  pending = "Pending",
+  suspended = "Suspended",
+  blocked = "Blocked",
 }
 
 export interface AuthResponse {
@@ -28,4 +36,50 @@ export interface AuthResponse {
 export interface ApiError {
   message: string;
   errors?: Record<string, string[]>;
+}
+
+export interface IBusinessInformation {
+  _id: string;
+  vendorID: string;
+  businessType: string;
+  taxID: string;
+  businessEmail: string;
+  businessPhone: string;
+  businessAddress: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  storePolicy: string;
+  returnPolicy: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface IStoreInformation {
+  _id: string;
+  vendorID: string;
+  storeImage?: string;
+  storeName: string;
+  storeDescription: string;
+  businessCategory: string;
+  companySize: string;
+  yearFounded: string;
+  website: string;
+  instagram: string;
+  facebook: string;
+  twitter: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface IPaymentInformation {
+  _id: string;
+  vendorID: string;
+  bankName: string;
+  accountHolderName: string;
+  accountNumber: string;
+  routingNumber: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
