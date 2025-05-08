@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -39,30 +39,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-
-// Dummy data - replace with API call
-const products = Array.from({ length: 50 }, (_, i) => ({
-  id: i + 1,
-  name: `Product ${i + 1}`,
-  vendor: `Vendor ${Math.floor(i / 5) + 1}`,
-  category: ["Electronics", "Clothing", "Home", "Beauty", "Food"][
-    Math.floor(Math.random() * 5)
-  ],
-  price: (Math.random() * 100 + 10).toFixed(2),
-  stock: Math.floor(Math.random() * 100),
-  isVisible: Math.random() > 0.2,
-  createdAt: new Date(
-    Date.now() - Math.floor(Math.random() * 90 * 24 * 60 * 60 * 1000)
-  ).toISOString(),
-}));
-
-// Extract unique vendors for the filter
-const vendors = Array.from(new Set(products.map((product) => product.vendor)));
-
-// Extract unique categories for the filter
-const categories = Array.from(
-  new Set(products.map((product) => product.category))
-);
+import axios from "axios";
+import { Product, ProductStatus, Vendor } from "@/app/types";
+import { User } from "@/lib/auth-types";
+import { toast } from "@/hooks/use-toast";
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -70,16 +50,23 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [itemsPerPage, setItemsPerPage] = useState("20");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
 
+  const vendors = products.reduce((acc: Vendor[], product) => {
+    if (!acc.find((v) => v._id === product.vendor._id)) {
+      acc.push(product.vendor);
+    }
+    return acc;
+  }, []);
   // Filter products based on search term, vendor and category
   const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name
+    const matchesSearch = product.title
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchesVendor =
-      selectedVendor === "all" || product.vendor === selectedVendor;
+      selectedVendor === "all" || product.vendor.name === selectedVendor;
     const matchesCategory =
       selectedCategory === "all" || product.category === selectedCategory;
     return matchesSearch && matchesVendor && matchesCategory;
@@ -93,12 +80,35 @@ export default function ProductsPage() {
   );
 
   // Handle product visibility toggle
-  const handleVisibilityToggle = (product: any) => {
-    // In a real app, this would be an API call
-    console.log(`Toggling visibility for product ${product.id}`);
-    // Update local state for demo purposes
-    product.isVisible = !product.isVisible;
+  const handleVisibilityToggle = (product: Product) => {
+    const formData = new FormData();
+
+    formData.append(
+      "status",
+      product.status === ProductStatus.Active
+        ? ProductStatus.Inactive
+        : ProductStatus.Active
+    );
+
+    product.status =
+      product.status === ProductStatus.Active
+        ? ProductStatus.Inactive
+        : ProductStatus.Active;
+
     setSelectedProduct({ ...product });
+
+    axios
+      .put(
+        `${process.env.NEXT_PUBLIC_API_URL}/product/${product._id}`,
+        formData
+      )
+      .then(() => {
+        toast({
+          variant: "default",
+          title: product.status,
+          description: "Product visibility updated successfully",
+        });
+      });
   };
 
   // Display product details and toggle visibility
@@ -106,6 +116,34 @@ export default function ProductsPage() {
     setSelectedProduct(product);
     setIsDialogOpen(true);
   };
+
+  const fetchProducts = (): Promise<Product[]> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        await axios
+          .get(`${process.env.NEXT_PUBLIC_API_URL}/product?&perPage=9999`)
+          .then((res) => {
+            resolve(res.data);
+          })
+          .catch((err) => {
+            reject(err);
+          });
+      } catch (err) {
+        reject(err);
+      }
+    });
+  };
+
+  // Extract unique categories for the filter
+  const categories = Array.from(
+    new Set(products.map((product) => product.category))
+  );
+
+  useEffect(() => {
+    fetchProducts().then((res) => {
+      setProducts(res);
+    });
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -132,8 +170,8 @@ export default function ProductsPage() {
           <SelectContent>
             <SelectItem value="all">All Vendors</SelectItem>
             {vendors.map((vendor) => (
-              <SelectItem key={vendor} value={vendor}>
-                {vendor}
+              <SelectItem key={vendor._id} value={vendor.name}>
+                {vendor.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -175,7 +213,6 @@ export default function ProductsPage() {
               <TableHead>Vendor</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Price</TableHead>
-              <TableHead>Stock</TableHead>
               <TableHead>Visibility</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Actions</TableHead>
@@ -183,15 +220,14 @@ export default function ProductsPage() {
           </TableHeader>
           <TableBody>
             {paginatedProducts.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell>{product.id}</TableCell>
-                <TableCell>{product.name}</TableCell>
-                <TableCell>{product.vendor}</TableCell>
+              <TableRow key={product._id}>
+                <TableCell>{product._id}</TableCell>
+                <TableCell>{product.title}</TableCell>
+                <TableCell>{product.vendor.name}</TableCell>
                 <TableCell>{product.category}</TableCell>
                 <TableCell>${product.price}</TableCell>
-                <TableCell>{product.stock}</TableCell>
                 <TableCell>
-                  {product.isVisible ? (
+                  {product.status == ProductStatus.Active ? (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       Visible
                     </span>
@@ -274,7 +310,7 @@ export default function ProductsPage() {
 
       {/* Product details dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-xlg">
           <DialogHeader>
             <DialogTitle>Product Details</DialogTitle>
           </DialogHeader>
@@ -284,15 +320,15 @@ export default function ProductsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>ID</Label>
-                  <div>{selectedProduct.id}</div>
+                  <div>{selectedProduct._id}</div>
                 </div>
                 <div>
                   <Label>Name</Label>
-                  <div>{selectedProduct.name}</div>
+                  <div>{selectedProduct.title}</div>
                 </div>
                 <div>
                   <Label>Vendor</Label>
-                  <div>{selectedProduct.vendor}</div>
+                  <div>{selectedProduct.vendor.name}</div>
                 </div>
                 <div>
                   <Label>Category</Label>
@@ -301,10 +337,6 @@ export default function ProductsPage() {
                 <div>
                   <Label>Price</Label>
                   <div>${selectedProduct.price}</div>
-                </div>
-                <div>
-                  <Label>Stock</Label>
-                  <div>{selectedProduct.stock}</div>
                 </div>
               </div>
 
@@ -320,7 +352,7 @@ export default function ProductsPage() {
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="product-visibility"
-                    checked={selectedProduct.isVisible}
+                    checked={selectedProduct.status === ProductStatus.Active}
                     onCheckedChange={() =>
                       handleVisibilityToggle(selectedProduct)
                     }
@@ -328,7 +360,7 @@ export default function ProductsPage() {
                   <Label htmlFor="product-visibility" className="sr-only">
                     Toggle visibility
                   </Label>
-                  {selectedProduct.isVisible ? (
+                  {selectedProduct.status === ProductStatus.Active ? (
                     <Eye className="h-4 w-4 text-green-600" />
                   ) : (
                     <EyeOff className="h-4 w-4 text-red-600" />

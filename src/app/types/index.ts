@@ -12,7 +12,7 @@ export interface Product {
   colorVariations: string[];
   sizeVariations: string[];
   vendor: Vendor;
-  status: string;
+  status: ProductStatus;
   link: string;
   orders: number;
   orderMinDays: number;
@@ -21,6 +21,11 @@ export interface Product {
   updatedAt: string;
   files: File[] | undefined;
   __v: number;
+}
+
+export enum ProductStatus {
+  Active = "Active",
+  Inactive = "Inactive",
 }
 
 export interface DeletingProduct {
