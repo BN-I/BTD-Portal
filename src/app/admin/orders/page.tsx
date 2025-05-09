@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -44,6 +44,8 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 
 // Order status options
 const orderStatuses = [
@@ -58,54 +60,6 @@ const orderStatuses = [
 // Payment status options
 const paymentStatuses = ["Paid", "Pending", "Failed", "Refunded"];
 
-// Generate dummy orders data
-const orders = Array.from({ length: 50 }, (_, i) => {
-  const orderStatus =
-    orderStatuses[Math.floor(Math.random() * orderStatuses.length)];
-  const paymentStatus =
-    paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)];
-  const orderDate = new Date(
-    Date.now() - Math.floor(Math.random() * 90 * 24 * 60 * 60 * 1000)
-  );
-
-  return {
-    id: `ORD-${10000 + i}`,
-    userId: `USR-${1000 + Math.floor(Math.random() * 500)}`,
-    userName: `User ${Math.floor(Math.random() * 100) + 1}`,
-    vendorId: `VND-${100 + Math.floor(Math.random() * 50)}`,
-    vendorName: `Vendor ${Math.floor(Math.random() * 10) + 1}`,
-    items: Array.from(
-      { length: Math.floor(Math.random() * 5) + 1 },
-      (_, j) => ({
-        id: j + 1,
-        productId: `PRD-${1000 + Math.floor(Math.random() * 1000)}`,
-        name: `Product ${j + 1}`,
-        quantity: Math.floor(Math.random() * 3) + 1,
-        price: (Math.random() * 100 + 10).toFixed(2),
-      })
-    ),
-    totalAmount: (Math.random() * 500 + 20).toFixed(2),
-    status: orderStatus,
-    paymentStatus: paymentStatus,
-    paymentMethod: ["Credit Card", "PayPal", "Apple Pay"][
-      Math.floor(Math.random() * 3)
-    ],
-    shippingAddress: {
-      street: `${Math.floor(Math.random() * 9000) + 1000} Main St`,
-      city: ["New York", "Los Angeles", "Chicago", "Miami", "Dallas"][
-        Math.floor(Math.random() * 5)
-      ],
-      state: ["NY", "CA", "IL", "FL", "TX"][Math.floor(Math.random() * 5)],
-      zipCode: `${Math.floor(Math.random() * 90000) + 10000}`,
-      country: "USA",
-    },
-    createdAt: orderDate.toISOString(),
-    updatedAt: new Date(
-      orderDate.getTime() + Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)
-    ).toISOString(),
-  };
-});
-
 export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -114,13 +68,71 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [orders, setOrders] = useState<any[]>([]);
+  const { toast } = useToast();
+
+  // Fetch orders from API
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/orders`
+      );
+      const apiOrders = response.data;
+
+      // Transform API data to match component's expected structure
+      const transformedOrders = apiOrders.map((order: any) => ({
+        id: order._id,
+        userId: order.user._id,
+        userName: order.user.name || "Unknown User",
+        vendorId: order.vendor._id,
+        vendorName: order.vendor.name || "Unknown Vendor",
+        items: order.gifts.map((gift: any, index: number) => ({
+          id: index + 1,
+          productId: gift._id,
+          name: gift.product?.name || `Gift Item ${index + 1}`,
+          quantity: 1, // API doesn't provide quantity, assuming 1
+          price: gift.price.toFixed(2),
+        })),
+        totalAmount: order.totalAmount.toFixed(2),
+        status: order.status.charAt(0).toUpperCase() + order.status.slice(1), // Capitalize (e.g., "delivered" → "Delivered")
+        paymentStatus: order.amountDispatched ? "Paid" : "Pending", // Derive from amountDispatched
+        paymentMethod: "Unknown", // Placeholder, as API doesn't provide this
+        shippingAddress: {
+          street: order.event.location || "N/A",
+          city: order.user.city || "N/A",
+          state: order.user.state || "N/A",
+          zipCode: order.user.postalCode || "N/A",
+          country: order.user.country || "N/A",
+        },
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt,
+        shippingService: order.shippingService, // Additional field for modal
+        trackingID: order.trackingID || "N/A",
+        trackingURL: order.trackingURL || "N/A",
+      }));
+
+      setOrders(transformedOrders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch orders. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Fetch orders on component mount
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   // Get unique vendors for filter
   const uniqueVendors = Array.from(
     new Set(orders.map((order) => order.vendorName))
   );
 
-  // Filter orders based on search, status and vendor
+  // Filter orders based on search, status, and vendor
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -403,7 +415,7 @@ export default function OrdersPage() {
                 <div className="space-y-2">
                   <div className="flex items-center text-sm font-medium text-gray-500">
                     <MapPin className="mr-2 h-4 w-4" />
-                    Shipping Address
+                    Shipping Information
                   </div>
                   <p className="text-sm">
                     {selectedOrder.shippingAddress.street}
@@ -413,6 +425,12 @@ export default function OrdersPage() {
                     {selectedOrder.shippingAddress.zipCode}
                     <br />
                     {selectedOrder.shippingAddress.country}
+                    <br />
+                    Service: {selectedOrder.shippingService}
+                    <br />
+                    Tracking ID: {selectedOrder.trackingID}
+                    <br />
+                    Tracking URL: {selectedOrder.trackingURL}
                   </p>
                 </div>
 

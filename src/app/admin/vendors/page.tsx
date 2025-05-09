@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Store, Clock, Ban, ShoppingBag } from "lucide-react";
+import { Search, Store, Clock, Ban, ShoppingBag, Filter } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -57,6 +57,12 @@ interface VendorFormData {
   accountNumber: string;
 }
 
+// Interface for filter options
+interface FilterOptions {
+  status: string;
+  category: string;
+}
+
 export default function VendorsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedVendor, setSelectedVendor] = useState<IUser | null>(null);
@@ -73,10 +79,14 @@ export default function VendorsPage() {
   const [vendorPayment, setVendorPayment] = useState<
     Record<string, IPaymentInformation>
   >({});
-
   const [vendorOrders, setVendorOrders] = useState<Record<string, Order[]>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterOptions>({
+    status: "all",
+    category: "all",
+  });
   const { toast } = useToast();
 
   // Form state
@@ -151,6 +161,13 @@ export default function VendorsPage() {
     }));
   };
 
+  const handleFilterChange = (value: string, name: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   const handleAddVendor = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -169,7 +186,6 @@ export default function VendorsPage() {
     setFormError("");
 
     // Submit logic would go here
-    // For demonstration, we'll just show a success toast
     toast({
       title: "Vendor Added",
       description: `${formData.name} has been added successfully`,
@@ -189,6 +205,18 @@ export default function VendorsPage() {
       accountName: "",
       accountNumber: "",
     });
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      status: "all",
+      category: "all",
+    });
+    setFilterDialogOpen(false);
+  };
+
+  const handleApplyFilters = () => {
+    setFilterDialogOpen(false);
   };
 
   const fetchVendors = async (): Promise<IUser[]> => {
@@ -282,10 +310,18 @@ export default function VendorsPage() {
   };
 
   const filteredVendors = vendors.filter((vendor) => {
-    return (
+    const matchesSearch =
       vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vendor.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+      vendor.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus =
+      filters.status === "all" || vendor.status === filters.status;
+
+    const matchesCategory =
+      filters.category === "all" ||
+      vendorStores[vendor._id]?.category === filters.category;
+
+    return matchesSearch && matchesStatus && matchesCategory;
   });
 
   useEffect(() => {
@@ -346,9 +382,6 @@ export default function VendorsPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Vendor Management</h2>
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-          {/* <DialogTrigger asChild>
-            <Button className="bg-[#00BFA6]">Add New Vendor</Button>
-          </DialogTrigger> */}
           <DialogContent className="max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Vendor</DialogTitle>
@@ -458,7 +491,7 @@ export default function VendorsPage() {
               </div>
 
               <div className="space-y-2 pt-4">
-                <h3 className="font-medium text-gray-700">
+                <h3 className="font-medium text-gray-omina-700">
                   Banking Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -548,7 +581,70 @@ export default function VendorsPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Button variant="outline">Filter</Button>
+        <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline">
+              <Filter className="h-4 w-4 mr-2" />
+              Filter
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Filter Vendors</DialogTitle>
+              <DialogDescription>
+                Select filters to narrow down the vendor list.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={filters.status}
+                  onValueChange={(value) => handleFilterChange(value, "status")}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value={UserStatus.active}>Active</SelectItem>
+                    <SelectItem value={UserStatus.pending}>Pending</SelectItem>
+                    <SelectItem value={UserStatus.blocked}>Blocked</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Select
+                  value={filters.category}
+                  onValueChange={(value) =>
+                    handleFilterChange(value, "category")
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="electronics">Electronics</SelectItem>
+                    <SelectItem value="fashion">Fashion</SelectItem>
+                    <SelectItem value="home">Home & Garden</SelectItem>
+                    <SelectItem value="beauty">Beauty & Health</SelectItem>
+                    <SelectItem value="food">Food & Beverages</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleClearFilters}>
+                Clear Filters
+              </Button>
+              <Button onClick={handleApplyFilters} className="bg-[#00BFA6]">
+                Apply Filters
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="rounded-md border bg-white">
@@ -611,13 +707,6 @@ export default function VendorsPage() {
                     >
                       View
                     </Button>
-                    {/* <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600"
-                    >
-                      Block
-                    </Button> */}
                   </div>
                 </TableCell>
               </TableRow>
