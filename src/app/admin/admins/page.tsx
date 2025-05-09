@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -14,14 +14,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogFooter,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, Plus, Trash2, UserPlus } from "lucide-react";
+import { Search, Plus, Trash2, UserPlus, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,42 +32,36 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 
-// Dummy data for super admins - replace with API call
-const initialAdmins = [
-  {
-    id: 1,
-    name: "John Smith",
-    email: "john.smith@example.com",
-    role: "Super Admin",
-    lastLogin: "2023-09-15T10:30:00Z",
-    createdAt: "2022-05-10T08:00:00Z",
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    email: "sarah.johnson@example.com",
-    role: "Super Admin",
-    lastLogin: "2023-09-20T14:45:00Z",
-    createdAt: "2022-06-22T09:15:00Z",
-  },
-  {
-    id: 3,
-    name: "Michael Chen",
-    email: "michael.chen@example.com",
-    role: "Super Admin",
-    lastLogin: "2023-09-18T11:20:00Z",
-    createdAt: "2022-07-05T10:30:00Z",
-  },
-];
+// Interface for API response
+interface AdminResponse {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+  [key: string]: any; // For additional fields
+}
+
+// Interface for component admin data
+interface Admin {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  lastLogin: string;
+  createdAt: string;
+}
 
 export default function AdminsPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [admins, setAdmins] = useState(initialAdmins);
+  const [admins, setAdmins] = useState<Admin[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [adminToDelete, setAdminToDelete] = useState<number | null>(null);
+  const [adminToDelete, setAdminToDelete] = useState<string | null>(null);
   const [newAdminData, setNewAdminData] = useState({
     name: "",
     email: "",
@@ -81,6 +74,46 @@ export default function AdminsPage() {
     password?: string;
     confirmPassword?: string;
   }>({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch admins from API
+  const fetchAdmins = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/admins`
+      );
+      const apiAdmins: AdminResponse[] = response.data;
+
+      // Transform API data
+      const transformedAdmins: Admin[] = apiAdmins.map((admin) => ({
+        id: admin._id,
+        name: admin.name || "Unknown Admin",
+        email: admin.email,
+        role: "Super Admin", // Display as Super Admin
+        lastLogin: "N/A", // API doesn't provide lastLogin
+        createdAt: admin.createdAt,
+      }));
+
+      setAdmins(transformedAdmins);
+    } catch (error: any) {
+      console.error("Error fetching admins:", error);
+      toast({
+        title: "Error",
+        description:
+          error.response?.data?.message ||
+          "Failed to fetch admins. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch admins on mount
+  useEffect(() => {
+    fetchAdmins();
+  }, []);
 
   // Filter admins based on search
   const filteredAdmins = admins.filter(
@@ -93,8 +126,6 @@ export default function AdminsPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setNewAdminData((prev) => ({ ...prev, [name]: value }));
-
-    // Clear error when user types
     if (formErrors[name as keyof typeof formErrors]) {
       setFormErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -131,56 +162,80 @@ export default function AdminsPage() {
   };
 
   // Add new super admin
-  const handleAddAdmin = () => {
+  const handleAddAdmin = async () => {
     if (!validateForm()) return;
 
-    // In a real app, this would be an API call
-    const newAdmin = {
-      id: admins.length + 1,
-      name: newAdminData.name,
-      email: newAdminData.email,
-      role: "Super Admin",
-      lastLogin: "N/A",
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admins`, {
+        name: newAdminData.name,
+        email: newAdminData.email,
+        password: newAdminData.password,
+        role: "Admin", // Match API role
+      });
 
-    setAdmins([...admins, newAdmin]);
-    setNewAdminData({
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    });
-    setIsAddDialogOpen(false);
+      // Refetch admins to ensure consistency
+      await fetchAdmins();
+      setNewAdminData({
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
+      setIsAddDialogOpen(false);
 
-    toast({
-      title: "Success",
-      description: `Super admin ${newAdmin.name} has been added`,
-      variant: "default",
-    });
+      toast({
+        title: "Success",
+        description: `Super admin ${newAdminData.name} has been added`,
+        variant: "default",
+      });
+    } catch (error: any) {
+      console.error("Error adding admin:", error);
+      toast({
+        title: "Error",
+        description:
+          error.response?.data?.message ||
+          "Failed to add admin. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Handle delete confirmation
-  const confirmDelete = (adminId: number) => {
+  const confirmDelete = (adminId: string) => {
     setAdminToDelete(adminId);
     setIsDeleteDialogOpen(true);
   };
 
   // Delete super admin
-  const handleDeleteAdmin = () => {
+  const handleDeleteAdmin = async () => {
     if (adminToDelete === null) return;
 
-    // In a real app, this would be an API call
-    const adminToDeleteName = admins.find((a) => a.id === adminToDelete)?.name;
-    setAdmins(admins.filter((admin) => admin.id !== adminToDelete));
-    setIsDeleteDialogOpen(false);
-    setAdminToDelete(null);
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_URL}/admins/${adminToDelete}`
+      );
+      const adminToDeleteName = admins.find(
+        (a) => a.id === adminToDelete
+      )?.name;
+      await fetchAdmins(); // Refetch to ensure consistency
+      setIsDeleteDialogOpen(false);
+      setAdminToDelete(null);
 
-    toast({
-      title: "Admin Removed",
-      description: `${adminToDeleteName} has been removed from super admins`,
-      variant: "default",
-    });
+      toast({
+        title: "Admin Removed",
+        description: `${adminToDeleteName} has been removed from super admins`,
+        variant: "default",
+      });
+    } catch (error: any) {
+      console.error("Error deleting admin:", error);
+      toast({
+        title: "Error",
+        description:
+          error.response?.data?.message ||
+          "Failed to delete admin. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -224,7 +279,13 @@ export default function AdminsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAdmins.length === 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-500" />
+                </TableCell>
+              </TableRow>
+            ) : filteredAdmins.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={7}
@@ -257,7 +318,7 @@ export default function AdminsPage() {
                       variant="destructive"
                       size="sm"
                       onClick={() => confirmDelete(admin.id)}
-                      disabled={admins.length <= 1} // Prevent deleting the last admin
+                      disabled={admins.length <= 1}
                     >
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">Delete</span>

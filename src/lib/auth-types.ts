@@ -71,6 +71,7 @@ export interface IStoreInformation {
   twitter: string;
   createdAt?: Date;
   updatedAt?: Date;
+  category?: string;
 }
 
 export interface IPaymentInformation {
