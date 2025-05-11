@@ -12,6 +12,12 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Diamond, CreditCard, Users, Store } from "lucide-react";
+import axios from "axios";
+import { UserStatus } from "@/lib/auth-types";
+import { useEffect, useMemo, useState } from "react";
+import { set } from "date-fns";
+import { calculateRevenueIncrements, generateSalesData } from "../common";
+import { SalesDataItem } from "../types";
 
 const salesData = [
   { month: "Jan", revenue: 65000, expense: 45000 },
@@ -28,34 +34,116 @@ const salesData = [
   { month: "Dec", revenue: 175000, expense: 100000 },
 ];
 
-const vendorStats = [
-  {
-    title: "Total Vendors",
-    value: "350",
-    icon: Store,
-    status: "Active",
-  },
-  {
-    title: "Pending",
-    value: "5",
-    icon: Store,
-    status: "Pending",
-  },
-  {
-    title: "Blocked",
-    value: "2",
-    icon: Store,
-    status: "Blocked",
-  },
-  {
-    title: "New Orders",
-    value: "15,000",
-    icon: Store,
-    status: "This Week",
-  },
-];
-
 export default function AdminDashboard() {
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [totalBalance, setTotalBalance] = useState(0);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalVendors, setTotalVendors] = useState(0);
+  const [pendingVendors, setPendingVendors] = useState(0);
+  const [blockedVendors, setBlockedVendors] = useState(0);
+  const [newOrders, setNewOrders] = useState(0);
+  const [salesData, setSalesData] = useState<SalesDataItem[]>([]);
+  const [revenueIncrements, setRevenueIncrements] = useState(0);
+
+  const getAllStats = async () => {
+    try {
+      await axios
+        .get(`${process.env.NEXT_PUBLIC_API_URL}/admin/dashboardDetails`)
+        .then((response) => {
+          const allOrder = response.data.allOrder;
+          const allUsers = response.data.allUsers;
+          const allVendors = response.data.allVendors;
+
+          //
+          const totalRevenue = allOrder.reduce((acc: number, order: any) => {
+            return acc + order.totalAmount;
+          }, 0);
+          //
+          const totalBalance = allOrder.reduce((acc: number, order: any) => {
+            if (!order.amountDispatched) {
+              return acc + order.totalAmount;
+            } else {
+              return acc;
+            }
+          }, 0);
+          //
+
+          const totalUsers = allUsers.length;
+          //
+          const totalVendors = allVendors.length;
+          //
+          const pendingVendors = allVendors.filter(
+            (vendor: any) => vendor.status === UserStatus.pending
+          );
+          //
+          const blockedVendors = allVendors.filter(
+            (vendor: any) => vendor.status === UserStatus.blocked
+          );
+          //
+
+          const salesData = generateSalesData(allOrder);
+          const revenueIncrements = calculateRevenueIncrements(salesData);
+
+          const currentWeekOrders = allOrder.filter((order: any) => {
+            const orderDate = new Date(order.createdAt);
+            const today = new Date();
+            return (
+              orderDate.getFullYear() === today.getFullYear() &&
+              orderDate.getMonth() === today.getMonth() &&
+              orderDate.getDate() >= today.getDate() - 7
+            );
+          }).length;
+
+          setTotalRevenue(totalRevenue);
+          setTotalBalance(totalBalance);
+          setTotalUsers(totalUsers);
+          setTotalVendors(totalVendors);
+          setPendingVendors(pendingVendors.length);
+          setBlockedVendors(blockedVendors.length);
+          setNewOrders(currentWeekOrders);
+          setSalesData(salesData);
+          setRevenueIncrements(
+            revenueIncrements[revenueIncrements.length - 1].incrementPercent
+          );
+        });
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const vendorStats = useMemo(() => {
+    return [
+      {
+        title: "Total Vendors",
+        value: totalVendors,
+        icon: Store,
+        status: "Active",
+      },
+      {
+        title: "Pending",
+        value: pendingVendors,
+        icon: Store,
+        status: "Pending",
+      },
+      {
+        title: "Blocked",
+        value: blockedVendors,
+        icon: Store,
+        status: "Blocked",
+      },
+      {
+        title: "New Orders",
+        value: newOrders.toLocaleString(),
+        icon: Store,
+        status: "This Week",
+      },
+    ];
+  }, [totalVendors, pendingVendors, blockedVendors, newOrders]);
+
+  useEffect(() => {
+    getAllStats();
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -73,7 +161,9 @@ export default function AdminDashboard() {
             <Diamond className="h-4 w-4 text-[#00BFA6]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$123k</div>
+            <div className="text-2xl font-bold">
+              ${totalRevenue.toLocaleString()}
+            </div>
             <div className="text-xs text-green-500">+45.00%</div>
           </CardContent>
         </Card>
@@ -83,7 +173,9 @@ export default function AdminDashboard() {
             <Users className="h-4 w-4 text-[#00BFA6]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">5,234</div>
+            <div className="text-2xl font-bold">
+              {totalUsers.toLocaleString()}
+            </div>
             <div className="text-xs text-green-500">+15.45%</div>
           </CardContent>
         </Card>
@@ -93,7 +185,9 @@ export default function AdminDashboard() {
             <CreditCard className="h-4 w-4 text-[#00BFA6]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$476.3k</div>
+            <div className="text-2xl font-bold">
+              ${totalBalance.toLocaleString()}
+            </div>
             <div className="text-xs text-red-500">-12.45%</div>
           </CardContent>
         </Card>

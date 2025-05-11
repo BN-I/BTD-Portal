@@ -79,13 +79,15 @@ export default function OrdersPage() {
       );
       const apiOrders = response.data;
 
+      console.log("apiOrders", apiOrders);
+
       // Transform API data to match component's expected structure
       const transformedOrders = apiOrders.map((order: any) => ({
         id: order._id,
-        userId: order.user._id,
-        userName: order.user.name || "Unknown User",
-        vendorId: order.vendor._id,
-        vendorName: order.vendor.name || "Unknown Vendor",
+        userId: order.user?._id,
+        userName: order.user?.name || "Unknown User",
+        vendorId: order.vendor?._id,
+        vendorName: order.vendor?.name || "Unknown Vendor",
         items: order.gifts.map((gift: any, index: number) => ({
           id: index + 1,
           productId: gift._id,
@@ -98,11 +100,11 @@ export default function OrdersPage() {
         paymentStatus: order.amountDispatched ? "Paid" : "Pending", // Derive from amountDispatched
         paymentMethod: "Unknown", // Placeholder, as API doesn't provide this
         shippingAddress: {
-          street: order.event.location || "N/A",
-          city: order.user.city || "N/A",
-          state: order.user.state || "N/A",
-          zipCode: order.user.postalCode || "N/A",
-          country: order.user.country || "N/A",
+          street: order.event?.location || "N/A",
+          city: order.user?.city || "N/A",
+          state: order.user?.state || "N/A",
+          zipCode: order.user?.postalCode || "N/A",
+          country: order.user?.country || "N/A",
         },
         createdAt: order.createdAt,
         updatedAt: order.updatedAt,

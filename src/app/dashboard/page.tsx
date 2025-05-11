@@ -17,80 +17,13 @@ import {
 import axios from "axios";
 import { User } from "@/lib/auth-types";
 import { useEffect, useState } from "react";
-import { SalesRecord } from "../types";
-
-const salesData = [
-  { month: "Jan", revenue: 65000, expense: 45000 },
-  { month: "Feb", revenue: 75000, expense: 50000 },
-  { month: "Mar", revenue: 85000, expense: 55000 },
-  { month: "Apr", revenue: 95000, expense: 60000 },
-  { month: "May", revenue: 105000, expense: 65000 },
-  { month: "Jun", revenue: 115000, expense: 70000 },
-  { month: "Jul", revenue: 125000, expense: 75000 },
-  { month: "Aug", revenue: 135000, expense: 80000 },
-  { month: "Sep", revenue: 145000, expense: 85000 },
-  { month: "Oct", revenue: 155000, expense: 90000 },
-  { month: "Nov", revenue: 165000, expense: 95000 },
-  { month: "Dec", revenue: 175000, expense: 100000 },
-];
+import { SalesDataItem, SalesRecord } from "../types";
+import { calculateRevenueIncrements, generateSalesData } from "../common";
 
 type Order = {
   totalAmount: number;
   createdAt: string;
 };
-
-type SalesDataItem = {
-  month: string;
-  revenue: number;
-  expense: number;
-};
-
-const monthLabels = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
-function generateSalesData(orders: Order[]): SalesDataItem[] {
-  const monthlyTotals = Array(12).fill(0);
-
-  for (const order of orders) {
-    const date = new Date(order.createdAt);
-    const monthIndex = date.getMonth(); // 0 (Jan) to 11 (Dec)
-    monthlyTotals[monthIndex] += order.totalAmount;
-  }
-
-  return monthlyTotals.map((total, index) => ({
-    month: monthLabels[index],
-    revenue: Math.round(total),
-    expense: Math.round(0), // Adjust as needed...
-  }));
-}
-
-function calculateRevenueIncrements(data: SalesRecord[]) {
-  return data.map((entry, index) => {
-    if (index === 0) {
-      return { month: entry.month, incrementPercent: 0 };
-    }
-
-    const prevRevenue = data[index - 1].revenue;
-    const increment = ((entry.revenue - prevRevenue) / prevRevenue) * 100;
-
-    return {
-      month: entry.month,
-      incrementPercent: parseFloat(increment.toFixed(2)),
-    };
-  });
-}
 
 export default function DashboardPage() {
   const [totalRevenue, setTotalRevenue] = useState(0);

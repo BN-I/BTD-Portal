@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -38,60 +38,13 @@ import {
 } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import axios from "axios";
+import { Event, Gift as IGift } from "@/app/types";
+import { formatDate, formatTime } from "@/app/common";
 
 // Dummy data - replace with API call
-const eventTypes = [
-  "Birthday",
-  "Wedding",
-  "Anniversary",
-  "Graduation",
-  "Other",
-];
+const eventTypes = ["Recurring", "One Time"];
 const eventStatuses = ["Upcoming", "Ongoing", "Completed", "Cancelled"];
-
-// Generate random date within next 3 months
-const getRandomFutureDate = () => {
-  const now = new Date();
-  const futureDate = new Date(
-    now.getTime() + Math.random() * 90 * 24 * 60 * 60 * 1000
-  );
-  return futureDate.toISOString();
-};
-
-// Generate dummy events data
-const events = Array.from({ length: 50 }, (_, i) => {
-  const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
-  const status =
-    eventStatuses[Math.floor(Math.random() * eventStatuses.length)];
-  const date = getRandomFutureDate();
-
-  return {
-    id: i + 1,
-    name: `${type} Event ${i + 1}`,
-    type,
-    status,
-    date,
-    location: `${
-      ["New York", "Los Angeles", "Chicago", "Miami", "Dallas"][
-        Math.floor(Math.random() * 5)
-      ]
-    }, USA`,
-    organizer: `User ${Math.floor(Math.random() * 100) + 1}`,
-    products: Array.from(
-      { length: Math.floor(Math.random() * 3) + 1 },
-      (_, j) => ({
-        id: j + 1,
-        name: `Product ${j + 1}`,
-        vendor: `Vendor ${Math.floor(Math.random() * 10) + 1}`,
-        price: (Math.random() * 100 + 10).toFixed(2),
-      })
-    ),
-    attendees: Math.floor(Math.random() * 50) + 5,
-    created: new Date(
-      Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)
-    ).toISOString(),
-  };
-});
 
 export default function EventsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -99,19 +52,22 @@ export default function EventsPage() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [itemsPerPage, setItemsPerPage] = useState("20");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [events, setEvents] = useState<Event[]>([]);
 
   // Filter events based on search term, type and status
   const filteredEvents = events.filter((event) => {
     const matchesSearch =
-      event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.organizer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = selectedType === "all" || event.type === selectedType;
-    const matchesStatus =
-      selectedStatus === "all" || event.status === selectedStatus;
-    return matchesSearch && matchesType && matchesStatus;
+    const matchesType =
+      selectedType === "all" ||
+      (selectedType === "Recurring" && event.recurringEvent === true) ||
+      (selectedType === "One Time" && event.recurringEvent === false);
+
+    return matchesSearch && matchesType;
   });
 
   // Pagination
@@ -125,18 +81,6 @@ export default function EventsPage() {
   const handleEventDetails = (event: any) => {
     setSelectedEvent(event);
     setIsDialogOpen(true);
-  };
-
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    };
-    return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
   // Get status badge color
@@ -154,6 +98,33 @@ export default function EventsPage() {
         return "bg-gray-100 text-gray-800";
     }
   };
+
+  const fetchEvents = async (): Promise<Event[]> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        await axios
+          .get(`${process.env.NEXT_PUBLIC_API_URL}/events`)
+          .then((res) => {
+            resolve(res.data);
+          })
+          .catch((err) => {
+            reject(err);
+          });
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
+  useEffect(() => {
+    fetchEvents()
+      .then((res) => {
+        setEvents(res);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -187,20 +158,6 @@ export default function EventsPage() {
           </SelectContent>
         </Select>
 
-        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            {eventStatuses.map((status) => (
-              <SelectItem key={status} value={status}>
-                {status}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
         <Select value={itemsPerPage} onValueChange={setItemsPerPage}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Items per page" />
@@ -220,8 +177,7 @@ export default function EventsPage() {
             <TableRow>
               <TableHead>ID</TableHead>
               <TableHead>Event Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Status</TableHead>
+
               <TableHead>Date</TableHead>
               <TableHead>Location</TableHead>
               <TableHead>Organizer</TableHead>
@@ -231,25 +187,16 @@ export default function EventsPage() {
           </TableHeader>
           <TableBody>
             {paginatedEvents.map((event) => (
-              <TableRow key={event.id}>
-                <TableCell>{event.id}</TableCell>
-                <TableCell className="font-medium">{event.name}</TableCell>
-                <TableCell>{event.type}</TableCell>
+              <TableRow key={event._id}>
+                <TableCell>{event._id}</TableCell>
+                <TableCell className="font-medium">{event.title}</TableCell>
+
                 <TableCell>
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                      event.status
-                    )}`}
-                  >
-                    {event.status}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  {new Date(event.date).toLocaleDateString()}
+                  {formatDate(event.fullDate)} {formatTime(event.time)}
                 </TableCell>
                 <TableCell>{event.location}</TableCell>
-                <TableCell>{event.organizer}</TableCell>
-                <TableCell>{event.products.length} items</TableCell>
+                <TableCell>{event.user?.name}</TableCell>
+                <TableCell>{event.gifts?.length} items</TableCell>
                 <TableCell>
                   <Button
                     variant="outline"
@@ -328,15 +275,8 @@ export default function EventsPage() {
                 <div className="flex-1 space-y-4">
                   <div>
                     <h3 className="text-xl font-semibold">
-                      {selectedEvent.name}
+                      {selectedEvent.title}
                     </h3>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                        selectedEvent.status
-                      )} mt-2`}
-                    >
-                      {selectedEvent.status}
-                    </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -345,7 +285,7 @@ export default function EventsPage() {
                       <div>
                         <p className="text-sm font-medium">Date & Time</p>
                         <p className="text-sm text-gray-500">
-                          {formatDate(selectedEvent.date)}
+                          {formatDate(selectedEvent.fullDate)}
                         </p>
                       </div>
                     </div>
@@ -365,7 +305,7 @@ export default function EventsPage() {
                       <div>
                         <p className="text-sm font-medium">Organizer</p>
                         <p className="text-sm text-gray-500">
-                          {selectedEvent.organizer}
+                          {selectedEvent.user?.name}
                         </p>
                       </div>
                     </div>
@@ -375,7 +315,9 @@ export default function EventsPage() {
                       <div>
                         <p className="text-sm font-medium">Created</p>
                         <p className="text-sm text-gray-500">
-                          {new Date(selectedEvent.created).toLocaleDateString()}
+                          {new Date(
+                            selectedEvent.createdAt
+                          ).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
@@ -386,18 +328,18 @@ export default function EventsPage() {
                   <div className="border rounded-lg p-4">
                     <h4 className="font-medium mb-3 flex items-center">
                       <Gift className="h-4 w-4 mr-2 text-gray-400" />
-                      Event Products ({selectedEvent.products.length})
+                      Event Products ({selectedEvent.gifts?.length || 0})
                     </h4>
                     <div className="space-y-3">
-                      {selectedEvent.products.map((product: any) => (
+                      {selectedEvent.gifts?.map((gift: IGift) => (
                         <div
-                          key={product.id}
+                          key={gift._id}
                           className="border-b pb-2 last:border-0 last:pb-0"
                         >
-                          <p className="font-medium">{product.name}</p>
+                          <p className="font-medium">{gift.product.title}</p>
                           <div className="flex justify-between text-sm text-gray-500">
-                            <span>{product.vendor}</span>
-                            <span>${product.price}</span>
+                            <span>{gift.product.vendor.name}</span>
+                            <span>${gift.product.price}</span>
                           </div>
                         </div>
                       ))}
@@ -410,9 +352,9 @@ export default function EventsPage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">Attendees</p>
+                  <p className="text-sm font-medium">Recurring Event</p>
                   <p className="text-sm text-gray-500">
-                    {selectedEvent.attendees} people
+                    {selectedEvent.recurringEvent ? "Yes" : "No"}
                   </p>
                 </div>
               </div>

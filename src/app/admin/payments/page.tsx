@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,71 +20,116 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar, CreditCard, DollarSign, CheckCircle } from "lucide-react";
-
-const stats = [
-  {
-    title: "Total Payments",
-    value: "$250,000",
-    icon: DollarSign,
-  },
-  {
-    title: "Pending Payments",
-    value: "$25,000",
-    icon: CreditCard,
-  },
-  {
-    title: "This Week",
-    value: "$5,000",
-    icon: Calendar,
-  },
-  {
-    title: "Processed Payment",
-    value: "53",
-    icon: CheckCircle,
-  },
-];
-
-const payments = [
-  {
-    id: "PAY123",
-    date: "2024-01-15",
-    vendor: "Vendor A",
-    amount: 1500,
-    method: "Credit Card",
-    type: "Product",
-    status: "Paid",
-    tax: 150,
-    total: 1650,
-  },
-  // Add more dummy data
-];
+import { Order } from "@/app/types";
+import axios from "axios";
+import { toast } from "@/hooks/use-toast";
+import { formatDate, formatTime } from "@/app/common";
 
 export default function PaymentsPage() {
   const [dateRange, setDateRange] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedPayments, setSelectedPayments] = useState("all");
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/orders`
+      );
+      const apiOrders = response.data;
+
+      console.log("apiOrders", apiOrders);
+
+      setOrders(apiOrders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch orders. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const totalPayments = useMemo(() => {
+    return orders.reduce((acc, order) => acc + order.totalAmount, 0);
+  }, [orders]);
+
+  const pendingPayments = useMemo(() => {
+    return orders.reduce((acc, order) => {
+      if (order.amountDispatched) return acc;
+
+      return acc + order.totalAmount;
+    }, 0);
+  }, [orders]);
+
+  const dispatchedPayments = useMemo(() => {
+    return orders.reduce((acc, order) => {
+      if (!order?.amountDispatched) return acc;
+
+      return acc + order.totalAmount;
+    }, 0);
+  }, [orders]);
+
+  const processedPayments = useMemo(() => {
+    return orders.filter((order) => {
+      return order.amountDispatched;
+    }).length;
+  }, [orders]);
+
+  const stats = useMemo(
+    () => [
+      {
+        title: "Total Payments",
+        value: `$${totalPayments.toLocaleString()}`,
+        icon: DollarSign,
+      },
+      {
+        title: "Pending Payments",
+        value: `$${pendingPayments.toLocaleString()}`,
+        icon: CreditCard,
+      },
+      {
+        title: "Dispatched Amount",
+        value: `$${dispatchedPayments.toLocaleString()}`,
+        icon: Calendar,
+      },
+      {
+        title: "Processed Payment",
+        value: `${processedPayments}`,
+        icon: CheckCircle,
+      },
+    ],
+    []
+  );
+
+  const filteredPayments = orders.filter((order) => {
+    const matchesStatus =
+      selectedPayments === "all" ||
+      (order.amountDispatched && selectedPayments == "dispatched") ||
+      (!order.amountDispatched && selectedPayments == "pending");
+
+    return matchesStatus;
+  });
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
         <h2 className="text-2xl font-bold">Payment Management</h2>
         <div className="flex gap-4">
-          <Input
-            type="date"
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-            className="w-[200px]"
-          />
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <Select value={selectedPayments} onValueChange={setSelectedPayments}>
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Product Category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="electronics">Electronics</SelectItem>
-              <SelectItem value="clothing">Clothing</SelectItem>
+              <SelectItem value="all">All Payments</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="dispatched">Dispatched</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline">Sort By: Date/Dollar</Button>
         </div>
       </div>
 
@@ -114,32 +159,34 @@ export default function PaymentsPage() {
               <TableHead>Method</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Tax</TableHead>
-              <TableHead>Total</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead>Total Paid</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {payments.map((payment) => (
-              <TableRow key={payment.id}>
-                <TableCell>{payment.date}</TableCell>
-                <TableCell>{payment.vendor}</TableCell>
-                <TableCell>${payment.amount}</TableCell>
-                <TableCell>{payment.method}</TableCell>
-                <TableCell>{payment.type}</TableCell>
+            {filteredPayments.map((order) => (
+              <TableRow key={order._id}>
+                <TableCell>
+                  {formatDate(order.createdAt)} {formatTime(order.createdAt)}
+                </TableCell>
+                <TableCell>{order.vendor?.name || "Unknown Vendor"}</TableCell>
+                <TableCell>${order.totalAmount}</TableCell>
+                <TableCell>Credit Card</TableCell>
+                <TableCell>Product</TableCell>
                 <TableCell>
                   <span
                     className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                      payment.status === "Paid"
+                      order.status === "paid"
                         ? "bg-green-100 text-green-700"
                         : "bg-yellow-100 text-yellow-700"
                     }`}
                   >
-                    {payment.status}
+                    {order.status}
                   </span>
                 </TableCell>
-                <TableCell>${payment.tax}</TableCell>
-                <TableCell>${payment.total}</TableCell>
+                <TableCell>${order.amount}</TableCell>
+                <TableCell>${order.totalAmount}</TableCell>
                 <TableCell>
                   <Button variant="outline" size="sm">
                     View

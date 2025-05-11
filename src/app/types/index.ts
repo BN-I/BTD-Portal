@@ -111,7 +111,10 @@ export interface Event {
   note: string;
   recipientPhone: string;
   recurringEvent: boolean;
-  user: string;
+  user: User;
+  gifts?: Gift[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Order {
@@ -123,6 +126,7 @@ export interface Order {
   status: string;
   user: User;
   event: Event;
+  amountDispatched: Boolean | undefined;
   shippingService: string | undefined;
   trackingID: string | undefined;
   trackingURL: string | undefined;
@@ -146,3 +150,9 @@ export interface Notification {
   updatedAt: string;
   user: string;
 }
+
+export type SalesDataItem = {
+  month: string;
+  revenue: number;
+  expense: number;
+};
