@@ -237,7 +237,7 @@ export default function AdminDashboard() {
             <CardTitle>Support Tickets</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <CircularProgress value={77} label="Resolution Rate" />
+            <CircularProgress value={100} label="Resolution Rate" />
           </CardContent>
         </Card>
       </div>
