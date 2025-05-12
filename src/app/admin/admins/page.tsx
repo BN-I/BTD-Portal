@@ -45,7 +45,7 @@ interface AdminResponse {
   [key: string]: any; // For additional fields
 }
 
-// Interface for component admin dataasdasdasdasd
+// Interface for component admin dataasdasdasdasdasdasdasd
 interface Admin {
   id: string;
   name: string;
