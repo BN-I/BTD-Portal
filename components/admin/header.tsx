@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import Image from "next/image";
+import { deleteAllCookies } from "@/app/common";
 
 export function AdminHeader() {
   return (
@@ -58,7 +59,16 @@ export function AdminHeader() {
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
+            <DropdownMenuItem
+              className="text-red-600"
+              onClick={() => {
+                localStorage.removeItem("auth_token");
+                localStorage.removeItem("user");
+                deleteAllCookies();
+
+                window.location.href = "/auth/signin";
+              }}
+            >
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

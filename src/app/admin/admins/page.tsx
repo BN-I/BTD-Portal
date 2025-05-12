@@ -45,7 +45,7 @@ interface AdminResponse {
   [key: string]: any; // For additional fields
 }
 
-// Interface for component admin dataasdasdasdasdasdasdasd
+// Interface for component admin data
 interface Admin {
   id: string;
   name: string;
@@ -91,7 +91,7 @@ export default function AdminsPage() {
         name: admin.name || "Unknown Admin",
         email: admin.email,
         role: "Super Admin", // Display as Super Admin
-        lastLogin: "N/A", // API doesn't provide lastLogin
+        lastLogin: admin.lastLogin, // API doesn't provide lastLogin
         createdAt: admin.createdAt,
       }));
 
@@ -308,7 +308,9 @@ export default function AdminsPage() {
                   <TableCell>
                     {admin.lastLogin === "N/A"
                       ? "Never"
-                      : new Date(admin.lastLogin).toLocaleString()}
+                      : new Date(admin.lastLogin).toLocaleString("en-US", {
+                          timeZone: "UTC",
+                        })}
                   </TableCell>
                   <TableCell>
                     {new Date(admin.createdAt).toLocaleDateString()}

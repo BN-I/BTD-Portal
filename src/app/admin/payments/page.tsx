@@ -19,16 +19,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, CreditCard, DollarSign, CheckCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Calendar,
+  CreditCard,
+  DollarSign,
+  CheckCircle,
+  Package,
+  User,
+} from "lucide-react";
 import { Order } from "@/app/types";
 import axios from "axios";
 import { toast } from "@/hooks/use-toast";
 import { formatDate, formatTime } from "@/app/common";
+import { Separator } from "@/components/ui/separator";
 
 export default function PaymentsPage() {
   const [dateRange, setDateRange] = useState("");
   const [selectedPayments, setSelectedPayments] = useState("all");
   const [orders, setOrders] = useState<Order[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
   const fetchOrders = async () => {
     try {
@@ -57,7 +76,6 @@ export default function PaymentsPage() {
   const pendingPayments = useMemo(() => {
     return orders.reduce((acc, order) => {
       if (order.amountDispatched) return acc;
-
       return acc + order.totalAmount;
     }, 0);
   }, [orders]);
@@ -65,7 +83,6 @@ export default function PaymentsPage() {
   const dispatchedPayments = useMemo(() => {
     return orders.reduce((acc, order) => {
       if (!order?.amountDispatched) return acc;
-
       return acc + order.totalAmount;
     }, 0);
   }, [orders]);
@@ -99,21 +116,51 @@ export default function PaymentsPage() {
         icon: CheckCircle,
       },
     ],
-    []
+    [totalPayments, pendingPayments, dispatchedPayments, processedPayments]
   );
 
   const filteredPayments = orders.filter((order) => {
     const matchesStatus =
       selectedPayments === "all" ||
-      (order.amountDispatched && selectedPayments == "dispatched") ||
-      (!order.amountDispatched && selectedPayments == "pending");
-
+      (order.amountDispatched && selectedPayments === "dispatched") ||
+      (!order.amountDispatched && selectedPayments === "pending");
     return matchesStatus;
   });
 
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  const handleViewDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenConfirmDialog = () => {
+    setIsConfirmDialogOpen(true);
+  };
+
+  const handleDispatchPayment = (order: Order) => {
+    // Placeholder for dispatch payment logic
+    console.log("Dispatch payment for order:", order._id);
+    toast({
+      title: "Dispatch Initiated",
+      description: `Payment dispatch for order ${order._id} has been initiated.`,
+    });
+    setIsConfirmDialogOpen(false);
+    setIsDialogOpen(false);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "paid":
+        return "text-green-600 bg-green-100";
+      case "pending":
+        return "text-yellow-600 bg-yellow-100";
+      default:
+        return "text-gray-600 bg-gray-100";
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -122,7 +169,7 @@ export default function PaymentsPage() {
         <div className="flex gap-4">
           <Select value={selectedPayments} onValueChange={setSelectedPayments}>
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Product Category" />
+              <SelectValue placeholder="Payment Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Payments</SelectItem>
@@ -176,11 +223,9 @@ export default function PaymentsPage() {
                 <TableCell>Product</TableCell>
                 <TableCell>
                   <span
-                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                      order.status === "paid"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-yellow-100 text-yellow-700"
-                    }`}
+                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(
+                      order.status
+                    )}`}
                   >
                     {order.status}
                   </span>
@@ -188,7 +233,11 @@ export default function PaymentsPage() {
                 <TableCell>${order.amount}</TableCell>
                 <TableCell>${order.totalAmount}</TableCell>
                 <TableCell>
-                  <Button variant="outline" size="sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleViewDetails(order)}
+                  >
                     View
                   </Button>
                 </TableCell>
@@ -197,6 +246,185 @@ export default function PaymentsPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Payment Details Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Payment Details</DialogTitle>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <div className="space-y-6">
+              <div className="flex justify-between flex-wrap gap-4">
+                <div>
+                  <h3 className="text-xl font-semibold">
+                    Order {selectedOrder._id}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Created on {formatDate(selectedOrder.createdAt)}{" "}
+                    {formatTime(selectedOrder.createdAt)}
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <span
+                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                      selectedOrder.status
+                    )}`}
+                  >
+                    {selectedOrder.status}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center text-sm font-medium text-gray-500">
+                    <User className="mr-2 h-4 w-4" />
+                    Vendor Information
+                  </div>
+                  <p className="font-medium">
+                    {selectedOrder.vendor?.name || "Unknown Vendor"}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    ID: {selectedOrder.vendor?._id || "N/A"}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center text-sm font-medium text-gray-500">
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Payment Information
+                  </div>
+                  <p className="text-sm">
+                    Method: Credit Card
+                    <br />
+                    Status:{" "}
+                    {selectedOrder.amountDispatched ? "Dispatched" : "Pending"}
+                    <br />
+                    Total: ${selectedOrder.totalAmount}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center text-sm font-medium text-gray-500">
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    Transaction Details
+                  </div>
+                  <p className="text-sm">
+                    Amount: ${selectedOrder.amount}
+                    <br />
+                    Total Paid: ${selectedOrder.totalAmount}
+                    <br />
+                    Type: Product
+                  </p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h4 className="font-medium mb-3 flex items-center">
+                  <Package className="h-4 w-4 mr-2 text-gray-500" />
+                  Order Items
+                </h4>
+                <div className="border rounded-md overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Product</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead>Quantity</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {selectedOrder.gifts?.map((gift: any, index: number) => (
+                        <TableRow key={index}>
+                          <TableCell>
+                            {gift.product?.name || `Gift Item ${index + 1}`}
+                          </TableCell>
+                          <TableCell>${gift.price.toFixed(2)}</TableCell>
+                          <TableCell>1</TableCell>
+                          <TableCell className="text-right">
+                            ${gift.price.toFixed(2)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow>
+                        <TableCell
+                          colSpan={3}
+                          className="text-right font-medium"
+                        >
+                          Total
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          ${selectedOrder.totalAmount.toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="flex-1">
+                  <h4 className="font-medium mb-2">Order Timeline</h4>
+                  <div className="text-sm space-y-1">
+                    <div className="flex justify-between">
+                      <span>Created:</span>
+                      <span>{formatDate(selectedOrder.createdAt)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Last Updated:</span>
+                      <span>{formatDate(selectedOrder.updatedAt)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center w-full justify-between">
+            {selectedOrder && !selectedOrder.amountDispatched && (
+              <Button onClick={handleOpenConfirmDialog}>
+                Dispatch Payment
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Payment Dispatch</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to dispatch the payment for order{" "}
+              {selectedOrder?._id}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsConfirmDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() =>
+                selectedOrder && handleDispatchPayment(selectedOrder)
+              }
+            >
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

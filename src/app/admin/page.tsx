@@ -150,7 +150,16 @@ export default function AdminDashboard() {
         <h2 className="text-2xl font-bold">Dashboard</h2>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">Data Refreshed</span>
-          <span className="text-sm">September 28, 2023 12:45 PM</span>
+          <span className="text-sm">
+            {new Date().toLocaleString("en-US", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+              hour: "numeric",
+              minute: "numeric",
+              hour12: true,
+            })}
+          </span>
         </div>
       </div>
 
@@ -164,7 +173,7 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold">
               ${totalRevenue.toLocaleString()}
             </div>
-            <div className="text-xs text-green-500">+45.00%</div>
+            {/* <div className="text-xs text-green-500">+45.00%</div> */}
           </CardContent>
         </Card>
         <Card>
@@ -176,7 +185,7 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold">
               {totalUsers.toLocaleString()}
             </div>
-            <div className="text-xs text-green-500">+15.45%</div>
+            {/* <div className="text-xs text-green-500">+15.45%</div> */}
           </CardContent>
         </Card>
         <Card>
@@ -188,7 +197,7 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold">
               ${totalBalance.toLocaleString()}
             </div>
-            <div className="text-xs text-red-500">-12.45%</div>
+            {/* <div className="text-xs text-red-500">-12.45%</div> */}
           </CardContent>
         </Card>
       </div>
@@ -215,20 +224,26 @@ export default function AdminDashboard() {
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>Sales Statistics 2022</CardTitle>
+            <CardTitle>Sales Statistics</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={salesData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="revenue" fill="#00BFA6" />
-                  <Bar dataKey="expense" fill="#FF725E" />
-                </BarChart>
-              </ResponsiveContainer>
+              {salesData && salesData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={salesData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="revenue" fill="#00BFA6" />
+                    <Bar dataKey="expense" fill="#FF725E" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-gray-500">No sales data available.</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

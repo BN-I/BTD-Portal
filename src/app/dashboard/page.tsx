@@ -1,6 +1,6 @@
 "use client";
 
-import { Diamond, CreditCard, Package2, RefreshCcw } from "lucide-react";
+import { Diamond, CreditCard, Package2, RefreshCcw, Car } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsCard } from "../../../components/stats-card";
 
@@ -131,7 +131,11 @@ export default function DashboardPage() {
         <h2 className="text-2xl font-bold">Dashboard</h2>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">Data Refreshed</span>
-          <RefreshCcw className="h-4 w-4 text-[#00BFA6]" />
+          <RefreshCcw
+            onClick={() => window.location.reload()}
+            className="h-4 w-4 text-[#00BFA6] cursor-pointer"
+            aria-hidden="true"
+          />
           <span className="text-sm">
             {new Date().toLocaleString("en-US", {
               day: "numeric",
@@ -139,14 +143,38 @@ export default function DashboardPage() {
               year: "numeric",
               hour: "numeric",
               minute: "numeric",
+              second: "numeric",
               hour12: true,
             })}
           </span>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <StatsCard
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
+        {/* A card (not a stats card) for total revenue but without change. */}
+
+        <div className="flex items- p-4 bg-white rounded-lg shadow-sm">
+          <div className="mr-4">
+            <Diamond className="h-6 w-6 text-[#00BFA6]" />{" "}
+          </div>
+          <div>
+            <h3 className="text-sm text-gray-500">Total Revenue</h3>
+            <p className="text-2xl font-bold">${totalRevenue.toFixed(2)}</p>
+          </div>
+        </div>
+        <div className="flex items- p-4 bg-white rounded-lg shadow-sm">
+          <div className="mr-4">
+            <CreditCard className="h-6 w-6 text-[#00BFA6]" />{" "}
+          </div>
+          <div>
+            <h3 className="text-sm text-gray-500">Average Order Value</h3>
+            <p className="text-2xl font-bold">
+              ${averageOrderValue.toFixed(2)}
+            </p>
+          </div>
+        </div>
+
+        {/* <StatsCard
           icon={<Diamond className="h-6 w-6 text-[#00BFA6]" />}
           title="Total Revenue"
           value={`$${totalRevenue.toFixed(2)}`}
@@ -157,8 +185,8 @@ export default function DashboardPage() {
           title="Average Order Value"
           value={`$${averageOrderValue.toFixed(2)}`}
           change={{ value: "-12.45%", trend: "down" }}
-        />
-        <div className="lg:col-span-1 md:col-span-2">
+        /> */}
+        <div className="lg:col-span-2 md:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle>Total Balance</CardTitle>

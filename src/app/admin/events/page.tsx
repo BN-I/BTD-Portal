@@ -336,10 +336,10 @@ export default function EventsPage() {
                           key={gift._id}
                           className="border-b pb-2 last:border-0 last:pb-0"
                         >
-                          <p className="font-medium">{gift.product.title}</p>
+                          <p className="font-medium">{gift.product?.title}</p>
                           <div className="flex justify-between text-sm text-gray-500">
-                            <span>{gift.product.vendor.name}</span>
-                            <span>${gift.product.price}</span>
+                            <span>{gift.product?.vendor.name}</span>
+                            <span>${gift.product?.price}</span>
                           </div>
                         </div>
                       ))}
