@@ -48,6 +48,7 @@ export default function PaymentsPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [shouldUpdate, setShouldUpdate] = useState(false);
 
   const fetchOrders = async () => {
     try {
@@ -129,7 +130,7 @@ export default function PaymentsPage() {
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [shouldUpdate]);
 
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
@@ -140,15 +141,30 @@ export default function PaymentsPage() {
     setIsConfirmDialogOpen(true);
   };
 
-  const handleDispatchPayment = (order: Order) => {
-    // Placeholder for dispatch payment logic
-    console.log("Dispatch payment for order:", order._id);
-    toast({
-      title: "Dispatch Initiated",
-      description: `Payment dispatch for order ${order._id} has been initiated.`,
-    });
-    setIsConfirmDialogOpen(false);
-    setIsDialogOpen(false);
+  const handleDispatchPayment = async (order: Order) => {
+    try {
+      // Placeholder for dispatch payment logic
+      console.log("Dispatch payment for order:", order._id);
+
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/orders/dispatch-amount`,
+        { orderID: order._id }
+      );
+      toast({
+        title: "Dispatch Initiated",
+        description: `Payment dispatch for order ${order._id} has been initiated.`,
+      });
+      setShouldUpdate(!shouldUpdate);
+      setIsConfirmDialogOpen(false);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Error dispatching payment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to dispatch payment. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -202,7 +218,7 @@ export default function PaymentsPage() {
             <TableRow>
               <TableHead>Date/Time</TableHead>
               <TableHead>Vendor Name</TableHead>
-              <TableHead>Amount</TableHead>
+              <TableHead>Amount dispatched</TableHead>
               <TableHead>Method</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
@@ -218,7 +234,9 @@ export default function PaymentsPage() {
                   {formatDate(order.createdAt)} {formatTime(order.createdAt)}
                 </TableCell>
                 <TableCell>{order.vendor?.name || "Unknown Vendor"}</TableCell>
-                <TableCell>${order.totalAmount}</TableCell>
+                <TableCell>
+                  {order.amountDispatched ? "$" + order.totalAmount : "-"}
+                </TableCell>
                 <TableCell>Credit Card</TableCell>
                 <TableCell>Product</TableCell>
                 <TableCell>
@@ -342,7 +360,7 @@ export default function PaymentsPage() {
                       {selectedOrder.gifts?.map((gift: any, index: number) => (
                         <TableRow key={index}>
                           <TableCell>
-                            {gift.product?.name || `Gift Item ${index + 1}`}
+                            {gift.product?.title || `Gift Item ${index + 1}`}
                           </TableCell>
                           <TableCell>${gift.price.toFixed(2)}</TableCell>
                           <TableCell>1</TableCell>
@@ -386,11 +404,21 @@ export default function PaymentsPage() {
           )}
 
           <div className="flex items-center w-full justify-between">
-            {selectedOrder && !selectedOrder.amountDispatched && (
-              <Button onClick={handleOpenConfirmDialog}>
-                Dispatch Payment
-              </Button>
-            )}
+            <Button
+              onClick={handleOpenConfirmDialog}
+              disabled={
+                selectedOrder &&
+                !selectedOrder.amountDispatched &&
+                selectedOrder.status === "delivered"
+                  ? false
+                  : true
+              }
+            >
+              {selectedOrder?.amountDispatched
+                ? "Already Dispatched"
+                : "Dispatch Payment"}
+            </Button>
+
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Close
             </Button>

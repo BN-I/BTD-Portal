@@ -49,7 +49,7 @@ export default function SignInPage() {
         });
 
         if (response.role == "Vendor") {
-          getStoreData(response._id);
+          await getStoreData(response._id);
           router.push("/dashboard");
         } else if (response.role == "Admin") {
           router.push("/admin");

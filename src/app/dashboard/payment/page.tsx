@@ -446,6 +446,7 @@ export default function PaymentsPage() {
                     <TableHead>Payment ID</TableHead>
                     <TableHead>Customer</TableHead>
                     <TableHead>Amount</TableHead>
+                    <TableHead>Payable Amount</TableHead>
                     <TableHead>Created Date</TableHead>
 
                     <TableHead>Status</TableHead>
@@ -459,7 +460,14 @@ export default function PaymentsPage() {
                         PI_{payment._id}
                       </TableCell>
                       <TableCell>{payment.user.name}</TableCell>
-                      <TableCell>{formatCurrency(payment.amount)}</TableCell>
+                      <TableCell>
+                        {formatCurrency(payment.totalAmount)}
+                      </TableCell>
+                      <TableCell>
+                        {formatCurrency(
+                          payment.totalAmount - (payment.totalAmount * 8) / 100
+                        )}
+                      </TableCell>
                       <TableCell>{formatDate(payment.createdAt)}</TableCell>
 
                       <TableCell>
@@ -579,10 +587,13 @@ export default function PaymentsPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">
-                    Total Amount
+                    Payable Amount
                   </h3>
                   <p className="mt-1 font-bold">
-                    {formatCurrency(selectedPayment.amount)}
+                    {formatCurrency(
+                      selectedPayment.totalAmount -
+                        (selectedPayment.totalAmount * 8) / 100
+                    )}
                   </p>
                 </div>
                 <div>
@@ -648,7 +659,11 @@ export default function PaymentsPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {formatCurrency(gift.product?.price)}
+                            {formatCurrency(
+                              gift.product?.discountedPrice ||
+                                gift.product?.price ||
+                                0
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}

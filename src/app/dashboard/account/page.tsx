@@ -122,7 +122,9 @@ export default function VendorAccountPage() {
     bankName: "",
     accountNumber: "",
     routingNumber: "",
-    accountHolderName: "",
+    accountHolderFirstName: "",
+    accountHolderLastName: "",
+    businessUrl: "",
 
     // Subscription
 
@@ -322,8 +324,14 @@ export default function VendorAccountPage() {
             paymentInformation.data.paymentInformation?.accountNumber || "",
           routingNumber:
             paymentInformation.data.paymentInformation?.routingNumber || "",
-          accountHolderName:
-            paymentInformation.data.paymentInformation?.accountHolderName || "",
+          accountHolderFirstName:
+            paymentInformation.data.paymentInformation
+              ?.accountHolderFirstName || "",
+          accountHolderLastName:
+            paymentInformation.data.paymentInformation?.accountHolderLastName ||
+            "",
+          businessUrl:
+            paymentInformation.data.paymentInformation?.businessUrl || "",
           subscription: subscriptionInformation.data?.subscription,
         };
 
@@ -612,8 +620,16 @@ export default function VendorAccountPage() {
         throw new Error("Bank name is required");
       }
 
-      if (!formData.accountHolderName.trim()) {
-        throw new Error("Account holder name is required");
+      if (!formData.accountHolderFirstName.trim()) {
+        throw new Error("Account holder first name is required");
+      }
+
+      if (!formData.accountHolderLastName.trim()) {
+        throw new Error("Account holder last name is required");
+      }
+
+      if (!formData.businessUrl.trim()) {
+        throw new Error("Business url is required");
       }
 
       if (!formData.accountNumber.trim()) {
@@ -629,7 +645,9 @@ export default function VendorAccountPage() {
         {
           vendorID: JSON.parse(userJson)._id,
           bankName: formData.bankName,
-          accountHolderName: formData.accountHolderName,
+          accountHolderFirstName: formData.accountHolderFirstName,
+          accountHolderLastName: formData.accountHolderLastName,
+          businessUrl: formData.businessUrl,
           accountNumber: formData.accountNumber,
           routingNumber: formData.routingNumber,
         }
@@ -1153,17 +1171,6 @@ export default function VendorAccountPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="accountHolderName">Account Holder Name</Label>
-                  <Input
-                    id="accountHolderName"
-                    name="accountHolderName"
-                    placeholder="Name on account"
-                    value={formData.accountHolderName}
-                    onChange={handleInputChange}
-                  />
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="accountNumber">Account Number</Label>
                   <Input
                     id="accountNumber"
@@ -1177,6 +1184,32 @@ export default function VendorAccountPage() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="accountHolderFirstName">
+                    Account Holder First Name
+                  </Label>
+                  <Input
+                    id="accountHolderFirstName"
+                    name="accountHolderFirstName"
+                    placeholder="First Name on account"
+                    value={formData.accountHolderFirstName}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="accountHolderFirstName">
+                    Account Holder Last Name
+                  </Label>
+                  <Input
+                    id="accountHolderLastName"
+                    name="accountHolderLastName"
+                    placeholder="Last Name on account"
+                    value={formData.accountHolderLastName}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="routingNumber">Routing Number</Label>
                   <Input
                     id="routingNumber"
@@ -1184,6 +1217,16 @@ export default function VendorAccountPage() {
                     placeholder="•••• ••••"
                     type="password"
                     value={formData.routingNumber}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="businessUrl">Business Url</Label>
+                  <Input
+                    id="businessUrl"
+                    name="businessUrl"
+                    value={formData.businessUrl}
                     onChange={handleInputChange}
                   />
                 </div>
