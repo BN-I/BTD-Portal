@@ -640,10 +640,28 @@ export default function VendorAccountPage() {
         throw new Error("Routing number is required");
       }
 
+      const stripe = await stripePromise;
+      if (!stripe) return;
+      const result = await stripe.createToken("bank_account", {
+        country: "US",
+        currency: "usd",
+        routing_number: formData.routingNumber,
+        account_number: formData.accountNumber,
+        account_holder_name: `${formData.accountHolderFirstName} ${formData.accountHolderLastName}`,
+        account_holder_type: "individual",
+      });
+
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+
+      const bankToken = result.token.id;
+
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/store/paymentInformation`,
         {
           vendorID: JSON.parse(userJson)._id,
+          bankToken,
           bankName: formData.bankName,
           accountHolderFirstName: formData.accountHolderFirstName,
           accountHolderLastName: formData.accountHolderLastName,

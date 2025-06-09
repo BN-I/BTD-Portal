@@ -42,6 +42,7 @@ import {
 import { formatDate, formatTime } from "@/app/common";
 import axios from "axios";
 import { Order, Product } from "@/app/types";
+import { set } from "date-fns";
 
 // Interface for the vendor form
 interface VendorFormData {
@@ -87,6 +88,11 @@ export default function VendorsPage() {
     status: "all",
     category: "all",
   });
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [newStatus, setNewStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [shouldUpdate, setShouldUpdate] = useState(false);
   const { toast } = useToast();
 
   // Form state
@@ -102,6 +108,8 @@ export default function VendorsPage() {
     accountName: "",
     accountNumber: "",
   });
+
+  const statuses = ["Active", "Inactive", "Pending", "Suspended", "Blocked"];
 
   const [formError, setFormError] = useState("");
 
@@ -138,6 +146,54 @@ export default function VendorsPage() {
       },
     ];
   }, [vendors, vendorProducts]);
+
+  const handleStatusChange = async () => {
+    setIsSubmitting(true);
+
+    try {
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/vendor/updateStatus/${selectedVendor?._id}`,
+        {
+          status: newStatus,
+        }
+      );
+
+      toast({
+        title: "Success",
+        description: "Vendor status updated successfully.",
+      });
+      setShouldUpdate(!shouldUpdate);
+      setIsStatusDialogOpen(false);
+      setIsSubmitting(false);
+      setSelectedVendor(null);
+    } catch (error) {
+      console.log(error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update vendor status.",
+      });
+      setIsSubmitting(false);
+      setIsStatusDialogOpen(false);
+      setSelectedVendor(null);
+    }
+  };
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Active":
+        return "bg-green-500 text-white"; // Positive status
+      case "Inactive":
+        return "bg-gray-400 text-white"; // Neutral/offline status
+      case "Pending":
+        return "bg-yellow-400 text-black"; // Waiting action
+      case "Suspended":
+        return "bg-orange-500 text-white"; // Warning
+      case "Blocked":
+        return "bg-red-600 text-white"; // Error/critical
+      default:
+        return "bg-gray-100 text-gray-800"; // Unknown/neutral
+    }
+  };
 
   const handleOpenVendorDetails = (vendor: IUser) => {
     setSelectedVendor(vendor);
@@ -375,7 +431,7 @@ export default function VendorsPage() {
         });
       })
       .catch(console.error);
-  }, []);
+  }, [shouldUpdate]);
 
   return (
     <div className="space-y-6">
@@ -681,17 +737,20 @@ export default function VendorsPage() {
                   `}
                 </TableCell>
                 <TableCell>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                      vendor.status === UserStatus.active
-                        ? "bg-green-100 text-green-700"
-                        : vendor.status === UserStatus.pending
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
+                  <button
+                    onClick={() => {
+                      setSelectedVendor(vendor);
+                      setNewStatus(vendor.status);
+                      setIsStatusDialogOpen(true);
+                      console.log("vendor.status", vendor.status);
+                    }}
+                    className={`px-3 py-1 rounded-full text-xs hover:scale-105 uppercase w-full font-medium cursor-pointer ${getStatusColor(
+                      vendor.status
+                    )}`}
+                    title="Change Status"
                   >
                     {vendor.status}
-                  </span>
+                  </button>
                 </TableCell>
                 <TableCell>
                   {formatDate(vendor.createdAt) +
@@ -903,6 +962,67 @@ export default function VendorsPage() {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isStatusDialogOpen} onOpenChange={setIsStatusDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Vendor Status</DialogTitle>
+            <DialogDescription>
+              Change the status of this Vendor
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">Current Status</h3>
+              <p
+                className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                  selectedVendor?.status || ""
+                )}`}
+              >
+                {selectedVendor?.status}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">New Status</h3>
+              <Select value={newStatus} onValueChange={setNewStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select new status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statuses.map((status, index) => (
+                    <SelectItem key={status} value={status}>
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <p className="text-xs text-red-500">{error}</p>
+          <DialogFooter>
+            <p className="text-xs text-muted-foreground">
+              Clicking update will update the status and send an email to the
+              vendor.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => setIsStatusDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleStatusChange}
+              disabled={isSubmitting}
+              className="bg-[#00BFA6] hover:bg-[#00BFA6]/90"
+            >
+              {isSubmitting ? "Updating..." : "Update Status"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

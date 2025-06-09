@@ -5,6 +5,13 @@ export function middleware(request: NextRequest) {
   const user = request.cookies.get("user");
   const path = request.nextUrl.pathname;
   console.log("Middleware is running...");
+
+  //check if loggedin
+
+  if (!user) {
+    return NextResponse.redirect(new URL("/auth/signin", request.url));
+  }
+
   // Check if path starts with /admin
   if (path.startsWith("/admin")) {
     if (!user) {
