@@ -250,7 +250,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="flex justify-center">
             <CircularProgress
-              value={deliveryPercentage.toFixed(2)}
+              value={parseFloat(deliveryPercentage.toFixed(2))}
               label="Delivery Rate"
             />
           </CardContent>
