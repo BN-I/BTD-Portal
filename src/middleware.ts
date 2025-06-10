@@ -26,6 +26,7 @@ export function middleware(request: NextRequest) {
     } catch (error) {
       return NextResponse.redirect(new URL("/auth/signin", request.url));
     }
+    //asdasdasd
   }
 
   // Check vendor access for dashboard routes
