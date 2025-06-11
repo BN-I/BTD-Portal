@@ -490,8 +490,8 @@ export default function VendorAccountPage() {
         description: "Your store information has been updated successfully.",
       });
 
-      document.cookie = `storeData=${JSON.stringify(
-        response.data
+      document.cookie = `storeData=${encodeURIComponent(
+        JSON.stringify(response.data)
       )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
     } catch (error) {
       console.error("Error saving store information:", error);
@@ -589,8 +589,8 @@ export default function VendorAccountPage() {
         description: "Your business details have been updated successfully.",
       });
 
-      document.cookie = `businessInformation=${JSON.stringify(
-        response.data
+      document.cookie = `businessInformation=${encodeURIComponent(
+        JSON.stringify(response.data)
       )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
     } catch (error) {
       console.error("Error saving business details:", error);
@@ -679,8 +679,8 @@ export default function VendorAccountPage() {
         description: "Your payment information has been updated successfully.",
       });
 
-      document.cookie = `paymentInformation=${JSON.stringify(
-        response.data
+      document.cookie = `paymentInformation=${encodeURIComponent(
+        JSON.stringify(response.data)
       )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
     } catch (error) {
       console.error("Error saving payment information:", error);

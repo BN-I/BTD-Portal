@@ -7,8 +7,8 @@ const getStoreData = (id: string) => {
         .get(`${process.env.NEXT_PUBLIC_API_URL}/store/storeInformation/${id}`)
         .then((res) => {
           if (res.data.storeInformation) {
-            document.cookie = `storeData=${JSON.stringify(
-              res.data.storeInformation
+            document.cookie = `storeData=${encodeURIComponent(
+              JSON.stringify(res.data.storeInformation)
             )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
           }
         })
@@ -22,8 +22,8 @@ const getStoreData = (id: string) => {
         )
         .then((res) => {
           if (res.data.businessInformation) {
-            document.cookie = `businessInformation=${JSON.stringify(
-              res.data.businessInformation
+            document.cookie = `businessInformation=${encodeURIComponent(
+              JSON.stringify(res.data.businessInformation)
             )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
           }
         })
@@ -37,8 +37,8 @@ const getStoreData = (id: string) => {
         )
         .then((res) => {
           if (res.data.paymentInformation) {
-            document.cookie = `paymentInformation=${JSON.stringify(
-              res.data.paymentInformation
+            document.cookie = `paymentInformation=${encodeURIComponent(
+              JSON.stringify(res.data.paymentInformation)
             )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
           }
         })
@@ -50,8 +50,8 @@ const getStoreData = (id: string) => {
         .get(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/${id}`)
         .then((res) => {
           if (res.data.subscription) {
-            document.cookie = `subscription=${JSON.stringify(
-              res.data.subscription
+            document.cookie = `subscription=${encodeURIComponent(
+              JSON.stringify(res.data.subscription)
             )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
           }
         })

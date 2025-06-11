@@ -37,9 +37,9 @@ export default function SignInPage() {
     try {
       await login(formData).then(async (response) => {
         const userCookie = JSON.stringify(response);
-        document.cookie = `user=${userCookie}; path=/; max-age=${
-          60 * 60 * 24 * 365
-        }`; // Expires in 365 days
+        document.cookie = `user=${encodeURIComponent(
+          userCookie
+        )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
         localStorage.setItem("auth_token", response.token);
         localStorage.setItem("user", JSON.stringify(response));
 

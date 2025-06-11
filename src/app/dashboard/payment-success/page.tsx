@@ -33,8 +33,8 @@ export default function SuccessPage() {
 
       const { session, subscription, error } = response.data;
 
-      document.cookie = `subscription=${JSON.stringify(
-        subscription
+      document.cookie = `subscription=${encodeURIComponent(
+        JSON.stringify(subscription)
       )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
 
       if (error) {
