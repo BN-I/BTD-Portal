@@ -45,10 +45,9 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         }))
       : []
   );
-  const [selectedSizes, setSelectedSizes] = useState<string[]>(
-    product?.sizeVariations || []
+  const [customSizes, setCustomSizes] = useState<string[]>(
+    product?.sizeVariations?.length ? product.sizeVariations : [""]
   );
-  const sizeOptions = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
   const [files, setFiles] = useState<FileList | null>();
   const [error, setError] = useState<string>("");
 
@@ -85,21 +84,28 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       orderMinDays: orderMinDays,
       orderMaxDays: orderMaxDays,
       colorVariations: colors.map((color) => color.hex),
-      sizeVariations: selectedSizes,
+      sizeVariations: customSizes.filter((size) => size.trim() !== ""),
       files: files ? Array.from(files) : [],
     });
   };
 
-  const handleCheckboxChange = (size: string) => {
-    setSelectedSizes((prevSizes) => {
-      if (prevSizes.includes(size)) {
-        // If size is already selected, remove it
-        return prevSizes.filter((s) => s !== size);
-      } else {
-        // If size is not selected, add it
-        return [...prevSizes, size];
-      }
-    });
+  const handleSizeChange = (index: number, value: string) => {
+    const updatedSizes = [...customSizes];
+    updatedSizes[index] = value;
+    setCustomSizes(updatedSizes);
+  };
+
+  const addSizeInput = () => {
+    if (customSizes.length < 10) {
+      setCustomSizes([...customSizes, ""]);
+    }
+  };
+
+  const removeSizeInput = (index: number) => {
+    if (customSizes.length > 1) {
+      const updatedSizes = customSizes.filter((_, i) => i !== index);
+      setCustomSizes(updatedSizes);
+    }
   };
 
   const handleCloseAllColors = async () => {
@@ -290,22 +296,39 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="size">Size Options</Label>
-        <div className="flex flex-wrap gap-2">
-          {sizeOptions.map((size, index) => (
+        <div className="space-y-2">
+          {customSizes.map((size, index) => (
             <div className="flex items-center space-x-2" key={index}>
-              <Checkbox
-                id={size}
-                onCheckedChange={() => handleCheckboxChange(size)}
-                checked={selectedSizes.includes(size)}
+              <Input
+                placeholder={`Size ${index + 1} (e.g., XL, 42, 52 inches)`}
+                value={size}
+                onChange={(e) => handleSizeChange(index, e.target.value)}
+                maxLength={15}
               />
-              <label
-                htmlFor={size}
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                {size}
-              </label>
+              {customSizes.length > 1 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => removeSizeInput(index)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  ×
+                </Button>
+              )}
             </div>
           ))}
+          {customSizes.length < 10 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addSizeInput}
+              className="w-full"
+            >
+              + Add Size
+            </Button>
+          )}
         </div>
       </div>
       <Button type="submit">
