@@ -175,6 +175,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           <Input
             id="picture"
             type="file"
+            accept="image/png,image/jpeg,image/bmp,image/jpg,image/webp"
             multiple
             required={product ? false : true}
             onChange={(e) => {
