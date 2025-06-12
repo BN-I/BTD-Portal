@@ -307,6 +307,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                 maxLength={15}
               />
               {customSizes.length > 1 && (
+                // asdasd
                 <Button
                   type="button"
                   variant="outline"
