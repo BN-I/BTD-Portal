@@ -177,7 +177,9 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       <div className="space-y-2">
         <div className="grid w-full max-w-sm items-center gap-1.5">
           <Label htmlFor="picture">Picture</Label>
-
+          <span className="text-xs text-muted-foreground text-stone-400">
+            png | jpg | bmp | jpeg | webp
+          </span>
           <Input
             id="picture"
             type="file"

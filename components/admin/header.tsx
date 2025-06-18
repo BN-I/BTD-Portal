@@ -15,8 +15,32 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { deleteAllCookies } from "@/app/common";
+import axios from "axios";
+import { User } from "@/lib/auth-types";
+import { useState } from "react";
+import { Notification } from "@/app/types";
 
 export function AdminHeader() {
+  const [unreadNotifications, setUnreadNotifications] = useState(false);
+  const perPage = 10000;
+  const [currentPage, setCurrentPage] = useState(1);
+  const fetchNotifications = async () => {
+    const user = localStorage.getItem("user");
+    if (!user) return;
+
+    const userObj = JSON.parse(user) as User;
+    // Add filter parameter if not showing all notifications
+    let url = `${process.env.NEXT_PUBLIC_API_URL}/notifications/user/${userObj._id}?page=${currentPage}&perPage=${perPage}&isRead=true`;
+
+    const response = await axios.get(url);
+
+    const unreadNotifications = response.data.filter(
+      (notification: Notification) => !notification.isRead
+    );
+
+    setUnreadNotifications(unreadNotifications.length > 0);
+  };
+
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-white px-6">
       <div className="flex flex-1 items-center gap-4">
@@ -33,7 +57,9 @@ export function AdminHeader() {
           <Button variant="outline" size="icon" className="relative">
             {" "}
             <Bell className="h-4 w-4" />
-            {/* <span className="absolute top-1 right-1 h-2 w-2 bg-red-600 rounded-full" /> */}
+            {unreadNotifications && (
+              <span className="absolute top-[-3px] right-[-1px] h-2 w-2 bg-red-600 rounded-full" />
+            )}
             <span className="sr-only">Toggle notifications</span>{" "}
           </Button>{" "}
         </Link>
