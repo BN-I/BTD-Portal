@@ -9,6 +9,7 @@ export function setAuthToken(token: string) {
 export function getAuthToken(): string | null {
   return localStorage.getItem("auth_token");
 }
+// asdsdgf
 
 export function removeAuthToken() {
   localStorage.removeItem("auth_token");
