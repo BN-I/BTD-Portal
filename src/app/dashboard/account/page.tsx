@@ -48,6 +48,7 @@ import axios from "axios";
 import { loadStripe } from "@stripe/stripe-js";
 import Stripe from "stripe";
 import { sub } from "date-fns";
+import { industries } from "@/utils/industries";
 
 // Business categories for vendors
 const businessCategories = [
@@ -81,6 +82,13 @@ const businessTypes = [
   "Corporation",
   "Non-profit Organization",
   "Other",
+];
+
+const countries = [
+  { code: "US", name: "United States" },
+  // { code: "CA", name: "Canada" },
+
+  // ✅ Add more countries as needed
 ];
 
 export default function VendorAccountPage() {
@@ -125,6 +133,17 @@ export default function VendorAccountPage() {
     accountHolderFirstName: "",
     accountHolderLastName: "",
     businessUrl: "",
+    phoneNumber: "",
+    addressP: "",
+    cityP: "",
+    stateP: "",
+    postalCodeP: "",
+    countryP: "",
+    dobDay: "",
+    dobMonth: "",
+    dobYear: "",
+    id_number: "",
+    industry: "",
 
     // Subscription
 
@@ -332,6 +351,20 @@ export default function VendorAccountPage() {
             "",
           businessUrl:
             paymentInformation.data.paymentInformation?.businessUrl || "",
+          phoneNumber:
+            paymentInformation.data.paymentInformation?.phoneNumber || "",
+          addressP: paymentInformation.data.paymentInformation?.addressP || "",
+          cityP: paymentInformation.data.paymentInformation?.cityP || "",
+          stateP: paymentInformation.data.paymentInformation?.stateP || "",
+          postalCodeP:
+            paymentInformation.data.paymentInformation?.postalCodeP || "",
+          countryP: paymentInformation.data.paymentInformation?.countryP || "",
+          dobDay: paymentInformation.data.paymentInformation?.dobDay || "",
+          dobMonth: paymentInformation.data.paymentInformation?.dobMonth || "",
+          dobYear: paymentInformation.data.paymentInformation?.dobYear || "",
+          id_number:
+            paymentInformation.data.paymentInformation?.id_number || "",
+          industry: paymentInformation.data.paymentInformation?.industry || "",
           subscription: subscriptionInformation.data?.subscription,
         };
 
@@ -668,6 +701,17 @@ export default function VendorAccountPage() {
           businessUrl: formData.businessUrl,
           accountNumber: formData.accountNumber,
           routingNumber: formData.routingNumber,
+          phoneNumber: formData.phoneNumber,
+          addressP: formData.addressP,
+          cityP: formData.cityP,
+          stateP: formData.stateP,
+          postalCodeP: formData.postalCodeP,
+          countryP: formData.countryP,
+          id_number: formData.id_number,
+          dobDay: formData.dobDay,
+          dobMonth: formData.dobMonth,
+          dobYear: formData.dobYear,
+          industry: formData.industry,
         }
       );
 
@@ -1247,6 +1291,143 @@ export default function VendorAccountPage() {
                     value={formData.businessUrl}
                     onChange={handleInputChange}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Input
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="addressP">Address</Label>
+                  <Input
+                    id="addressP"
+                    name="addressP"
+                    value={formData.addressP}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cityP">City</Label>
+                  <Input
+                    id="cityP"
+                    name="cityP"
+                    value={formData.cityP}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="stateP">State</Label>
+                  <Input
+                    id="stateP"
+                    name="stateP"
+                    value={formData.stateP}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="postalCodeP">Postal Code</Label>
+                  <Input
+                    id="postalCodeP"
+                    name="postalCodeP"
+                    value={formData.postalCodeP}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="countryP">Country</Label>
+                  <select
+                    id="countryP"
+                    name="countryP"
+                    value={formData.countryP}
+                    onChange={(e) => {
+                      console.log(e.target.value);
+                      setFormData((prev) => ({
+                        ...prev,
+                        countryP: e.target.value,
+                      }));
+                    }}
+                    className="w-full rounded-md border px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  >
+                    <option value="">Select a country</option>
+                    {countries.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dobDay">Date of Birth</Label>
+                  <Input
+                    id="dobDay"
+                    name="dobDay"
+                    value={formData.dobDay}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dobMonth">Month of Birth</Label>
+                  <Input
+                    id="dobMonth"
+                    name="dobMonth"
+                    value={formData.dobMonth}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dobYear">Year of Birth</Label>
+                  <Input
+                    id="dobYear"
+                    name="dobYear"
+                    value={formData.dobYear}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="id_number">SSN / ITIN</Label>
+                  <Input
+                    id="id_number"
+                    name="id_number"
+                    value={formData.id_number}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="industry">Industry</Label>
+                  <select
+                    id="industry"
+                    value={formData.industry}
+                    onChange={(e) => {
+                      console.log(e.target.value);
+                      setFormData((prev) => ({
+                        ...prev,
+                        industry: e.target.value,
+                      }));
+                    }}
+                    className="w-full rounded-md border px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  >
+                    <option value="">Select your industry</option>
+                    {industries.map((industry) => (
+                      <option key={industry.mcc} value={industry.mcc}>
+                        {industry.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </CardContent>
