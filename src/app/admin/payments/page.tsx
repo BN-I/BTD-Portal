@@ -362,7 +362,11 @@ export default function PaymentsPage() {
                           <TableCell>
                             {gift.product?.title || `Gift Item ${index + 1}`}
                           </TableCell>
-                          <TableCell>${gift.price.toFixed(2)}</TableCell>
+                          <TableCell>
+                            $
+                            {gift.discountedPrice?.toFixed(2) ||
+                              gift.price.toFixed(2)}
+                          </TableCell>
                           <TableCell>1</TableCell>
                           <TableCell className="text-right">
                             ${gift.price.toFixed(2)}
