@@ -28,6 +28,8 @@ export function removeUser() {
   localStorage.removeItem("user");
 }
 
+// asdfasdfasdf
+
 export async function signOut() {
   removeAuthToken();
   removeUser();
