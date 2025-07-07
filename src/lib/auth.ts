@@ -29,6 +29,7 @@ export function removeUser() {
 }
 
 // asdfasdfasdf
+// dfgdfgsdf
 
 export async function signOut() {
   removeAuthToken();
