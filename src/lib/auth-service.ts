@@ -52,3 +52,77 @@ export async function login(data: {
     }
   });
 }
+
+export async function forgotPassword(data: {
+  email: string;
+}): Promise<{ message: string }> {
+  return new Promise((resolve, reject) => {
+    try {
+      axios
+        .post(`${process.env.NEXT_PUBLIC_API_URL}/forgot-password`, data)
+        .then((response) => {
+          resolve(response.data);
+        })
+        .catch((error) => {
+          reject(
+            error.response?.data?.message ||
+              error.message ||
+              "Failed to send password reset email"
+          );
+        });
+    } catch (error) {
+      reject("Failed to send password reset email");
+    }
+  });
+}
+
+export async function verifyOTP(data: {
+  email: string;
+  otp: string;
+}): Promise<{ message: string }> {
+  return new Promise((resolve, reject) => {
+    try {
+      axios
+        .post(`${process.env.NEXT_PUBLIC_API_URL}/verify-otp`, data)
+        .then((response) => {
+          resolve(response.data);
+        })
+        .catch((error) => {
+          reject(
+            error.response?.data?.message ||
+              error.message ||
+              "Invalid OTP"
+          );
+        });
+    } catch (error) {
+      reject("OTP verification failed");
+    }
+  });
+}
+
+export async function resetPassword(data: {
+  email: string;
+  password: string;
+  otp: string;
+}): Promise<{ message: string }> {
+  return new Promise((resolve, reject) => {
+    try {
+      axios
+        .post(`${process.env.NEXT_PUBLIC_API_URL}/reset-password`, data)
+        .then((response) => {
+          resolve(response.data);
+        })
+        .catch((error) => {
+          reject(
+            error.response?.data?.message ||
+              error.message ||
+              "Failed to reset password"
+          );
+        });
+    } catch (error) {
+      reject("Password reset failed");
+    }
+  });
+}
+
+

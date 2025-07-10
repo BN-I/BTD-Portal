@@ -17,12 +17,13 @@ import {
   EyeOff,
 } from "lucide-react";
 import Image from "next/image";
+import { forgotPassword, verifyOTP, resetPassword } from "@/lib/auth-service";
 
-type Step = "email" | "pin" | "password" | "success";
+type Step = "email" | "otp" | "password" | "success";
 
 interface FormData {
   email: string;
-  pin: string;
+  otp: string;
   newPassword: string;
   confirmPassword: string;
 }
@@ -33,7 +34,7 @@ const ChangePasswordPage = () => {
   const [currentStep, setCurrentStep] = useState<Step>("email");
   const [formData, setFormData] = useState<FormData>({
     email: "",
-    pin: "",
+    otp: "",
     newPassword: "",
     confirmPassword: "",
   });
@@ -47,8 +48,8 @@ const ChangePasswordPage = () => {
     return emailRegex.test(email);
   };
 
-  const validatePin = (pin: string): boolean => {
-    return /^\d{4}$/.test(pin);
+  const validateOTP = (otp: string): boolean => {
+    return /^\d{4}$/.test(otp);
   };
 
   const validatePassword = (
@@ -102,58 +103,52 @@ const ChangePasswordPage = () => {
 
     setIsLoading(true);
     try {
-      // TODO: Call API to send PIN to email
-      // await sendPinToEmail(formData.email);
+      await forgotPassword({ email: formData.email });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setCurrentStep("pin");
+      setCurrentStep("otp");
       toast({
-        title: "Verification PIN sent to your email",
-        description: "Please check your email for the verification PIN",
+        title: "Verification OTP sent to your email",
+        description: "Please check your email for the verification OTP",
       });
     } catch (error) {
       toast({
-        title: "Failed to send PIN. Please try again.",
-        description: "Please try again later",
+        title: "Failed to send OTP",
+        description:
+          typeof error === "string" ? error : "Please try again later",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handlePinSubmit = async (e: React.FormEvent) => {
+  const handleOTPSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
-    if (!formData.pin) {
-      setErrors({ pin: "PIN is required" });
+    if (!formData.otp) {
+      setErrors({ otp: "OTP is required" });
       return;
     }
 
-    if (!validatePin(formData.pin)) {
-      setErrors({ pin: "PIN must be exactly 4 digits" });
+    if (!validateOTP(formData.otp)) {
+      setErrors({ otp: "OTP must be exactly 4 digits" });
       return;
     }
 
     setIsLoading(true);
     try {
-      // TODO: Call API to verify PIN
-      // await verifyPin(formData.email, formData.pin);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await verifyOTP({ email: formData.email, otp: formData.otp });
 
       setCurrentStep("password");
       toast({
-        title: "PIN verified successfully",
+        title: "OTP verified successfully",
         description: "Please enter your new password",
       });
     } catch (error) {
       toast({
-        title: "Invalid PIN. Please try again.",
-        description: "Please try again later",
+        title: "Invalid OTP",
+        description:
+          typeof error === "string" ? error : "Please try again later",
       });
     } finally {
       setIsLoading(false);
@@ -187,11 +182,11 @@ const ChangePasswordPage = () => {
 
     setIsLoading(true);
     try {
-      // TODO: Call API to change password
-      // await changePassword(formData.email, formData.pin, formData.newPassword);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await resetPassword({
+        email: formData.email,
+        password: formData.newPassword,
+        otp: formData.otp,
+      });
 
       setCurrentStep("success");
       toast({
@@ -200,8 +195,9 @@ const ChangePasswordPage = () => {
       });
     } catch (error) {
       toast({
-        title: "Failed to change password. Please try again.",
-        description: "Please try again later",
+        title: "Failed to change password",
+        description:
+          typeof error === "string" ? error : "Please try again later",
       });
     } finally {
       setIsLoading(false);
@@ -213,10 +209,10 @@ const ChangePasswordPage = () => {
   };
 
   const handleGoBack = () => {
-    if (currentStep === "pin") {
+    if (currentStep === "otp") {
       setCurrentStep("email");
     } else if (currentStep === "password") {
-      setCurrentStep("pin");
+      setCurrentStep("otp");
     }
   };
 
@@ -224,7 +220,7 @@ const ChangePasswordPage = () => {
     switch (step) {
       case "email":
         return <Mail className="w-6 h-6" />;
-      case "pin":
+      case "otp":
         return <Shield className="w-6 h-6" />;
       case "password":
         return <Lock className="w-6 h-6" />;
@@ -237,8 +233,8 @@ const ChangePasswordPage = () => {
     switch (step) {
       case "email":
         return "Enter Your Email";
-      case "pin":
-        return "Verify PIN";
+      case "otp":
+        return "Verify OTP";
       case "password":
         return "Set New Password";
       case "success":
@@ -249,9 +245,9 @@ const ChangePasswordPage = () => {
   const getStepDescription = (step: Step) => {
     switch (step) {
       case "email":
-        return "Enter your email address to receive a verification PIN";
-      case "pin":
-        return "Enter the 4-digit PIN sent to your email";
+        return "Enter your email address to receive a verification OTP";
+      case "otp":
+        return "Enter the 4-digit OTP sent to your email";
       case "password":
         return "Create a new secure password for your account";
       case "success":
@@ -309,33 +305,33 @@ const ChangePasswordPage = () => {
                 className="w-full bg-[#00BFA6] hover:bg-[#00BFA6]/90"
                 disabled={isLoading}
               >
-                {isLoading ? "Sending PIN..." : "Send Verification PIN"}
+                {isLoading ? "Sending OTP..." : "Send Verification OTP"}
               </Button>
             </form>
           )}
 
-          {currentStep === "pin" && (
-            <form onSubmit={handlePinSubmit} className="space-y-6">
+          {currentStep === "otp" && (
+            <form onSubmit={handleOTPSubmit} className="space-y-6">
               <div>
-                <Label htmlFor="pin">Verification PIN</Label>
+                <Label htmlFor="otp">Verification OTP</Label>
                 <Input
-                  id="pin"
+                  id="otp"
                   type="text"
-                  placeholder="Enter 4-digit PIN"
-                  value={formData.pin}
+                  placeholder="Enter 4-digit OTP"
+                  value={formData.otp}
                   onChange={(e) => {
                     const value = e.target.value.replace(/\D/g, "").slice(0, 4);
-                    setFormData({ ...formData, pin: value });
+                    setFormData({ ...formData, otp: value });
                   }}
                   maxLength={4}
                   disabled={isLoading}
                   className="mt-1 text-center text-lg tracking-widest"
                 />
-                {errors.pin && (
-                  <p className="text-sm text-red-500">{errors.pin}</p>
+                {errors.otp && (
+                  <p className="text-sm text-red-500">{errors.otp}</p>
                 )}
                 <p className="text-xs text-gray-500 text-center mt-2">
-                  PIN sent to {formData.email}. <br /> The pin will expire in 5
+                  OTP sent to {formData.email}. <br /> The OTP will expire in 5
                   minutes.
                 </p>
               </div>
@@ -355,7 +351,7 @@ const ChangePasswordPage = () => {
                   className="flex-1 bg-[#00BFA6] hover:bg-[#00BFA6]/90"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Verifying..." : "Verify PIN"}
+                  {isLoading ? "Verifying..." : "Verify OTP"}
                 </Button>
               </div>
             </form>
