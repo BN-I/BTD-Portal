@@ -145,7 +145,7 @@ export default function SignInPage() {
             <div className="flex items-center justify-between">
               <div className="text-sm">
                 <Link
-                  href="/auth/forgot-password"
+                  href="/auth/change-password"
                   className="font-medium text-[#00BFA6] hover:text-[#00BFA6]/90"
                 >
                   Forgot your password?
