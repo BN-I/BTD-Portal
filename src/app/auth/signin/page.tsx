@@ -213,7 +213,7 @@ export default function SignInPage() {
                   {!videoError ? (
                     <>
                       <video
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                         controls
                         poster="/logo.png"
                         preload="metadata"
