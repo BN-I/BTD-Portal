@@ -483,30 +483,6 @@ export default function VendorAccountPage() {
         throw new Error("Please select a business category");
       }
 
-      if (!formData.companySize) {
-        throw new Error("Please select a company size");
-      }
-
-      if (!formData.yearFounded) {
-        throw new Error("Please select a year founded");
-      }
-
-      if (!formData.website.trim()) {
-        throw new Error("Website URL is required");
-      }
-
-      if (!formData.instagram.trim()) {
-        throw new Error("Instagram URL is required");
-      }
-
-      if (!formData.facebook.trim()) {
-        throw new Error("Facebook URL is required");
-      }
-
-      if (!formData.twitter.trim()) {
-        throw new Error("Twitter URL is required");
-      }
-
       if (!formData.storeDescription.trim()) {
         throw new Error("Store description is required");
       }
