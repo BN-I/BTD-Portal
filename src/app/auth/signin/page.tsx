@@ -109,7 +109,7 @@ export default function SignInPage() {
           </p>
         </div>
 
-        <div className="mt-8 flex gap-4 items-stretch justify-center">
+        <div className="mt-8 flex md:flex-row flex-col gap-4 items-stretch justify-center">
           <div
             className={`max-w-md h-full w-full transition-all duration-1000`}
           >
