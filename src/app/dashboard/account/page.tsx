@@ -43,6 +43,7 @@ import {
   Truck,
   Users,
   createLucideIcon,
+  AlertCircle,
 } from "lucide-react";
 import type { User, User as UserType } from "@/lib/auth-types";
 import axios from "axios";
@@ -50,6 +51,36 @@ import { loadStripe } from "@stripe/stripe-js";
 import Stripe from "stripe";
 import { sub } from "date-fns";
 import { industries } from "@/utils/industries";
+import { DatePicker } from "@/components/ui/date-picker";
+import {
+  STRIPE_COUNTRIES,
+  getStatesForCountry,
+  getCitiesForState,
+  getCitiesForCountry,
+  US_STATES,
+  COUNTRIES,
+  MAJOR_US_CITIES,
+  MONTHS,
+  generateBirthYears,
+  generateBirthDays,
+} from "@/utils/location-data";
+import {
+  validateStoreInfo,
+  validateBusinessDetails,
+  validatePaymentInfo,
+  isValidEmail,
+  isValidPhone,
+  isValidAccountNumber,
+  isValidRoutingNumber,
+  isValidSSN,
+  isValidTaxId,
+  isValidUrl,
+  isValidSocialHandle,
+  isValidPostalCode,
+  isValidName,
+  isValidStoreName,
+  VALIDATION_MESSAGES,
+} from "@/lib/validations/account";
 
 // Business categories for vendors
 const businessCategories = [
@@ -96,12 +127,7 @@ const XIcon = createLucideIcon("X", [
   ],
 ]);
 
-const countries = [
-  { code: "US", name: "United States" },
-  // { code: "CA", name: "Canada" },
-
-  // ✅ Add more countries as needed
-];
+// Remove the old countries array since we're importing from location-data
 
 export default function VendorAccountPage() {
   const { toast } = useToast();
@@ -109,6 +135,23 @@ export default function VendorAccountPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [storeLogo, setStoreLogo] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(undefined);
+
+  // Location filtering state
+  const [availableStates, setAvailableStates] = useState<
+    Array<{ code: string; name: string }>
+  >([]);
+  const [availableCities, setAvailableCities] = useState<
+    Array<{ name: string; stateCode: string }>
+  >([]);
+  const [availableStatesP, setAvailableStatesP] = useState<
+    Array<{ code: string; name: string }>
+  >([]);
+  const [availableCitiesP, setAvailableCitiesP] = useState<
+    Array<{ name: string; stateCode: string }>
+  >([]);
+
   const [formData, setFormData] = useState({
     // Store Information
     storeName: "",
@@ -257,6 +300,17 @@ export default function VendorAccountPage() {
     fetchVendorData();
   }, []);
 
+  // Initialize location data when component loads
+  useEffect(() => {
+    // Set default states for US if no country is selected
+    if (!formData.country) {
+      setAvailableStates(US_STATES);
+    }
+    if (!formData.countryP) {
+      setAvailableStatesP(US_STATES);
+    }
+  }, []);
+
   const fetchVendorData = async () => {
     setLoading(true);
     try {
@@ -384,6 +438,30 @@ export default function VendorAccountPage() {
         setFormData(mockVendorData);
         // Set store logo if available
         setStoreLogo(storeInformation.data.storeInformation?.storeImage);
+
+        // Initialize location data based on loaded data
+        if (mockVendorData.country) {
+          const states = getStatesForCountry(mockVendorData.country);
+          setAvailableStates(states);
+          if (mockVendorData.state) {
+            const cities = getCitiesForState(
+              mockVendorData.country,
+              mockVendorData.state
+            );
+            setAvailableCities(cities);
+          }
+        }
+        if (mockVendorData.countryP) {
+          const states = getStatesForCountry(mockVendorData.countryP);
+          setAvailableStatesP(states);
+          if (mockVendorData.stateP) {
+            const cities = getCitiesForState(
+              mockVendorData.countryP,
+              mockVendorData.stateP
+            );
+            setAvailableCitiesP(cities);
+          }
+        }
       }
     } catch (error) {
       console.error("Error fetching vendor data:", error);
@@ -403,10 +481,92 @@ export default function VendorAccountPage() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handleDateOfBirthChange = (date: Date | undefined) => {
+    setDateOfBirth(date);
+    if (date) {
+      const day = date.getDate().toString().padStart(2, "0");
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const year = date.getFullYear().toString();
+
+      setFormData((prev) => ({
+        ...prev,
+        dobDay: day,
+        dobMonth: month,
+        dobYear: year,
+      }));
+    }
+
+    // Clear date of birth error
+    if (errors.dateOfBirth) {
+      setErrors((prev) => ({ ...prev, dateOfBirth: "" }));
+    }
   };
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear error when user selects an option
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+
+    // Handle location filtering
+    if (name === "country") {
+      // Reset state and city when country changes
+      setFormData((prev) => ({
+        ...prev,
+        country: value,
+        state: "",
+        city: "",
+      }));
+
+      // Get states for selected country
+      const states = getStatesForCountry(value);
+      setAvailableStates(states);
+      setAvailableCities([]);
+    } else if (name === "state") {
+      // Reset city when state changes
+      setFormData((prev) => ({
+        ...prev,
+        state: value,
+        city: "",
+      }));
+
+      // Get cities for selected state
+      const cities = getCitiesForState(formData.country, value);
+      setAvailableCities(cities);
+    } else if (name === "countryP") {
+      // Reset state and city when country changes (payment section)
+      setFormData((prev) => ({
+        ...prev,
+        countryP: value,
+        stateP: "",
+        cityP: "",
+      }));
+
+      // Get states for selected country
+      const states = getStatesForCountry(value);
+      setAvailableStatesP(states);
+      setAvailableCitiesP([]);
+    } else if (name === "stateP") {
+      // Reset city when state changes (payment section)
+      setFormData((prev) => ({
+        ...prev,
+        stateP: value,
+        cityP: "",
+      }));
+
+      // Get cities for selected state
+      const cities = getCitiesForState(formData.countryP, value);
+      setAvailableCitiesP(cities);
+    }
   };
 
   const handleSettingChange = (key: keyof typeof storeSettings) => {
@@ -474,17 +634,12 @@ export default function VendorAccountPage() {
       if (!userJson) {
         return;
       }
+
       // Validate form data
-      if (!formData.storeName.trim()) {
-        throw new Error("Store name is required");
-      }
-
-      if (!formData.category) {
-        throw new Error("Please select a business category");
-      }
-
-      if (!formData.storeDescription.trim()) {
-        throw new Error("Store description is required");
+      const validationErrors = validateStoreInfo(formData);
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors(validationErrors);
+        throw new Error("Please fix the validation errors");
       }
 
       const response = await axios.post(
@@ -537,51 +692,11 @@ export default function VendorAccountPage() {
         return;
       }
 
-      if (!formData.businessType.trim()) {
-        throw new Error("Business type is required");
-      }
-
-      if (!formData.taxId.trim()) {
-        throw new Error("Tax id is required");
-      }
-
-      if (
-        !formData.businessEmail ||
-        !/\S+@\S+\.\S+/.test(formData.businessEmail)
-      ) {
-        throw new Error("Valid business email is required");
-      }
-
-      if (!formData.businessPhone.trim()) {
-        throw new Error("Valid business phone is required");
-      }
-
-      if (!formData.streetAddress.trim()) {
-        throw new Error("Street address is required");
-      }
-
-      if (!formData.city.trim()) {
-        throw new Error("City is required");
-      }
-
-      if (!formData.state.trim()) {
-        throw new Error("State is required");
-      }
-
-      if (!formData.postalCode.trim()) {
-        throw new Error("Postal code is required");
-      }
-
-      if (!formData.country.trim()) {
-        throw new Error("Country is required");
-      }
-
-      if (!formData.shippingPolicy.trim()) {
-        throw new Error("Shipping policy is required");
-      }
-
-      if (!formData.returnPolicy.trim()) {
-        throw new Error("Return policy is required");
+      // Validate form data
+      const validationErrors = validateBusinessDetails(formData);
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors(validationErrors);
+        throw new Error("Please fix the validation errors");
       }
 
       const response = await axios.post(
@@ -637,34 +752,16 @@ export default function VendorAccountPage() {
       }
 
       // Validate form data
-      if (!formData.bankName.trim()) {
-        throw new Error("Bank name is required");
-      }
-
-      if (!formData.accountHolderFirstName.trim()) {
-        throw new Error("Account holder first name is required");
-      }
-
-      if (!formData.accountHolderLastName.trim()) {
-        throw new Error("Account holder last name is required");
-      }
-
-      if (!formData.businessUrl.trim()) {
-        throw new Error("Business url is required");
-      }
-
-      if (!formData.accountNumber.trim()) {
-        throw new Error("Account number is required");
-      }
-
-      if (!formData.routingNumber.trim()) {
-        throw new Error("Routing number is required");
+      const validationErrors = validatePaymentInfo(formData);
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors(validationErrors);
+        throw new Error("Please fix the validation errors");
       }
 
       const stripe = await stripePromise;
       if (!stripe) return;
       const result = await stripe.createToken("bank_account", {
-        country: "US",
+        country: formData.countryP || "US",
         currency: "usd",
         routing_number: formData.routingNumber,
         account_number: formData.accountNumber,
@@ -831,11 +928,21 @@ export default function VendorAccountPage() {
                       id="storeName"
                       name="storeName"
                       placeholder="Your store name"
-                      className="pl-9"
+                      className={`pl-9 ${
+                        errors.storeName
+                          ? "border-red-500 focus:border-red-500"
+                          : ""
+                      }`}
                       value={formData.storeName}
                       onChange={handleInputChange}
                     />
                   </div>
+                  {errors.storeName && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.storeName}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2 sm:col-span-2">
@@ -845,9 +952,20 @@ export default function VendorAccountPage() {
                     name="storeDescription"
                     placeholder="Describe your store and what you sell"
                     rows={4}
+                    className={
+                      errors.storeDescription
+                        ? "border-red-500 focus:border-red-500"
+                        : ""
+                    }
                     value={formData.storeDescription}
                     onChange={handleInputChange}
                   />
+                  {errors.storeDescription && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.storeDescription}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -858,7 +976,13 @@ export default function VendorAccountPage() {
                       handleSelectChange("category", value)
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      className={
+                        errors.category
+                          ? "border-red-500 focus:border-red-500"
+                          : ""
+                      }
+                    >
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -869,6 +993,12 @@ export default function VendorAccountPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.category && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.category}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -898,9 +1028,20 @@ export default function VendorAccountPage() {
                     id="yearFounded"
                     name="yearFounded"
                     placeholder="e.g., 2018"
+                    className={
+                      errors.yearFounded
+                        ? "border-red-500 focus:border-red-500"
+                        : ""
+                    }
                     value={formData.yearFounded}
                     onChange={handleInputChange}
                   />
+                  {errors.yearFounded && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.yearFounded}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -911,11 +1052,21 @@ export default function VendorAccountPage() {
                       id="website"
                       name="website"
                       placeholder="https://yourwebsite.com"
-                      className="pl-9"
+                      className={`pl-9 ${
+                        errors.website
+                          ? "border-red-500 focus:border-red-500"
+                          : ""
+                      }`}
                       value={formData.website}
                       onChange={handleInputChange}
                     />
                   </div>
+                  {errors.website && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.website}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -933,11 +1084,21 @@ export default function VendorAccountPage() {
                         id="instagram"
                         name="instagram"
                         placeholder="@yourusername"
-                        className="pl-9"
+                        className={`pl-9 ${
+                          errors.instagram
+                            ? "border-red-500 focus:border-red-500"
+                            : ""
+                        }`}
                         value={formData.instagram}
                         onChange={handleInputChange}
                       />
                     </div>
+                    {errors.instagram && (
+                      <div className="flex items-center gap-1 text-sm text-red-500">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors.instagram}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -948,11 +1109,21 @@ export default function VendorAccountPage() {
                         id="facebook"
                         name="facebook"
                         placeholder="yourusername"
-                        className="pl-9"
+                        className={`pl-9 ${
+                          errors.facebook
+                            ? "border-red-500 focus:border-red-500"
+                            : ""
+                        }`}
                         value={formData.facebook}
                         onChange={handleInputChange}
                       />
                     </div>
+                    {errors.facebook && (
+                      <div className="flex items-center gap-1 text-sm text-red-500">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors.facebook}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -963,11 +1134,21 @@ export default function VendorAccountPage() {
                         id="twitter"
                         name="twitter"
                         placeholder="@yourusername"
-                        className="pl-9"
+                        className={`pl-9 ${
+                          errors.twitter
+                            ? "border-red-500 focus:border-red-500"
+                            : ""
+                        }`}
                         value={formData.twitter}
                         onChange={handleInputChange}
                       />
                     </div>
+                    {errors.twitter && (
+                      <div className="flex items-center gap-1 text-sm text-red-500">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors.twitter}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1011,7 +1192,13 @@ export default function VendorAccountPage() {
                       handleSelectChange("businessType", value)
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      className={
+                        errors.businessType
+                          ? "border-red-500 focus:border-red-500"
+                          : ""
+                      }
+                    >
                       <SelectValue placeholder="Select business type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1022,6 +1209,12 @@ export default function VendorAccountPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.businessType && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.businessType}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -1032,9 +1225,18 @@ export default function VendorAccountPage() {
                     id="taxId"
                     name="taxId"
                     placeholder="e.g., 12-3456789"
+                    className={
+                      errors.taxId ? "border-red-500 focus:border-red-500" : ""
+                    }
                     value={formData.taxId}
                     onChange={handleInputChange}
                   />
+                  {errors.taxId && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.taxId}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -1046,11 +1248,21 @@ export default function VendorAccountPage() {
                       name="businessEmail"
                       type="email"
                       placeholder="business@example.com"
-                      className="pl-9"
+                      className={`pl-9 ${
+                        errors.businessEmail
+                          ? "border-red-500 focus:border-red-500"
+                          : ""
+                      }`}
                       value={formData.businessEmail}
                       onChange={handleInputChange}
                     />
                   </div>
+                  {errors.businessEmail && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.businessEmail}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -1061,11 +1273,21 @@ export default function VendorAccountPage() {
                       id="businessPhone"
                       name="businessPhone"
                       placeholder="(555) 123-4567"
-                      className="pl-9"
+                      className={`pl-9 ${
+                        errors.businessPhone
+                          ? "border-red-500 focus:border-red-500"
+                          : ""
+                      }`}
                       value={formData.businessPhone}
                       onChange={handleInputChange}
                     />
                   </div>
+                  {errors.businessPhone && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.businessPhone}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1083,33 +1305,140 @@ export default function VendorAccountPage() {
                         id="streetAddress"
                         name="streetAddress"
                         placeholder="123 Business St"
-                        className="pl-9"
+                        className={`pl-9 ${
+                          errors.streetAddress
+                            ? "border-red-500 focus:border-red-500"
+                            : ""
+                        }`}
                         value={formData.streetAddress}
                         onChange={handleInputChange}
                       />
                     </div>
+                    {errors.streetAddress && (
+                      <div className="flex items-center gap-1 text-sm text-red-500">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors.streetAddress}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      name="city"
-                      placeholder="City"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                    />
+                    <Label htmlFor="country">Country</Label>
+                    <Select
+                      value={formData.country}
+                      onValueChange={(value) =>
+                        handleSelectChange("country", value)
+                      }
+                    >
+                      <SelectTrigger
+                        className={
+                          errors.country
+                            ? "border-red-500 focus:border-red-500"
+                            : ""
+                        }
+                      >
+                        <SelectValue placeholder="Select a country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STRIPE_COUNTRIES.map((country) => (
+                          <SelectItem key={country.code} value={country.code}>
+                            {country.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.country && (
+                      <div className="flex items-center gap-1 text-sm text-red-500">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors.country}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="state">State / Province</Label>
-                    <Input
-                      id="state"
-                      name="state"
-                      placeholder="State or Province"
+                    <Select
                       value={formData.state}
-                      onChange={handleInputChange}
-                    />
+                      onValueChange={(value) =>
+                        handleSelectChange("state", value)
+                      }
+                    >
+                      <SelectTrigger
+                        className={
+                          errors.state
+                            ? "border-red-500 focus:border-red-500"
+                            : ""
+                        }
+                      >
+                        <SelectValue placeholder="Select a state" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableStates.length > 0 ? (
+                          availableStates.map((state) => (
+                            <SelectItem key={state.code} value={state.code}>
+                              {state.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="placeholder" disabled>
+                            Select a country first
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {errors.state && (
+                      <div className="flex items-center gap-1 text-sm text-red-500">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors.state}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Select
+                      value={formData.city}
+                      onValueChange={(value) =>
+                        handleSelectChange("city", value)
+                      }
+                    >
+                      <SelectTrigger
+                        className={
+                          errors.city
+                            ? "border-red-500 focus:border-red-500"
+                            : ""
+                        }
+                      >
+                        <SelectValue placeholder="Select a city" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableCities.length > 0 ? (
+                          availableCities.map((city) => (
+                            <SelectItem key={city.name} value={city.name}>
+                              {city.name}
+                            </SelectItem>
+                          ))
+                        ) : formData.country === "US" ? (
+                          MAJOR_US_CITIES.map((city: string, index: number) => (
+                            <SelectItem key={index} value={city}>
+                              {city}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="placeholder" disabled>
+                            {formData.state
+                              ? "No cities found for this state"
+                              : "Select a state first"}
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {errors.city && (
+                      <div className="flex items-center gap-1 text-sm text-red-500">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors.city}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -1118,20 +1447,20 @@ export default function VendorAccountPage() {
                       id="postalCode"
                       name="postalCode"
                       placeholder="Postal or ZIP code"
+                      className={
+                        errors.postalCode
+                          ? "border-red-500 focus:border-red-500"
+                          : ""
+                      }
                       value={formData.postalCode}
                       onChange={handleInputChange}
                     />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="country">Country</Label>
-                    <Input
-                      id="country"
-                      name="country"
-                      placeholder="Country"
-                      value={formData.country}
-                      onChange={handleInputChange}
-                    />
+                    {errors.postalCode && (
+                      <div className="flex items-center gap-1 text-sm text-red-500">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors.postalCode}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1149,9 +1478,20 @@ export default function VendorAccountPage() {
                       name="shippingPolicy"
                       placeholder="Describe your shipping policy"
                       rows={3}
+                      className={
+                        errors.shippingPolicy
+                          ? "border-red-500 focus:border-red-500"
+                          : ""
+                      }
                       value={formData.shippingPolicy}
                       onChange={handleInputChange}
                     />
+                    {errors.shippingPolicy && (
+                      <div className="flex items-center gap-1 text-sm text-red-500">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors.shippingPolicy}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -1161,9 +1501,20 @@ export default function VendorAccountPage() {
                       name="returnPolicy"
                       placeholder="Describe your return policy"
                       rows={3}
+                      className={
+                        errors.returnPolicy
+                          ? "border-red-500 focus:border-red-500"
+                          : ""
+                      }
                       value={formData.returnPolicy}
                       onChange={handleInputChange}
                     />
+                    {errors.returnPolicy && (
+                      <div className="flex items-center gap-1 text-sm text-red-500">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors.returnPolicy}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1213,11 +1564,21 @@ export default function VendorAccountPage() {
                       id="bankName"
                       name="bankName"
                       placeholder="Your bank name"
-                      className="pl-9"
+                      className={`pl-9 ${
+                        errors.bankName
+                          ? "border-red-500 focus:border-red-500"
+                          : ""
+                      }`}
                       value={formData.bankName}
                       onChange={handleInputChange}
                     />
                   </div>
+                  {errors.bankName && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.bankName}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -1227,10 +1588,21 @@ export default function VendorAccountPage() {
                     name="accountNumber"
                     placeholder="•••• •••• •••• 6789"
                     type="password"
+                    className={
+                      errors.accountNumber
+                        ? "border-red-500 focus:border-red-500"
+                        : ""
+                    }
                     value={formData.accountNumber}
                     onChange={handleInputChange}
                     autoComplete="off"
                   />
+                  {errors.accountNumber && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.accountNumber}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -1241,22 +1613,44 @@ export default function VendorAccountPage() {
                     id="accountHolderFirstName"
                     name="accountHolderFirstName"
                     placeholder="First Name on account"
+                    className={
+                      errors.accountHolderFirstName
+                        ? "border-red-500 focus:border-red-500"
+                        : ""
+                    }
                     value={formData.accountHolderFirstName}
                     onChange={handleInputChange}
                   />
+                  {errors.accountHolderFirstName && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.accountHolderFirstName}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="accountHolderFirstName">
+                  <Label htmlFor="accountHolderLastName">
                     Account Holder Last Name
                   </Label>
                   <Input
                     id="accountHolderLastName"
                     name="accountHolderLastName"
                     placeholder="Last Name on account"
+                    className={
+                      errors.accountHolderLastName
+                        ? "border-red-500 focus:border-red-500"
+                        : ""
+                    }
                     value={formData.accountHolderLastName}
                     onChange={handleInputChange}
                   />
+                  {errors.accountHolderLastName && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.accountHolderLastName}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -1266,9 +1660,20 @@ export default function VendorAccountPage() {
                     name="routingNumber"
                     placeholder="•••• ••••"
                     type="password"
+                    className={
+                      errors.routingNumber
+                        ? "border-red-500 focus:border-red-500"
+                        : ""
+                    }
                     value={formData.routingNumber}
                     onChange={handleInputChange}
                   />
+                  {errors.routingNumber && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.routingNumber}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -1276,9 +1681,21 @@ export default function VendorAccountPage() {
                   <Input
                     id="businessUrl"
                     name="businessUrl"
+                    placeholder="https://yourbusiness.com"
+                    className={
+                      errors.businessUrl
+                        ? "border-red-500 focus:border-red-500"
+                        : ""
+                    }
                     value={formData.businessUrl}
                     onChange={handleInputChange}
                   />
+                  {errors.businessUrl && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.businessUrl}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -1286,9 +1703,21 @@ export default function VendorAccountPage() {
                   <Input
                     id="phoneNumber"
                     name="phoneNumber"
+                    placeholder="(555) 123-4567"
+                    className={
+                      errors.phoneNumber
+                        ? "border-red-500 focus:border-red-500"
+                        : ""
+                    }
                     value={formData.phoneNumber}
                     onChange={handleInputChange}
                   />
+                  {errors.phoneNumber && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.phoneNumber}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -1296,29 +1725,140 @@ export default function VendorAccountPage() {
                   <Input
                     id="addressP"
                     name="addressP"
+                    placeholder="123 Business St"
+                    className={
+                      errors.addressP
+                        ? "border-red-500 focus:border-red-500"
+                        : ""
+                    }
                     value={formData.addressP}
                     onChange={handleInputChange}
                   />
+                  {errors.addressP && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.addressP}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cityP">City</Label>
-                  <Input
-                    id="cityP"
-                    name="cityP"
-                    value={formData.cityP}
-                    onChange={handleInputChange}
-                  />
+                  <Label htmlFor="countryP">Country</Label>
+                  <Select
+                    value={formData.countryP}
+                    onValueChange={(value) =>
+                      handleSelectChange("countryP", value)
+                    }
+                  >
+                    <SelectTrigger
+                      className={
+                        errors.countryP
+                          ? "border-red-500 focus:border-red-500"
+                          : ""
+                      }
+                    >
+                      <SelectValue placeholder="Select a country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STRIPE_COUNTRIES.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.countryP && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.countryP}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="stateP">State</Label>
-                  <Input
-                    id="stateP"
-                    name="stateP"
+                  <Select
                     value={formData.stateP}
-                    onChange={handleInputChange}
-                  />
+                    onValueChange={(value) =>
+                      handleSelectChange("stateP", value)
+                    }
+                  >
+                    <SelectTrigger
+                      className={
+                        errors.stateP
+                          ? "border-red-500 focus:border-red-500"
+                          : ""
+                      }
+                    >
+                      <SelectValue placeholder="Select a state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableStatesP.length > 0 ? (
+                        availableStatesP.map((state) => (
+                          <SelectItem key={state.code} value={state.code}>
+                            {state.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="placeholder" disabled>
+                          Select a country first
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {errors.stateP && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.stateP}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cityP">City</Label>
+                  <Select
+                    value={formData.cityP}
+                    onValueChange={(value) =>
+                      handleSelectChange("cityP", value)
+                    }
+                  >
+                    <SelectTrigger
+                      className={
+                        errors.cityP
+                          ? "border-red-500 focus:border-red-500"
+                          : ""
+                      }
+                    >
+                      <SelectValue placeholder="Select a city" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCitiesP.length > 0 ? (
+                        availableCitiesP.map((city) => (
+                          <SelectItem key={city.name} value={city.name}>
+                            {city.name}
+                          </SelectItem>
+                        ))
+                      ) : formData.countryP === "US" ? (
+                        MAJOR_US_CITIES.map((city: string) => (
+                          <SelectItem key={city} value={city}>
+                            {city}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="placeholder" disabled>
+                          {formData.stateP
+                            ? "No cities found for this state"
+                            : "Select a state first"}
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {errors.cityP && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.cityP}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -1326,63 +1866,41 @@ export default function VendorAccountPage() {
                   <Input
                     id="postalCodeP"
                     name="postalCodeP"
+                    placeholder="12345"
+                    className={
+                      errors.postalCodeP
+                        ? "border-red-500 focus:border-red-500"
+                        : ""
+                    }
                     value={formData.postalCodeP}
                     onChange={handleInputChange}
                   />
+                  {errors.postalCodeP && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.postalCodeP}
+                    </div>
+                  )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="countryP">Country</Label>
-                  <select
-                    id="countryP"
-                    name="countryP"
-                    value={formData.countryP}
-                    onChange={(e) => {
-                      console.log(e.target.value);
-                      setFormData((prev) => ({
-                        ...prev,
-                        countryP: e.target.value,
-                      }));
-                    }}
-                    className="w-full rounded-md border px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    <option value="">Select a country</option>
-                    {countries.map((country) => (
-                      <option key={country.code} value={country.code}>
-                        {country.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dobDay">Date of Birth</Label>
-                  <Input
-                    id="dobDay"
-                    name="dobDay"
-                    value={formData.dobDay}
-                    onChange={handleInputChange}
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                  <DatePicker
+                    date={dateOfBirth}
+                    onDateChange={handleDateOfBirthChange}
+                    placeholder="Select your date of birth"
+                    className={
+                      errors.dateOfBirth
+                        ? "border-red-500 focus:border-red-500"
+                        : ""
+                    }
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dobMonth">Month of Birth</Label>
-                  <Input
-                    id="dobMonth"
-                    name="dobMonth"
-                    value={formData.dobMonth}
-                    onChange={handleInputChange}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dobYear">Year of Birth</Label>
-                  <Input
-                    id="dobYear"
-                    name="dobYear"
-                    value={formData.dobYear}
-                    onChange={handleInputChange}
-                  />
+                  {errors.dateOfBirth && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.dateOfBirth}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -1390,32 +1908,56 @@ export default function VendorAccountPage() {
                   <Input
                     id="id_number"
                     name="id_number"
+                    placeholder="123-45-6789"
+                    type="password"
+                    className={
+                      errors.id_number
+                        ? "border-red-500 focus:border-red-500"
+                        : ""
+                    }
                     value={formData.id_number}
                     onChange={handleInputChange}
+                    autoComplete="off"
                   />
+                  {errors.id_number && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.id_number}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="industry">Industry</Label>
-                  <select
-                    id="industry"
+                  <Select
                     value={formData.industry}
-                    onChange={(e) => {
-                      console.log(e.target.value);
-                      setFormData((prev) => ({
-                        ...prev,
-                        industry: e.target.value,
-                      }));
-                    }}
-                    className="w-full rounded-md border px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    onValueChange={(value) =>
+                      handleSelectChange("industry", value)
+                    }
                   >
-                    <option value="">Select your industry</option>
-                    {industries.map((industry) => (
-                      <option key={industry.mcc} value={industry.mcc}>
-                        {industry.label}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger
+                      className={
+                        errors.industry
+                          ? "border-red-500 focus:border-red-500"
+                          : ""
+                      }
+                    >
+                      <SelectValue placeholder="Select your industry" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {industries.map((industry) => (
+                        <SelectItem key={industry.mcc} value={industry.mcc}>
+                          {industry.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.industry && (
+                    <div className="flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.industry}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
