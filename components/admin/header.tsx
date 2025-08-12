@@ -17,22 +17,30 @@ import Image from "next/image";
 import { deleteAllCookies } from "@/app/common";
 import axios from "axios";
 import { User } from "@/lib/auth-types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Notification } from "@/app/types";
 
 export function AdminHeader() {
   const [unreadNotifications, setUnreadNotifications] = useState(false);
   const perPage = 10000;
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
   const fetchNotifications = async () => {
+    console.log("fetching notifications");
     const user = localStorage.getItem("user");
     if (!user) return;
 
+    console.log(user, "user");
     const userObj = JSON.parse(user) as User;
     // Add filter parameter if not showing all notifications
     let url = `${process.env.NEXT_PUBLIC_API_URL}/notifications/user/${userObj._id}?page=${currentPage}&perPage=${perPage}&isRead=true`;
 
     const response = await axios.get(url);
+
+    console.log(response.data, "response");
 
     const unreadNotifications = response.data.filter(
       (notification: Notification) => !notification.isRead
@@ -40,6 +48,8 @@ export function AdminHeader() {
 
     setUnreadNotifications(unreadNotifications.length > 0);
   };
+
+  console.log(unreadNotifications, "unread");
 
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-white px-6">
