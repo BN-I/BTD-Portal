@@ -101,10 +101,10 @@ export default function OrdersPage() {
         paymentMethod: "Unknown", // Placeholder, as API doesn't provide this
         shippingAddress: {
           street: order.event?.location || "N/A",
-          city: order.user?.city || "N/A",
-          state: order.user?.state || "N/A",
-          zipCode: order.user?.postalCode || "N/A",
-          country: order.user?.country || "N/A",
+          city: order.event?.city || "N/A",
+          state: order.event?.state || "N/A",
+          zipCode: order.event?.postalCode || "N/A",
+          country: order.event?.country || "N/A",
         },
         createdAt: order.createdAt,
         updatedAt: order.updatedAt,
