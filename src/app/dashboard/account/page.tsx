@@ -234,7 +234,7 @@ export default function VendorAccountPage() {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/create-portal-session`
+        `${process.env.NEXT_PUBLIC_API_URL}/create-portal-session/${vendor?._id}`
       );
       const { url } = response.data;
       window.location.href = url;
