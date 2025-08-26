@@ -24,6 +24,7 @@ import {
 import axios from "axios";
 import type { User } from "@/lib/auth-types";
 import { formatDistanceToNow } from "date-fns";
+import { trimWithEllipsis } from "@/app/common";
 
 interface Notification {
   _id: string;
@@ -34,10 +35,14 @@ interface Notification {
   createdAt: string;
   updatedAt: string;
   user: string;
+  description: string;
 }
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [filteredNotifications, setFilteredNotifications] = useState<
+    Notification[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -47,6 +52,47 @@ export default function NotificationsPage() {
   useEffect(() => {
     fetchNotifications();
   }, [currentPage, activeTab]);
+
+  useEffect(() => {
+    filterNotifications();
+  }, [activeTab]);
+
+  const filterNotifications = () => {
+    if (activeTab === "all") {
+      setFilteredNotifications(notifications);
+      return;
+    }
+
+    if (activeTab === "unread") {
+      setFilteredNotifications(
+        notifications.filter((notification) => !notification.isRead)
+      );
+      return;
+    }
+
+    if (activeTab === "order") {
+      setFilteredNotifications(
+        notifications.filter(
+          (notification) => notification.type === "new_order"
+        )
+      );
+      return;
+    }
+
+    if (activeTab === "event") {
+      setFilteredNotifications(
+        notifications.filter((notification) => notification.type === "event")
+      );
+      return;
+    }
+
+    if (activeTab === "payment") {
+      setFilteredNotifications(
+        notifications.filter((notification) => notification.type === "payment")
+      );
+      return;
+    }
+  };
 
   const fetchNotifications = async () => {
     setLoading(true);
@@ -89,9 +135,9 @@ export default function NotificationsPage() {
       const userObj = JSON.parse(user) as User;
 
       await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/notifications/${id}/read`,
+        `${process.env.NEXT_PUBLIC_API_URL}/notifications/${id}`,
         {
-          userId: userObj._id,
+          isRead: true,
         }
       );
 
@@ -110,17 +156,16 @@ export default function NotificationsPage() {
 
   const markAllAsRead = async () => {
     try {
-      const user = localStorage.getItem("user");
-      if (!user) return;
-
-      const userObj = JSON.parse(user) as User;
-
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/notifications/mark-all-read`,
-        {
-          userId: userObj._id,
+      notifications.forEach((notification) => {
+        if (!notification.isRead) {
+          axios.put(
+            `${process.env.NEXT_PUBLIC_API_URL}/notifications/${notification._id}`,
+            {
+              isRead: true,
+            }
+          );
         }
-      );
+      });
 
       // Update local state
       setNotifications(
@@ -184,7 +229,7 @@ export default function NotificationsPage() {
             <div className="flex justify-center items-center py-10">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00BFA6]"></div>
             </div>
-          ) : notifications.length === 0 ? (
+          ) : filteredNotifications.length === 0 ? (
             <div className="text-center py-10">
               <Bell className="mx-auto h-12 w-12 text-gray-300" />
               <h3 className="mt-2 text-lg font-medium">No notifications</h3>
@@ -193,7 +238,7 @@ export default function NotificationsPage() {
               </p>
             </div>
           ) : (
-            notifications.map((notification) => (
+            filteredNotifications.map((notification) => (
               <Card
                 key={notification._id}
                 className={`transition-colors ${
@@ -226,7 +271,7 @@ export default function NotificationsPage() {
                         </div>
                       </div>
                       <p className="text-gray-600 mt-1">
-                        {notification.message}
+                        {trimWithEllipsis(notification.description, 100)}
                       </p>
                     </div>
                   </div>
