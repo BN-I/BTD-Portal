@@ -21,10 +21,16 @@ export default function DashboardLayout({
     try {
       const user = localStorage.getItem("user");
 
-      const storeData = getCookie("storeData");
-      const businessInformation = getCookie("businessInformation");
-      const paymentInformation = getCookie("paymentInformation");
-      const subscription = getCookie("subscription");
+      // const storeData = getCookie("storeData");
+      // const businessInformation = getCookie("businessInformation");
+      // const paymentInformation = getCookie("paymentInformation");
+      // const subscription = getCookie("subscription");
+
+      const storeData = localStorage.getItem("storeData");
+      const businessInformation = localStorage.getItem("businessInformation");
+      const paymentInformation = localStorage.getItem("paymentInformation");
+      const subscription = localStorage.getItem("subscription");
+
       console.log("user", user);
       console.log("storeData", storeData);
       console.log("businessInformation", businessInformation);

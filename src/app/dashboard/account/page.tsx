@@ -81,6 +81,7 @@ import {
   isValidStoreName,
   VALIDATION_MESSAGES,
 } from "@/lib/validations/account";
+import { getCookie } from "@/app/common";
 
 // Business categories for vendors
 const businessCategories = [
@@ -666,9 +667,13 @@ export default function VendorAccountPage() {
         description: "Your store information has been updated successfully.",
       });
 
-      document.cookie = `storeData=${encodeURIComponent(
-        JSON.stringify(response.data)
-      )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
+      // document.cookie = `storeData=${encodeURIComponent(
+      //   JSON.stringify(response.data)
+      // )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
+      document.cookie = `storeData=${true}; path=/; max-age=${
+        60 * 60 * 24 * 365
+      }`;
+      localStorage.setItem("storeData", JSON.stringify(response.data));
     } catch (error) {
       console.error("Error saving store information:", error);
       toast({
@@ -725,9 +730,22 @@ export default function VendorAccountPage() {
         description: "Your business details have been updated successfully.",
       });
 
-      document.cookie = `businessInformation=${encodeURIComponent(
+      console.log(response.data);
+      // document.cookie = `businessInformation=${encodeURIComponent(
+      //   JSON.stringify(response.data)
+      // )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
+      document.cookie = `businessInformation=${true}; path=/; max-age=${
+        60 * 60 * 24 * 365
+      }`;
+      localStorage.setItem(
+        "businessInformation",
         JSON.stringify(response.data)
-      )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
+      );
+
+      console.log(
+        "businessInformation",
+        localStorage.getItem("businessInformation")
+      );
     } catch (error) {
       console.error("Error saving business details:", error);
       toast({
@@ -808,9 +826,13 @@ export default function VendorAccountPage() {
         description: "Your payment information has been updated successfully.",
       });
 
-      document.cookie = `paymentInformation=${encodeURIComponent(
-        JSON.stringify(response.data)
-      )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
+      // document.cookie = `paymentInformation=${encodeURIComponent(
+      //   JSON.stringify(response.data)
+      // )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
+      document.cookie = `paymentInformation=${true}; path=/; max-age=${
+        60 * 60 * 24 * 365
+      }`;
+      localStorage.setItem("paymentInformation", JSON.stringify(response.data));
     } catch (error) {
       console.error("Error saving payment information:", error);
       toast({

@@ -42,6 +42,7 @@ export function hasStoreData(user: User | null): boolean {
   if (user.role !== "Vendor") return true;
 
   // Check if vendor has store data
-  const storeData = getCookie("storeData");
+  // const storeData = getCookie("storeData");
+  const storeData = localStorage.getItem("storeData");
   return !!storeData;
 }

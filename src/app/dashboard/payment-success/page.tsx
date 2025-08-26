@@ -33,9 +33,13 @@ export default function SuccessPage() {
 
       const { session, subscription, error } = response.data;
 
-      document.cookie = `subscription=${encodeURIComponent(
-        JSON.stringify(subscription)
-      )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
+      // document.cookie = `subscription=${encodeURIComponent(
+      //   JSON.stringify(subscription)
+      // )}; path=/; max-age=${60 * 60 * 24 * 365}`; // Expires in 365 days
+      document.cookie = `subscription=${true}; path=/; max-age=${
+        60 * 60 * 24 * 365
+      }`;
+      localStorage.setItem("subscription", JSON.stringify(subscription));
 
       if (error) {
         setStatus("failed");
