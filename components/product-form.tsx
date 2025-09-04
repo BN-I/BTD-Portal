@@ -83,14 +83,26 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     }
 
     // Check if files are required and present
+    // For new products: require at least one image
+    // For editing products: either keep existing images or add new ones
     if (!product && files.length === 0) {
       setError("Please select at least one image file");
       return;
     }
 
+    // For editing products, ensure we have either existing images or new files
+    if (
+      product &&
+      files.length === 0 &&
+      (!product.images || product.images.length === 0)
+    ) {
+      setError("Please select at least one image file or keep existing images");
+      return;
+    }
+
     // Validate image file sizes
     if (files.length > 0) {
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      const maxSize = 1 * 1024 * 1024; // 5MB in bytes
       const oversizedFiles: string[] = [];
 
       files.forEach((file) => {
@@ -101,7 +113,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
       if (oversizedFiles.length > 0) {
         setImageError(
-          `Image(s) exceed 5MB limit: ${oversizedFiles.join(", ")}`
+          `Image(s) exceed 1MB limit: ${oversizedFiles.join(", ")}`
         );
         return;
       }
@@ -161,7 +173,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     console.log("handleFileChange - current files state:", files);
 
     if (selectedFiles) {
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      const maxSize = 1 * 1024 * 1024; // 5MB in bytes
       const oversizedFiles: string[] = [];
 
       Array.from(selectedFiles).forEach((file) => {
@@ -172,7 +184,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
       if (oversizedFiles.length > 0) {
         setImageError(
-          `Image(s) exceed 5MB limit: ${oversizedFiles.join(", ")}`
+          `Image(s) exceed 1MB limit: ${oversizedFiles.join(", ")}`
         );
         e.target.value = ""; // Reset the input
         return;
@@ -286,11 +298,16 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         <div className="grid w-full max-w-sm items-center gap-1.5">
           <Label htmlFor="picture">Picture</Label>
           <span className="text-xs text-muted-foreground text-stone-400">
-            png | jpg | bmp | jpeg | webp (Max size: 5MB per image)
+            png | jpg | bmp | jpeg | webp (Max size: 1MB per image)
           </span>
           <span className="text-xs text-blue-600">
             💡 You can select multiple images at once or add more images by
             clicking "Choose Files" again
+            {product && product.images && product.images.length > 0 && (
+              <span className="block mt-1">
+                📸 New images will be added to existing ones
+              </span>
+            )}
           </span>
           <Input
             id="picture"
@@ -302,13 +319,28 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         </div>
 
         {/* Show existing product images when editing */}
-        {product?.images && !files && (
-          <div className="flex flex-row space-x-4">
-            {product.images.map((image, index) => (
-              <div key={index}>
-                <img src={image} alt={`Product ${index}`} />
-              </div>
-            ))}
+        {product?.images && product.images.length > 0 && (
+          <div className="mt-3">
+            <Label className="text-sm font-medium">
+              Existing Product Images:
+            </Label>
+            <div className="flex flex-wrap gap-3 mt-2">
+              {product.images.map((image, index) => (
+                <div
+                  key={index}
+                  className="relative min-w-[103px] flex flex-col items-center justify-center group"
+                >
+                  <img
+                    src={image}
+                    alt={`Product ${index + 1}`}
+                    className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                  />
+                  <div className="text-xs text-gray-500 mt-1 text-center">
+                    Existing Image {index + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
