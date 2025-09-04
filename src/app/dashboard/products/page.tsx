@@ -36,7 +36,9 @@ export default function ProductsPage() {
   const { toast } = useToast();
 
   const handleAddProduct = (newProduct: ProductForm) => {
-    console.log(newProduct);
+    console.log("handleAddProduct - newProduct:", newProduct);
+    console.log("handleAddProduct - files:", newProduct.files);
+    console.log("handleAddProduct - files length:", newProduct.files?.length);
     var user = localStorage.getItem("user") as string | null;
     var userObj = null;
     if (user) {
@@ -65,9 +67,15 @@ export default function ProductsPage() {
       formData.append("colorVariations", color);
     });
 
-    newProduct.files?.forEach((image: any) => {
-      formData.append("files", image);
-    });
+    if (newProduct.files && newProduct.files.length > 0) {
+      console.log("Adding files to FormData:", newProduct.files);
+      newProduct.files.forEach((image: any) => {
+        console.log("Adding file to FormData:", image.name, image.size);
+        formData.append("files", image);
+      });
+    } else {
+      console.log("No files to add to FormData");
+    }
 
     formData.append("category", newProduct.category);
 

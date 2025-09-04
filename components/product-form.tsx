@@ -48,14 +48,15 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   const [customSizes, setCustomSizes] = useState<string[]>(
     product?.sizeVariations?.length ? product.sizeVariations : [""]
   );
-  const [files, setFiles] = useState<FileList | null>();
+  const [files, setFiles] = useState<File[]>([]);
   const [fileUrls, setFileUrls] = useState<string[]>([]);
   const [error, setError] = useState<string>("");
   const [imageError, setImageError] = useState<string>("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(typeof orderMaxDays);
+    console.log("Form submission - files state:", files);
+    console.log("Form submission - fileUrls state:", fileUrls);
 
     // Clear previous errors
     setError("");
@@ -81,12 +82,18 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       return;
     }
 
+    // Check if files are required and present
+    if (!product && files.length === 0) {
+      setError("Please select at least one image file");
+      return;
+    }
+
     // Validate image file sizes
-    if (files) {
+    if (files.length > 0) {
       const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       const oversizedFiles: string[] = [];
 
-      Array.from(files).forEach((file) => {
+      files.forEach((file) => {
         if (file.size > maxSize) {
           oversizedFiles.push(file.name);
         }
@@ -111,7 +118,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       orderMaxDays: orderMaxDays,
       colorVariations: colors.map((color) => color.hex),
       sizeVariations: customSizes.filter((size) => size.trim() !== ""),
-      files: files ? Array.from(files) : [],
+      files: files,
     });
   };
 
@@ -150,6 +157,9 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     const selectedFiles = e.target.files;
     setImageError(""); // Clear previous image errors
 
+    console.log("handleFileChange - selectedFiles:", selectedFiles);
+    console.log("handleFileChange - current files state:", files);
+
     if (selectedFiles) {
       const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       const oversizedFiles: string[] = [];
@@ -168,31 +178,27 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         return;
       }
 
-      // Combine existing files with new files
-      if (files) {
-        const dt = new DataTransfer();
+      // Convert selectedFiles to array and combine with existing files
+      const newFiles = Array.from(selectedFiles);
+      console.log("New files to add:", newFiles);
 
-        // Add existing files
-        Array.from(files).forEach((file) => dt.items.add(file));
-
-        // Add new files
-        Array.from(selectedFiles).forEach((file) => dt.items.add(file));
-
-        setFiles(dt.files);
+      if (files.length > 0) {
+        console.log("Combining existing files with new files");
+        // Combine existing files with new files
+        const combinedFiles = [...files, ...newFiles];
+        console.log("Combined files:", combinedFiles);
+        setFiles(combinedFiles);
 
         // Create URLs for new thumbnails and add to existing ones
-        const newUrls = Array.from(selectedFiles).map((file) =>
-          URL.createObjectURL(file)
-        );
+        const newUrls = newFiles.map((file) => URL.createObjectURL(file));
         setFileUrls((prev) => [...prev, ...newUrls]);
       } else {
+        console.log("First time selecting files");
         // First time selecting files
-        setFiles(selectedFiles);
+        setFiles(newFiles);
 
         // Create URLs for thumbnails
-        const urls = Array.from(selectedFiles).map((file) =>
-          URL.createObjectURL(file)
-        );
+        const urls = newFiles.map((file) => URL.createObjectURL(file));
         setFileUrls(urls);
       }
 
@@ -202,18 +208,10 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   };
 
   const removeImage = (index: number) => {
-    if (files) {
-      const dt = new DataTransfer();
-      const fileArray = Array.from(files);
-
+    if (files.length > 0) {
       // Remove the file at the specified index
-      fileArray.splice(index, 1);
-
-      // Add remaining files to DataTransfer
-      fileArray.forEach((file) => dt.items.add(file));
-
-      // Update files state
-      setFiles(dt.files);
+      const updatedFiles = files.filter((_, i) => i !== index);
+      setFiles(updatedFiles);
 
       // Update file URLs
       const newUrls = [...fileUrls];
@@ -299,7 +297,6 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
             type="file"
             accept="image/png,image/jpeg,image/bmp,image/jpg,image/webp"
             multiple
-            required={product ? false : true}
             onChange={handleFileChange}
           />
         </div>
@@ -339,7 +336,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                     ×
                   </button>
                   <div className="text-xs text-gray-500 mt-1 text-center">
-                    {files && files[index]
+                    {files[index]
                       ? files[index].name.substring(0, 15) +
                         (files[index].name.length > 15 ? "..." : "")
                       : ""}
@@ -353,6 +350,21 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         {imageError && (
           <div className="text-red-500 text-sm mt-1">{imageError}</div>
         )}
+
+        {/* Debug info - remove this after fixing the issue */}
+        {/* {process.env.NODE_ENV === "development" && (
+          <div className="text-xs text-gray-500 mt-2 p-2 bg-gray-100 rounded">
+            <div>Debug Info:</div>
+            <div>Files count: {files ? files.length : 0}</div>
+            <div>File URLs count: {fileUrls.length}</div>
+            {files &&
+              Array.from(files).map((file, index) => (
+                <div key={index}>
+                  File {index + 1}: {file.name} ({file.size} bytes)
+                </div>
+              ))}
+          </div>
+        )} */}
       </div>
 
       <div className="space-y-2">
