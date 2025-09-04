@@ -72,7 +72,9 @@ export default function ProductsPage() {
     formData.append("category", newProduct.category);
 
     axios
-      .post(`${process.env.NEXT_PUBLIC_API_URL}/product`, formData)
+      .post(`${process.env.NEXT_PUBLIC_API_URL}/product`, formData, {
+        timeout: 18000,
+      })
       .then(() => {
         toast({
           variant: "default",

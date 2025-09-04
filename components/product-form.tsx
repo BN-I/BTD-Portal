@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,11 +49,18 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     product?.sizeVariations?.length ? product.sizeVariations : [""]
   );
   const [files, setFiles] = useState<FileList | null>();
+  const [fileUrls, setFileUrls] = useState<string[]>([]);
   const [error, setError] = useState<string>("");
+  const [imageError, setImageError] = useState<string>("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log(typeof orderMaxDays);
+
+    // Clear previous errors
+    setError("");
+    setImageError("");
+
     if (discountedPrice && parseFloat(discountedPrice) > parseFloat(price)) {
       setError("Discounted price cannot be greater than price");
       return;
@@ -72,6 +79,25 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     if (orderMaxDays < orderMinDays) {
       setError("Order max days cannot be less than order min days");
       return;
+    }
+
+    // Validate image file sizes
+    if (files) {
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      const oversizedFiles: string[] = [];
+
+      Array.from(files).forEach((file) => {
+        if (file.size > maxSize) {
+          oversizedFiles.push(file.name);
+        }
+      });
+
+      if (oversizedFiles.length > 0) {
+        setImageError(
+          `Image(s) exceed 5MB limit: ${oversizedFiles.join(", ")}`
+        );
+        return;
+      }
     }
 
     onSubmit({
@@ -119,6 +145,90 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       resolve(true);
     });
   };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = e.target.files;
+    setImageError(""); // Clear previous image errors
+
+    if (selectedFiles) {
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      const oversizedFiles: string[] = [];
+
+      Array.from(selectedFiles).forEach((file) => {
+        if (file.size > maxSize) {
+          oversizedFiles.push(file.name);
+        }
+      });
+
+      if (oversizedFiles.length > 0) {
+        setImageError(
+          `Image(s) exceed 5MB limit: ${oversizedFiles.join(", ")}`
+        );
+        e.target.value = ""; // Reset the input
+        return;
+      }
+
+      // Combine existing files with new files
+      if (files) {
+        const dt = new DataTransfer();
+
+        // Add existing files
+        Array.from(files).forEach((file) => dt.items.add(file));
+
+        // Add new files
+        Array.from(selectedFiles).forEach((file) => dt.items.add(file));
+
+        setFiles(dt.files);
+
+        // Create URLs for new thumbnails and add to existing ones
+        const newUrls = Array.from(selectedFiles).map((file) =>
+          URL.createObjectURL(file)
+        );
+        setFileUrls((prev) => [...prev, ...newUrls]);
+      } else {
+        // First time selecting files
+        setFiles(selectedFiles);
+
+        // Create URLs for thumbnails
+        const urls = Array.from(selectedFiles).map((file) =>
+          URL.createObjectURL(file)
+        );
+        setFileUrls(urls);
+      }
+
+      // Reset the input so user can select more files
+      e.target.value = "";
+    }
+  };
+
+  const removeImage = (index: number) => {
+    if (files) {
+      const dt = new DataTransfer();
+      const fileArray = Array.from(files);
+
+      // Remove the file at the specified index
+      fileArray.splice(index, 1);
+
+      // Add remaining files to DataTransfer
+      fileArray.forEach((file) => dt.items.add(file));
+
+      // Update files state
+      setFiles(dt.files);
+
+      // Update file URLs
+      const newUrls = [...fileUrls];
+      URL.revokeObjectURL(newUrls[index]); // Clean up the removed URL
+      newUrls.splice(index, 1);
+      setFileUrls(newUrls);
+    }
+  };
+
+  // Clean up URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      fileUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [fileUrls]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -178,7 +288,11 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         <div className="grid w-full max-w-sm items-center gap-1.5">
           <Label htmlFor="picture">Picture</Label>
           <span className="text-xs text-muted-foreground text-stone-400">
-            png | jpg | bmp | jpeg | webp
+            png | jpg | bmp | jpeg | webp (Max size: 5MB per image)
+          </span>
+          <span className="text-xs text-blue-600">
+            💡 You can select multiple images at once or add more images by
+            clicking "Choose Files" again
           </span>
           <Input
             id="picture"
@@ -186,12 +300,11 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
             accept="image/png,image/jpeg,image/bmp,image/jpg,image/webp"
             multiple
             required={product ? false : true}
-            onChange={(e) => {
-              setFiles(e.target.files);
-            }}
+            onChange={handleFileChange}
           />
         </div>
 
+        {/* Show existing product images when editing */}
         {product?.images && !files && (
           <div className="flex flex-row space-x-4">
             {product.images.map((image, index) => (
@@ -200,6 +313,45 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
               </div>
             ))}
           </div>
+        )}
+
+        {/* Show thumbnails of newly uploaded images */}
+        {fileUrls.length > 0 && (
+          <div className="mt-3">
+            <Label className="text-sm font-medium">Uploaded Images:</Label>
+            <div className="flex flex-wrap gap-3 mt-2">
+              {fileUrls.map((url, index) => (
+                <div
+                  key={index}
+                  className="relative min-w-[103px] flex flex-col items-center justify-center group"
+                >
+                  <img
+                    src={url}
+                    alt={`Preview ${index + 1}`}
+                    className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                    title="Remove image"
+                  >
+                    ×
+                  </button>
+                  <div className="text-xs text-gray-500 mt-1 text-center">
+                    {files && files[index]
+                      ? files[index].name.substring(0, 15) +
+                        (files[index].name.length > 15 ? "..." : "")
+                      : ""}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {imageError && (
+          <div className="text-red-500 text-sm mt-1">{imageError}</div>
         )}
       </div>
 
