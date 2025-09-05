@@ -17,6 +17,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Product, ProductForm, DeletingProduct } from "@/app/types";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
@@ -33,7 +49,16 @@ export default function ProductsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingProduct, setDeletingProduct] =
     useState<DeletingProduct | null>();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState("10");
   const { toast } = useToast();
+
+  // Pagination logic
+  const totalPages = Math.ceil(products.length / Number(itemsPerPage));
+  const paginatedProducts = products.slice(
+    (currentPage - 1) * Number(itemsPerPage),
+    currentPage * Number(itemsPerPage)
+  );
 
   const handleAddProduct = (newProduct: ProductForm) => {
     console.log("handleAddProduct - newProduct:", newProduct);
@@ -195,7 +220,7 @@ export default function ProductsPage() {
       var userObj = JSON.parse(user) as User;
       axios
         .get(
-          `${process.env.NEXT_PUBLIC_API_URL}/product/vendor/${userObj?._id}`
+          `${process.env.NEXT_PUBLIC_API_URL}/product/vendor/${userObj?._id}?perPage=9999`
         )
         .then((response) => {
           setProducts(response.data);
@@ -209,6 +234,11 @@ export default function ProductsPage() {
         });
     }
   }, [shouldUpdate, dialogOpen, editDialogOpen]);
+
+  // Reset to first page when items per page changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage]);
 
   return (
     <div className="space-y-4">
@@ -237,7 +267,7 @@ export default function ProductsPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product) => (
+          {paginatedProducts.map((product) => (
             <TableRow key={product._id}>
               <TableCell>{product.title}</TableCell>
               <TableCell>${product.price.toFixed(2)}</TableCell>
@@ -323,6 +353,72 @@ export default function ProductsPage() {
           ))}
         </TableBody>
       </Table>
+
+      {/* Pagination controls */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-gray-500">Items per page:</span>
+          <Select value={itemsPerPage} onValueChange={setItemsPerPage}>
+            <SelectTrigger className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="5">5</SelectItem>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="text-sm text-gray-500">
+          Showing {(currentPage - 1) * Number(itemsPerPage) + 1} to{" "}
+          {Math.min(currentPage * Number(itemsPerPage), products.length)} of{" "}
+          {products.length} products
+        </div>
+
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                className={
+                  currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                }
+              />
+            </PaginationItem>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const pageNumber = i + 1;
+              return (
+                <PaginationItem key={pageNumber}>
+                  <PaginationLink
+                    isActive={pageNumber === currentPage}
+                    onClick={() => setCurrentPage(pageNumber)}
+                  >
+                    {pageNumber}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            })}
+
+            {totalPages > 5 && <PaginationEllipsis />}
+
+            <PaginationItem>
+              <PaginationNext
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                className={
+                  currentPage === totalPages
+                    ? "pointer-events-none opacity-50"
+                    : ""
+                }
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
     </div>
   );
 }
