@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,12 +48,20 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   const [customSizes, setCustomSizes] = useState<string[]>(
     product?.sizeVariations?.length ? product.sizeVariations : [""]
   );
-  const [files, setFiles] = useState<FileList | null>();
+  const [files, setFiles] = useState<File[]>([]);
+  const [fileUrls, setFileUrls] = useState<string[]>([]);
   const [error, setError] = useState<string>("");
+  const [imageError, setImageError] = useState<string>("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(typeof orderMaxDays);
+    console.log("Form submission - files state:", files);
+    console.log("Form submission - fileUrls state:", fileUrls);
+
+    // Clear previous errors
+    setError("");
+    setImageError("");
+
     if (discountedPrice && parseFloat(discountedPrice) > parseFloat(price)) {
       setError("Discounted price cannot be greater than price");
       return;
@@ -74,6 +82,43 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       return;
     }
 
+    // Check if files are required and present
+    // For new products: require at least one image
+    // For editing products: either keep existing images or add new ones
+    if (!product && files.length === 0) {
+      setError("Please select at least one image file");
+      return;
+    }
+
+    // For editing products, ensure we have either existing images or new files
+    if (
+      product &&
+      files.length === 0 &&
+      (!product.images || product.images.length === 0)
+    ) {
+      setError("Please select at least one image file or keep existing images");
+      return;
+    }
+
+    // Validate image file sizes
+    if (files.length > 0) {
+      const maxSize = 1 * 1024 * 1024; // 5MB in bytes
+      const oversizedFiles: string[] = [];
+
+      files.forEach((file) => {
+        if (file.size > maxSize) {
+          oversizedFiles.push(file.name);
+        }
+      });
+
+      if (oversizedFiles.length > 0) {
+        setImageError(
+          `Image(s) exceed 1MB limit: ${oversizedFiles.join(", ")}`
+        );
+        return;
+      }
+    }
+
     onSubmit({
       _id: product?._id ? product._id : "",
       title: name,
@@ -85,7 +130,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       orderMaxDays: orderMaxDays,
       colorVariations: colors.map((color) => color.hex),
       sizeVariations: customSizes.filter((size) => size.trim() !== ""),
-      files: files ? Array.from(files) : [],
+      files: files,
     });
   };
 
@@ -119,6 +164,81 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       resolve(true);
     });
   };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = e.target.files;
+    setImageError(""); // Clear previous image errors
+
+    console.log("handleFileChange - selectedFiles:", selectedFiles);
+    console.log("handleFileChange - current files state:", files);
+
+    if (selectedFiles) {
+      const maxSize = 1 * 1024 * 1024; // 5MB in bytes
+      const oversizedFiles: string[] = [];
+
+      Array.from(selectedFiles).forEach((file) => {
+        if (file.size > maxSize) {
+          oversizedFiles.push(file.name);
+        }
+      });
+
+      if (oversizedFiles.length > 0) {
+        setImageError(
+          `Image(s) exceed 1MB limit: ${oversizedFiles.join(", ")}`
+        );
+        e.target.value = ""; // Reset the input
+        return;
+      }
+
+      // Convert selectedFiles to array and combine with existing files
+      const newFiles = Array.from(selectedFiles);
+      console.log("New files to add:", newFiles);
+
+      if (files.length > 0) {
+        console.log("Combining existing files with new files");
+        // Combine existing files with new files
+        const combinedFiles = [...files, ...newFiles];
+        console.log("Combined files:", combinedFiles);
+        setFiles(combinedFiles);
+
+        // Create URLs for new thumbnails and add to existing ones
+        const newUrls = newFiles.map((file) => URL.createObjectURL(file));
+        setFileUrls((prev) => [...prev, ...newUrls]);
+      } else {
+        console.log("First time selecting files");
+        // First time selecting files
+        setFiles(newFiles);
+
+        // Create URLs for thumbnails
+        const urls = newFiles.map((file) => URL.createObjectURL(file));
+        setFileUrls(urls);
+      }
+
+      // Reset the input so user can select more files
+      e.target.value = "";
+    }
+  };
+
+  const removeImage = (index: number) => {
+    if (files.length > 0) {
+      // Remove the file at the specified index
+      const updatedFiles = files.filter((_, i) => i !== index);
+      setFiles(updatedFiles);
+
+      // Update file URLs
+      const newUrls = [...fileUrls];
+      URL.revokeObjectURL(newUrls[index]); // Clean up the removed URL
+      newUrls.splice(index, 1);
+      setFileUrls(newUrls);
+    }
+  };
+
+  // Clean up URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      fileUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [fileUrls]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -178,29 +298,105 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         <div className="grid w-full max-w-sm items-center gap-1.5">
           <Label htmlFor="picture">Picture</Label>
           <span className="text-xs text-muted-foreground text-stone-400">
-            png | jpg | bmp | jpeg | webp
+            png | jpg | bmp | jpeg | webp (Max size: 1MB per image)
+          </span>
+          <span className="text-xs text-blue-600">
+            💡 You can select multiple images at once or add more images by
+            clicking "Choose Files" again
+            {product && product.images && product.images.length > 0 && (
+              <span className="block mt-1">
+                📸 New images will be added to existing ones
+              </span>
+            )}
           </span>
           <Input
             id="picture"
             type="file"
             accept="image/png,image/jpeg,image/bmp,image/jpg,image/webp"
             multiple
-            required={product ? false : true}
-            onChange={(e) => {
-              setFiles(e.target.files);
-            }}
+            onChange={handleFileChange}
           />
         </div>
 
-        {product?.images && !files && (
-          <div className="flex flex-row space-x-4">
-            {product.images.map((image, index) => (
-              <div key={index}>
-                <img src={image} alt={`Product ${index}`} />
-              </div>
-            ))}
+        {/* Show existing product images when editing */}
+        {product?.images && product.images.length > 0 && (
+          <div className="mt-3">
+            <Label className="text-sm font-medium">
+              Existing Product Images:
+            </Label>
+            <div className="flex flex-wrap gap-3 mt-2">
+              {product.images.map((image, index) => (
+                <div
+                  key={index}
+                  className="relative min-w-[103px] flex flex-col items-center justify-center group"
+                >
+                  <img
+                    src={image}
+                    alt={`Product ${index + 1}`}
+                    className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                  />
+                  <div className="text-xs text-gray-500 mt-1 text-center">
+                    Existing Image {index + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
+
+        {/* Show thumbnails of newly uploaded images */}
+        {fileUrls.length > 0 && (
+          <div className="mt-3">
+            <Label className="text-sm font-medium">Uploaded Images:</Label>
+            <div className="flex flex-wrap gap-3 mt-2">
+              {fileUrls.map((url, index) => (
+                <div
+                  key={index}
+                  className="relative min-w-[103px] flex flex-col items-center justify-center group"
+                >
+                  <img
+                    src={url}
+                    alt={`Preview ${index + 1}`}
+                    className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                    title="Remove image"
+                  >
+                    ×
+                  </button>
+                  <div className="text-xs text-gray-500 mt-1 text-center">
+                    {files[index]
+                      ? files[index].name.substring(0, 15) +
+                        (files[index].name.length > 15 ? "..." : "")
+                      : ""}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {imageError && (
+          <div className="text-red-500 text-sm mt-1">{imageError}</div>
+        )}
+
+        {/* Debug info - remove this after fixing the issue */}
+        {/* {process.env.NODE_ENV === "development" && (
+          <div className="text-xs text-gray-500 mt-2 p-2 bg-gray-100 rounded">
+            <div>Debug Info:</div>
+            <div>Files count: {files ? files.length : 0}</div>
+            <div>File URLs count: {fileUrls.length}</div>
+            {files &&
+              Array.from(files).map((file, index) => (
+                <div key={index}>
+                  File {index + 1}: {file.name} ({file.size} bytes)
+                </div>
+              ))}
+          </div>
+        )} */}
       </div>
 
       <div className="space-y-2">
