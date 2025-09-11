@@ -132,6 +132,11 @@ export interface Order {
   trackingURL: string | undefined;
   createdAt: string;
   updatedAt: string;
+  address: string;
+  state: string;
+  city: string;
+  zipcode: string;
+  additionalAddressInfo: string;
 }
 
 export type SalesRecord = {

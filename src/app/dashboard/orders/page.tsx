@@ -443,6 +443,35 @@ export default function OrdersPage() {
                     ${selectedOrder.amount.toFixed(2)}
                   </p>
                 </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Address</h3>
+                  <p className="mt-1 ">{selectedOrder.address}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">State</h3>
+                  <p className="mt-1 ">{selectedOrder.state}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">City</h3>
+                  <p className="mt-1 ">{selectedOrder.city}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Zipcode</h3>
+                  <p className="mt-1 ">{selectedOrder.zipcode}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">
+                    Additional Address Info
+                  </h3>
+                  <p className="mt-1 ">
+                    {selectedOrder.additionalAddressInfo || "-"}{" "}
+                  </p>
+                </div>
               </div>
 
               <div>

@@ -108,6 +108,38 @@ export default function ProductsPage() {
           title: product.status,
           description: "Product visibility updated successfully",
         });
+      })
+      .catch((error) => {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+        });
+      });
+  };
+
+  const setProductIsFeatured = (product: Product) => {
+    product.isFeatured = !product.isFeatured;
+
+    setSelectedProduct({ ...product });
+
+    axios
+      .put(`${process.env.NEXT_PUBLIC_API_URL}/product/${product._id}`, {
+        isFeatured: product.isFeatured ? "true" : "false",
+      })
+      .then(() => {
+        toast({
+          variant: "default",
+          title: "Success",
+          description: "Product featured status updated successfully",
+        });
+      })
+      .catch((error) => {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+        });
       });
   };
 
@@ -361,6 +393,32 @@ export default function ProductsPage() {
                     Toggle visibility
                   </Label>
                   {selectedProduct.status === ProductStatus.Active ? (
+                    <Eye className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <EyeOff className="h-4 w-4 text-red-600" />
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="product-visibility">Featured Product</Label>
+                  <div className="text-sm text-gray-500">
+                    Toggle whether this product is featured
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="product-visibility"
+                    checked={selectedProduct.isFeatured === true}
+                    onCheckedChange={() =>
+                      setProductIsFeatured(selectedProduct)
+                    }
+                  />
+                  <Label htmlFor="product-visibility" className="sr-only">
+                    Toggle visibility
+                  </Label>
+                  {selectedProduct.isFeatured === true ? (
                     <Eye className="h-4 w-4 text-green-600" />
                   ) : (
                     <EyeOff className="h-4 w-4 text-red-600" />

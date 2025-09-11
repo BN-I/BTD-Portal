@@ -100,11 +100,11 @@ export default function OrdersPage() {
         paymentStatus: order.amountDispatched ? "Paid" : "Pending", // Derive from amountDispatched
         paymentMethod: "Unknown", // Placeholder, as API doesn't provide this
         shippingAddress: {
-          street: order.event?.location || "N/A",
-          city: order.event?.city || "N/A",
-          state: order.event?.state || "N/A",
-          zipCode: order.event?.postalCode || "N/A",
-          country: order.event?.country || "N/A",
+          address: order?.address || "N/A",
+          state: order.state || "N/A",
+          city: order.city || "N/A",
+          zipcode: order.zipcode || "N/A",
+          additionalAddressInfo: order.additionalAddressInfo || "N/A",
         },
         createdAt: order.createdAt,
         updatedAt: order.updatedAt,
@@ -420,13 +420,13 @@ export default function OrdersPage() {
                     Shipping Information
                   </div>
                   <p className="text-sm">
-                    {selectedOrder.shippingAddress.street}
+                    {selectedOrder.shippingAddress.address}
                     <br />
-                    {selectedOrder.shippingAddress.city},{" "}
-                    {selectedOrder.shippingAddress.state}{" "}
-                    {selectedOrder.shippingAddress.zipCode}
+                    {selectedOrder.shippingAddress.state},{" "}
+                    {selectedOrder.shippingAddress.city} <br />
+                    {selectedOrder.shippingAddress.zipcode}
                     <br />
-                    {selectedOrder.shippingAddress.country}
+                    {selectedOrder.shippingAddress.additionalAddressInfo}
                     <br />
                     Service: {selectedOrder.shippingService}
                     <br />
