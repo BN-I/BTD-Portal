@@ -13,10 +13,13 @@ import { login } from "@/lib/auth-service";
 import { cookies } from "next/headers"; // Import this to access cookies
 import axios from "axios";
 import { getStoreData } from "@/lib/http/getStoreData";
+import { useFacebookPixel } from "@/hooks/use-facebook-pixel";
 
 export default function SignInPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { trackPageView, trackLoginAttempt, trackLoginSuccess, trackCTA } =
+    useFacebookPixel();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
@@ -28,6 +31,9 @@ export default function SignInPage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
+    // Track page view
+    trackPageView("login", "auth");
+
     // Load video after page loads
     const timer = setTimeout(() => {
       setShowVideo(true);
@@ -45,6 +51,10 @@ export default function SignInPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    // Track login attempt
+    trackLoginAttempt("email");
+
     try {
       await login(formData).then(async (response) => {
         const userCookie = JSON.stringify(response);
@@ -58,6 +68,9 @@ export default function SignInPage() {
           title: "Login successful",
           description: "Welcome back!",
         });
+
+        // Track successful login
+        trackLoginSuccess(response.role);
 
         if (response.role == "Vendor") {
           await getStoreData(response._id);
@@ -103,6 +116,7 @@ export default function SignInPage() {
             <Link
               href="/auth/register"
               className="font-medium text-[#00BFA6] hover:text-[#00BFA6]/90"
+              onClick={() => trackCTA("register_link", "login_page")}
             >
               create a new account
             </Link>

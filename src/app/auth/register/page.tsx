@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -22,10 +22,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useFacebookPixel } from "@/hooks/use-facebook-pixel";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const {
+    trackPageView,
+    trackRegistrationFormStart,
+    trackRegistrationAttempt,
+    trackRegistrationSuccess,
+    trackAgreementViewed,
+    trackAgreementAccepted,
+    trackCTA,
+  } = useFacebookPixel();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,6 +48,12 @@ export default function RegisterPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isAgreementOpen, setIsAgreementOpen] = useState(false); // modal state
   const [hasReadAgreement, setHasReadAgreement] = useState(false);
+
+  // Track page view and form start
+  useEffect(() => {
+    trackPageView("register", "auth");
+    trackRegistrationFormStart();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -63,6 +79,9 @@ export default function RegisterPage() {
         throw new Error("All fields are required");
       }
 
+      // Track registration attempt
+      trackRegistrationAttempt();
+
       // If validations pass → open agreement modal
       setIsAgreementOpen(true);
     } catch (error: any) {
@@ -78,12 +97,20 @@ export default function RegisterPage() {
   const handleAcceptAgreement = async () => {
     setIsAgreementOpen(false);
     setIsLoading(true);
+
+    // Track agreement acceptance
+    trackAgreementAccepted();
+
     try {
       await register({
         ...formData,
         role: "Vendor",
         loginProvider: "Local",
       });
+
+      // Track successful registration
+      trackRegistrationSuccess("vendor");
+
       toast({
         title: "Registration successful",
         description: "Welcome to the dashboard!",
@@ -121,6 +148,7 @@ export default function RegisterPage() {
             <Link
               href="/auth/signin"
               className="font-medium text-[#00BFA6] hover:text-[#00BFA6]/90"
+              onClick={() => trackCTA("login_link", "register_page")}
             >
               sign in to your existing account
             </Link>
@@ -234,7 +262,15 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      <Dialog open={isAgreementOpen} onOpenChange={setIsAgreementOpen}>
+      <Dialog
+        open={isAgreementOpen}
+        onOpenChange={(open) => {
+          setIsAgreementOpen(open);
+          if (open) {
+            trackAgreementViewed();
+          }
+        }}
+      >
         <DialogContent className="max-w-lg flex flex-col">
           <DialogHeader>
             <DialogTitle>Terms & Agreement</DialogTitle>
