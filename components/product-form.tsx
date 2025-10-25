@@ -310,6 +310,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
             )}
           </span>
           <Input
+            className="cursor-pointer"
             id="picture"
             type="file"
             accept="image/png,image/jpeg,image/bmp,image/jpg,image/webp"
