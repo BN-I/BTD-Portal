@@ -17,6 +17,10 @@ export interface Product {
   orders: number;
   orderMinDays: number;
   orderMaxDays: number;
+  weight?: number;
+  length?: number;
+  width?: number;
+  height?: number;
   createdAt: string;
   updatedAt: string;
   files: File[] | undefined;
@@ -47,6 +51,10 @@ export interface productForm {
   sizeVariations?: string[];
   images?: string[];
   files?: File[];
+  weight: number;
+  length?: number;
+  width?: number;
+  height?: number;
 }
 
 export interface ProductForm {
@@ -62,6 +70,10 @@ export interface ProductForm {
   sizeVariations?: string[];
   images?: string[];
   files?: File[];
+  weight: number;
+  length?: number;
+  width?: number;
+  height?: number;
 }
 
 export interface Vendor {

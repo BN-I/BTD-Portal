@@ -36,6 +36,12 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   const [orderMinDays, setOrderMinDays] = useState<number>(
     product?.orderMinDays || 0
   );
+  const [weight, setWeight] = useState<string>(
+    product?.weight?.toString() || ""
+  );
+  const [length, setLength] = useState<number>(product?.length || 0);
+  const [width, setWidth] = useState<number>(product?.width || 0);
+  const [height, setHeight] = useState<number>(product?.height || 0);
 
   const [colors, setColors] = useState<{ hex: string; isOpen: boolean }[]>(
     product?.colorVariations
@@ -79,6 +85,12 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
     if (orderMaxDays < orderMinDays) {
       setError("Order max days cannot be less than order min days");
+      return;
+    }
+
+    const weightValue = parseFloat(weight);
+    if (!weight || isNaN(weightValue) || weightValue <= 0) {
+      setError("Weight is required and must be greater than 0");
       return;
     }
 
@@ -131,6 +143,10 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       colorVariations: colors.map((color) => color.hex),
       sizeVariations: customSizes.filter((size) => size.trim() !== ""),
       files: files,
+      weight: parseFloat(weight),
+      length: length || 0,
+      width: width || 0,
+      height: height || 0,
     });
   };
 
@@ -441,6 +457,59 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         </div>
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="weight">Weight (oz) *</Label>
+        <Input
+          id="weight"
+          type="number"
+          step="0.01"
+          min="0"
+          placeholder="Enter weight in ounces (e.g., 5.5)"
+          value={weight}
+          onChange={(e) => setWeight(e.target.value)}
+          required
+        />
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="length">Length (cm)</Label>
+          <Input
+            id="length"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="Enter length"
+            value={length}
+            onChange={(e) => setLength(parseFloat(e.target.value) || 0)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="width">Width (cm)</Label>
+          <Input
+            id="width"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="Enter width"
+            value={width}
+            onChange={(e) => setWidth(parseFloat(e.target.value) || 0)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="height">Height (cm)</Label>
+          <Input
+            id="height"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="Enter height"
+            value={height}
+            onChange={(e) => setHeight(parseFloat(e.target.value) || 0)}
+          />
+        </div>
+      </div>
+
       <div className="space-y-2 ">
         <Label htmlFor="color">Color</Label>
 
@@ -495,7 +564,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="size">Size Options</Label>
+        <Label htmlFor="size">Variation Options</Label>
         <div className="space-y-2">
           {customSizes.map((size, index) => (
             <div className="flex items-center space-x-2" key={index}>
@@ -527,7 +596,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
               onClick={addSizeInput}
               className="w-full"
             >
-              + Add Size
+              + Add Variation
             </Button>
           )}
         </div>
