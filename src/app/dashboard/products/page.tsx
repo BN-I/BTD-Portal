@@ -103,6 +103,10 @@ export default function ProductsPage() {
     }
 
     formData.append("category", newProduct.category);
+    formData.append("weight", newProduct.weight?.toString() || "0");
+    formData.append("length", (newProduct.length ?? 0).toString());
+    formData.append("width", (newProduct.width ?? 0).toString());
+    formData.append("height", (newProduct.height ?? 0).toString());
 
     axios
       .post(`${process.env.NEXT_PUBLIC_API_URL}/product`, formData, {
@@ -161,6 +165,10 @@ export default function ProductsPage() {
     });
 
     formData.append("category", updatedProduct.category);
+    formData.append("weight", updatedProduct.weight?.toString() || "0");
+    formData.append("length", (updatedProduct.length ?? 0).toString());
+    formData.append("width", (updatedProduct.width ?? 0).toString());
+    formData.append("height", (updatedProduct.height ?? 0).toString());
 
     // setProducts(
     //   products.map((p) => (p._id === updatedProduct?._id ? updatedProduct : p))

@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Search, Globe } from "lucide-react";
+import { Bell, Search, Globe, LogOut, UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,6 +12,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { User } from "@/lib/auth-types";
@@ -44,6 +55,13 @@ export function Header() {
     setUnreadNotifications(unreadNotifications.length > 0);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user");
+    deleteAllCookies();
+    window.location.href = "/auth/signin";
+  };
+
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-white px-6">
       <div className="flex flex-1 items-center gap-4">
@@ -71,7 +89,7 @@ export function Header() {
             <span className="sr-only">Toggle notifications</span>
           </Link>
         </Button>
-        <DropdownMenu>
+        {/* <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
@@ -88,9 +106,7 @@ export function Header() {
                 Profile
               </DropdownMenuItem>
             </Link>
-            {/* <DropdownMenuItem className="cursor-pointer">
-              Settings
-            </DropdownMenuItem> */}
+
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="cursor-pointer"
@@ -105,7 +121,46 @@ export function Header() {
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu> */}
+      </div>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/dashboard/account" className="flex items-center gap-2">
+            <UserIcon className="h-4 w-4" />
+            <span>Profile</span>
+          </Link>
+        </Button>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to log out? You will need to sign in again
+                to access your account.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleLogout}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Logout
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </header>
   );

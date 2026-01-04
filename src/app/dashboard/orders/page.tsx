@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Package2, Search } from "lucide-react";
+import { Package2, Search, Edit2, Info } from "lucide-react";
 import axios from "axios";
 import type { User } from "@/lib/auth-types";
 import type { Gift, Order } from "@/app/types";
@@ -312,6 +312,17 @@ export default function OrdersPage() {
           Filter
         </Button>
       </div>
+
+      {/* Guide Text */}
+      <div className="flex items-start gap-2 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+        <p className="text-sm text-blue-800">
+          <strong>Tip:</strong> Click on any order status badge to update it.
+          You can change the status and add tracking information when marking an
+          order as "shipped".
+        </p>
+      </div>
+
       {/* Orders Table */}
       <div className="rounded-lg border bg-white">
         <Table>
@@ -322,7 +333,7 @@ export default function OrdersPage() {
               <TableHead>Date</TableHead>
               <TableHead>Items</TableHead>
               <TableHead>Amount</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Status </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -365,11 +376,12 @@ export default function OrdersPage() {
 
                       setIsStatusDialogOpen(true);
                     }}
-                    className={`px-3 py-1 rounded-full text-xs hover:scale-105 uppercase w-full font-medium cursor-pointer ${getStatusColor(
+                    className={`flex shadow-md border items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs hover:scale-105 uppercase w-full font-medium cursor-pointer transition-all ${getStatusColor(
                       order.status
                     )}`}
-                    title="Change Status"
+                    title="Click to change status"
                   >
+                    <Edit2 className="h-3 w-3" />
                     {order.status}
                   </button>
                 </TableCell>

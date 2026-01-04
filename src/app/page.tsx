@@ -1,8 +1,22 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { useFacebookPixel } from "@/hooks/use-facebook-pixel";
+import { useEffect } from "react";
 
 export default function HomePage() {
+  const { trackMainPageView, trackCTA } = useFacebookPixel();
+
+  // Track main page view
+  useEffect(() => {
+    trackMainPageView("direct");
+  }, []);
+
+  const handleCTAClick = (ctaType: string) => {
+    trackCTA(ctaType, "main_page");
+  };
   return (
     <div className="flex flex-col min-h-screen">
       <header className="px-4 lg:px-6 h-14 flex items-center">
@@ -47,10 +61,14 @@ export default function HomePage() {
                   <Button>Get Started</Button>
                 </Link> */}
                 <Link href="/auth/signin">
-                  <Button>Log In</Button>
+                  <Button onClick={() => handleCTAClick("login")}>
+                    Log In
+                  </Button>
                 </Link>
                 <Link href="/auth/register">
-                  <Button>Get Started</Button>
+                  <Button onClick={() => handleCTAClick("register")}>
+                    Get Started
+                  </Button>
                 </Link>
               </div>
             </div>
