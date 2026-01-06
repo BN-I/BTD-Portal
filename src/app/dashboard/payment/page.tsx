@@ -52,6 +52,9 @@ interface Payment {
   vendor: User;
   amount: number;
   totalAmount: number;
+  subtotal: number;
+  shippingAmount: number;
+  taxAmount: number;
   status: string;
   user: User;
   event: Event;
@@ -465,7 +468,10 @@ export default function PaymentsPage() {
                       </TableCell>
                       <TableCell>
                         {formatCurrency(
-                          payment.totalAmount - (payment.totalAmount * 8) / 100
+                          payment.subtotal -
+                            (payment.subtotal * 8) / 100 +
+                            payment.shippingAmount +
+                            payment.taxAmount
                         )}
                       </TableCell>
                       <TableCell>{formatDate(payment.createdAt)}</TableCell>
@@ -591,8 +597,10 @@ export default function PaymentsPage() {
                   </h3>
                   <p className="mt-1 font-bold">
                     {formatCurrency(
-                      selectedPayment.totalAmount -
-                        (selectedPayment.totalAmount * 8) / 100
+                      selectedPayment.subtotal -
+                        (selectedPayment.subtotal * 8) / 100 +
+                        selectedPayment.shippingAmount +
+                        selectedPayment.taxAmount
                     )}
                   </p>
                 </div>
