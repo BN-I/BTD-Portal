@@ -161,6 +161,7 @@ export default function VendorAccountPage() {
     companySize: "",
     yearFounded: "",
     website: "",
+    carrier: "",
     instagram: "",
     facebook: "",
     twitter: "",
@@ -217,6 +218,7 @@ export default function VendorAccountPage() {
     },
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [carriers, setCarriers] = useState<any[]>([]);
   const [plans, setPlans] = useState<
     Array<{
       id: string;
@@ -229,13 +231,13 @@ export default function VendorAccountPage() {
   >([]);
 
   const stripePromise = loadStripe(
-    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string,
   );
   const handleManageSubscription = async () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/create-portal-session/${vendor?._id}`
+        `${process.env.NEXT_PUBLIC_API_URL}/create-portal-session/${vendor?._id}`,
       );
       const { url } = response.data;
       window.location.href = url;
@@ -250,7 +252,7 @@ export default function VendorAccountPage() {
     const fetchPlans = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/subscription-plans`
+          `${process.env.NEXT_PUBLIC_API_URL}/subscription-plans`,
         );
         console.log("fetchPlans", response.data.plans);
         setPlans(response.data.plans);
@@ -276,7 +278,7 @@ export default function VendorAccountPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ priceId, vendorID: userObj._id, planName }),
-      }
+      },
     ).then((res) => res.json());
 
     if (!stripe) return;
@@ -299,6 +301,7 @@ export default function VendorAccountPage() {
 
   useEffect(() => {
     fetchVendorData();
+    fetchCarriers();
   }, []);
 
   // Initialize location data when component loads
@@ -328,7 +331,7 @@ export default function VendorAccountPage() {
 
         await axios
           .get(
-            `${process.env.NEXT_PUBLIC_API_URL}/store/storeInformation/${userData._id}`
+            `${process.env.NEXT_PUBLIC_API_URL}/store/storeInformation/${userData._id}`,
           )
           .then((res) => {
             storeInformation = res;
@@ -339,7 +342,7 @@ export default function VendorAccountPage() {
 
         await axios
           .get(
-            `${process.env.NEXT_PUBLIC_API_URL}/store/businessInformation/${userData._id}`
+            `${process.env.NEXT_PUBLIC_API_URL}/store/businessInformation/${userData._id}`,
           )
           .then((res) => {
             businessInformation = res;
@@ -350,7 +353,7 @@ export default function VendorAccountPage() {
 
         await axios
           .get(
-            `${process.env.NEXT_PUBLIC_API_URL}/store/paymentInformation/${userData._id}`
+            `${process.env.NEXT_PUBLIC_API_URL}/store/paymentInformation/${userData._id}`,
           )
           .then((res) => {
             paymentInformation = res;
@@ -361,7 +364,7 @@ export default function VendorAccountPage() {
 
         await axios
           .get(
-            `${process.env.NEXT_PUBLIC_API_URL}/subscriptions/${userData._id}`
+            `${process.env.NEXT_PUBLIC_API_URL}/subscriptions/${userData._id}`,
           )
           .then((res) => {
             subscriptionInformation = res;
@@ -384,6 +387,7 @@ export default function VendorAccountPage() {
           yearFounded:
             storeInformation.data.storeInformation?.yearFounded || "",
           website: storeInformation.data.storeInformation?.website || "",
+          carrier: storeInformation.data.storeInformation?.carrier || "",
           instagram: storeInformation.data.storeInformation?.instagram || "",
           facebook: storeInformation.data.storeInformation?.facebook || "",
           twitter: storeInformation.data.storeInformation?.twitter || "",
@@ -447,7 +451,7 @@ export default function VendorAccountPage() {
           if (mockVendorData.state) {
             const cities = getCitiesForState(
               mockVendorData.country,
-              mockVendorData.state
+              mockVendorData.state,
             );
             setAvailableCities(cities);
           }
@@ -458,7 +462,7 @@ export default function VendorAccountPage() {
           if (mockVendorData.stateP) {
             const cities = getCitiesForState(
               mockVendorData.countryP,
-              mockVendorData.stateP
+              mockVendorData.stateP,
             );
             setAvailableCitiesP(cities);
           }
@@ -477,8 +481,20 @@ export default function VendorAccountPage() {
     }
   };
 
+  const fetchCarriers = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/carriers`,
+      );
+      console.log("fetchCarriers", response.data);
+      setCarriers(response.data.carriers);
+    } catch (error) {
+      console.error("Error fetching carriers:", error);
+    }
+  };
+
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -567,6 +583,12 @@ export default function VendorAccountPage() {
       // Get cities for selected state
       const cities = getCitiesForState(formData.countryP, value);
       setAvailableCitiesP(cities);
+    } else if (name === "carrier") {
+      // Reset city when state changes (payment section)
+      setFormData((prev) => ({
+        ...prev,
+        carrier: value,
+      }));
     }
   };
 
@@ -591,7 +613,7 @@ export default function VendorAccountPage() {
 
     const response = await axios.post(
       `${process.env.NEXT_PUBLIC_API_URL}/store/logo`,
-      formData
+      formData,
     );
 
     console.log("response", response);
@@ -653,10 +675,11 @@ export default function VendorAccountPage() {
           companySize: formData.companySize,
           yearFounded: formData.yearFounded,
           website: formData.website,
+          carrier: formData.carrier,
           instagram: formData.instagram,
           facebook: formData.facebook,
           twitter: formData.twitter,
-        }
+        },
       );
 
       console.log(response);
@@ -681,7 +704,7 @@ export default function VendorAccountPage() {
         title: "Error",
         description:
           error instanceof Error
-            ? error.message
+            ? error.response.data.message
             : "Failed to update your store information. Please try again.",
       });
     } finally {
@@ -719,7 +742,7 @@ export default function VendorAccountPage() {
           country: formData.country,
           storePolicy: formData.shippingPolicy,
           returnPolicy: formData.returnPolicy,
-        }
+        },
       );
 
       console.log(response);
@@ -739,12 +762,12 @@ export default function VendorAccountPage() {
       }`;
       localStorage.setItem(
         "businessInformation",
-        JSON.stringify(response.data)
+        JSON.stringify(response.data),
       );
 
       console.log(
         "businessInformation",
-        localStorage.getItem("businessInformation")
+        localStorage.getItem("businessInformation"),
       );
     } catch (error) {
       console.error("Error saving business details:", error);
@@ -815,7 +838,7 @@ export default function VendorAccountPage() {
           dobMonth: formData.dobMonth,
           dobYear: formData.dobYear,
           industry: formData.industry,
-        }
+        },
       );
 
       console.log(response);
@@ -1089,6 +1112,37 @@ export default function VendorAccountPage() {
                       {errors.website}
                     </div>
                   )}
+                </div>
+              </div>
+
+              <Separator />
+              <div>
+                <h3 className="text-sm font-medium mb-3">Preferred Carrier </h3>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="companySize">Carrier</Label>
+                    <Select
+                      value={formData.carrier}
+                      onValueChange={(value) =>
+                        handleSelectChange("carrier", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select carrier" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {carriers.map((carrier) => (
+                          <SelectItem
+                            key={carrier.carrier_id}
+                            value={carrier.carrier_code}
+                          >
+                            {carrier.friendly_name}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
