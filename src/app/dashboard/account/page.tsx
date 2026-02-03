@@ -49,7 +49,7 @@ import type { User, User as UserType } from "@/lib/auth-types";
 import axios from "axios";
 import { loadStripe } from "@stripe/stripe-js";
 import Stripe from "stripe";
-import { sub } from "date-fns";
+import { set, sub } from "date-fns";
 import { industries } from "@/utils/industries";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
@@ -82,7 +82,12 @@ import {
   VALIDATION_MESSAGES,
 } from "@/lib/validations/account";
 import { getCookie } from "@/app/common";
-
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 // Business categories for vendors
 const businessCategories = [
   "Apparel & Fashion",
@@ -161,7 +166,7 @@ export default function VendorAccountPage() {
     companySize: "",
     yearFounded: "",
     website: "",
-    carrier: "",
+    carrier: [] as string[],
     instagram: "",
     facebook: "",
     twitter: "",
@@ -493,6 +498,17 @@ export default function VendorAccountPage() {
     }
   };
 
+  const toggleCarrier = (carrierCode: string) => {
+    setFormData((prev) => {
+      return {
+        ...prev,
+        carrier: formData.carrier.includes(carrierCode)
+          ? formData.carrier.filter((c) => c !== carrierCode)
+          : [...formData.carrier, carrierCode],
+      };
+    });
+  };
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
@@ -583,12 +599,6 @@ export default function VendorAccountPage() {
       // Get cities for selected state
       const cities = getCitiesForState(formData.countryP, value);
       setAvailableCitiesP(cities);
-    } else if (name === "carrier") {
-      // Reset city when state changes (payment section)
-      setFormData((prev) => ({
-        ...prev,
-        carrier: value,
-      }));
     }
   };
 
@@ -1121,7 +1131,7 @@ export default function VendorAccountPage() {
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="companySize">Carrier</Label>
-                    <Select
+                    {/* <Select
                       value={formData.carrier}
                       onValueChange={(value) =>
                         handleSelectChange("carrier", value)
@@ -1141,7 +1151,49 @@ export default function VendorAccountPage() {
                         ))}
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
-                    </Select>
+                    </Select> */}
+
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                        >
+                          {formData.carrier.length
+                            ? formData.carrier.join(", ")
+                            : "Select carriers"}
+                        </Button>
+                      </PopoverTrigger>
+
+                      <PopoverContent className="w-full">
+                        <div className="space-y-2">
+                          {carriers.map((carrier) => (
+                            <div
+                              key={carrier.carrier_id}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                checked={formData.carrier.includes(
+                                  carrier.carrier_code,
+                                )}
+                                onCheckedChange={() =>
+                                  toggleCarrier(carrier.carrier_code)
+                                }
+                              />
+                              <span>{carrier.friendly_name}</span>
+                            </div>
+                          ))}
+
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={formData.carrier.includes("other")}
+                              onCheckedChange={() => toggleCarrier("other")}
+                            />
+                            <span>Other</span>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
               </div>
