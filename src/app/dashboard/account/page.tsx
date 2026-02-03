@@ -46,7 +46,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import type { User, User as UserType } from "@/lib/auth-types";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { loadStripe } from "@stripe/stripe-js";
 import Stripe from "stripe";
 import { set, sub } from "date-fns";
@@ -707,7 +707,7 @@ export default function VendorAccountPage() {
         60 * 60 * 24 * 365
       }`;
       localStorage.setItem("storeData", JSON.stringify(response.data));
-    } catch (error: any) {
+    } catch (error: AxiosError | any) {
       console.error("Error saving store information:", error);
       toast({
         variant: "destructive",
