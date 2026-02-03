@@ -707,15 +707,14 @@ export default function VendorAccountPage() {
         60 * 60 * 24 * 365
       }`;
       localStorage.setItem("storeData", JSON.stringify(response.data));
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving store information:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description:
-          error instanceof Error
-            ? error.response.data.message
-            : "Failed to update your store information. Please try again.",
+        description: error
+          ? error.response.data.message
+          : "Failed to update your store information. Please try again.",
       });
     } finally {
       setSaving(false);
