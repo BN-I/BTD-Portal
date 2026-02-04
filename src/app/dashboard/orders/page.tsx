@@ -433,14 +433,18 @@ export default function OrdersPage() {
                   <h3 className="text-sm font-medium text-gray-500">Date</h3>
                   <p className="mt-1">{formatDate(selectedOrder.createdAt)}</p>
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">
-                    Event Date
-                  </h3>
-                  <p className="mt-1 ">
-                    {formatDate(selectedOrder.event.fullDate)}
-                  </p>
-                </div>
+
+                {selectedOrder.event?.fullDate && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">
+                      Event Date
+                    </h3>
+                    <p className="mt-1 ">
+                      {formatDate(selectedOrder.event?.fullDate)}
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Email</h3>
                   <p className="mt-1">{selectedOrder.user.email}</p>

@@ -1166,7 +1166,7 @@ export default function VendorAccountPage() {
 
                       <PopoverContent className="w-full">
                         <div className="space-y-2">
-                          {carriers.map((carrier) => (
+                          {carriers?.map((carrier) => (
                             <div
                               key={carrier.carrier_id}
                               className="flex items-center space-x-2"
