@@ -149,6 +149,7 @@ export interface Order {
   city: string;
   zipcode: string;
   additionalAddressInfo: string;
+  selectedCarrier: string | undefined;
 }
 
 export type SalesRecord = {

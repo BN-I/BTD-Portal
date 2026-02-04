@@ -72,7 +72,7 @@ export default function OrdersPage() {
 
         axios
           .get(
-            `${process.env.NEXT_PUBLIC_API_URL}/orders-stats/vendor/${userObj?._id}`
+            `${process.env.NEXT_PUBLIC_API_URL}/orders-stats/vendor/${userObj?._id}`,
           )
           .then((response) => {
             setStats([
@@ -115,7 +115,7 @@ export default function OrdersPage() {
 
       axios
         .get(
-          `${process.env.NEXT_PUBLIC_API_URL}/orders/vendor/${userObj?._id}?page=1&perPage=10`
+          `${process.env.NEXT_PUBLIC_API_URL}/orders/vendor/${userObj?._id}?page=1&perPage=10`,
         )
         .then((response) => {
           setOrders(response.data);
@@ -180,7 +180,7 @@ export default function OrdersPage() {
             deliveryService === "other"
               ? otherDeliveryService
               : deliveryService,
-        }
+        },
       );
 
       // Update the order in the local state
@@ -188,8 +188,8 @@ export default function OrdersPage() {
         orders.map((order) =>
           order._id === selectedOrder._id
             ? { ...order, status: newStatus }
-            : order
-        )
+            : order,
+        ),
       );
 
       toast({
@@ -225,8 +225,8 @@ export default function OrdersPage() {
           order.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.gifts.some((gift: Gift) =>
-            gift.product.title.toLowerCase().includes(searchTerm.toLowerCase())
-          )
+            gift.product.title.toLowerCase().includes(searchTerm.toLowerCase()),
+          ),
       );
     }
 
@@ -246,8 +246,8 @@ export default function OrdersPage() {
         order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.gifts.some((gift: Gift) =>
-          gift.product.title.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+          gift.product.title.toLowerCase().includes(searchTerm.toLowerCase()),
+        ),
     );
   };
 
@@ -270,7 +270,7 @@ export default function OrdersPage() {
 
   const currentStatusIndex = useMemo(
     () => statuses.indexOf(selectedOrder?.status || "pending"),
-    [selectedOrder]
+    [selectedOrder],
   );
 
   return (
@@ -357,7 +357,7 @@ export default function OrdersPage() {
                       console.log(
                         deliveryServices[
                           order.shippingService as keyof typeof deliveryServices
-                        ]
+                        ],
                       );
 
                       //
@@ -377,7 +377,7 @@ export default function OrdersPage() {
                       setIsStatusDialogOpen(true);
                     }}
                     className={`flex shadow-md border items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs hover:scale-105 uppercase w-full font-medium cursor-pointer transition-all ${getStatusColor(
-                      order.status
+                      order.status,
                     )}`}
                     title="Click to change status"
                   >
@@ -424,14 +424,22 @@ export default function OrdersPage() {
                   <p className="mt-1">{selectedOrder._id}</p>
                 </div>
                 <div>
+                  <h3 className="text-sm font-medium text-gray-500">
+                    Customer
+                  </h3>
+                  <p className="mt-1">{selectedOrder.user.name}</p>
+                </div>
+                <div>
                   <h3 className="text-sm font-medium text-gray-500">Date</h3>
                   <p className="mt-1">{formatDate(selectedOrder.createdAt)}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">
-                    Customer
+                    Event Date
                   </h3>
-                  <p className="mt-1">{selectedOrder.user.name}</p>
+                  <p className="mt-1 ">
+                    {formatDate(selectedOrder.event.fullDate)}
+                  </p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Email</h3>
@@ -441,7 +449,7 @@ export default function OrdersPage() {
                   <h3 className="text-sm font-medium text-gray-500">Status</h3>
                   <p
                     className={`mt-1 inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                      selectedOrder.status
+                      selectedOrder.status,
                     )}`}
                   >
                     {selectedOrder.status}
@@ -484,6 +492,15 @@ export default function OrdersPage() {
                     {selectedOrder.additionalAddressInfo || "-"}{" "}
                   </p>
                 </div>
+
+                {selectedOrder.selectedCarrier && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">
+                      Selected Carrier
+                    </h3>
+                    <p className="mt-1 ">{selectedOrder.selectedCarrier}</p>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -623,7 +640,7 @@ export default function OrdersPage() {
                 <h3 className="text-sm font-medium">Current Status</h3>
                 <p
                   className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                    selectedOrder.status
+                    selectedOrder.status,
                   )}`}
                 >
                   {selectedOrder.status}
