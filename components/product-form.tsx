@@ -27,17 +27,17 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   const [description, setDescription] = useState(product?.description || "");
   const [price, setPrice] = useState(product?.price?.toString() || "");
   const [discountedPrice, setDiscountedPrice] = useState(
-    product?.discountedPrice?.toString() || ""
+    product?.discountedPrice?.toString() || "",
   );
   const [category, setCategory] = useState(product?.category || "");
   const [orderMaxDays, setOrderMaxDays] = useState<number>(
-    product?.orderMaxDays || 0
+    product?.orderMaxDays || 0,
   );
   const [orderMinDays, setOrderMinDays] = useState<number>(
-    product?.orderMinDays || 0
+    product?.orderMinDays || 0,
   );
   const [weight, setWeight] = useState<string>(
-    product?.weight?.toString() || ""
+    product?.weight?.toString() || "",
   );
   const [length, setLength] = useState<number>(product?.length || 0);
   const [width, setWidth] = useState<number>(product?.width || 0);
@@ -49,10 +49,10 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           hex: color,
           isOpen: false,
         }))
-      : []
+      : [],
   );
   const [customSizes, setCustomSizes] = useState<string[]>(
-    product?.sizeVariations?.length ? product.sizeVariations : [""]
+    product?.sizeVariations?.length ? product.sizeVariations : [""],
   );
   const [files, setFiles] = useState<File[]>([]);
   const [fileUrls, setFileUrls] = useState<string[]>([]);
@@ -125,7 +125,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
       if (oversizedFiles.length > 0) {
         setImageError(
-          `Image(s) exceed 1MB limit: ${oversizedFiles.join(", ")}`
+          `Image(s) exceed 1MB limit: ${oversizedFiles.join(", ")}`,
         );
         return;
       }
@@ -175,7 +175,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         colors.map((color) => ({
           ...color,
           isOpen: false,
-        }))
+        })),
       );
       resolve(true);
     });
@@ -192,6 +192,21 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       const maxSize = 1 * 1024 * 1024; // 5MB in bytes
       const oversizedFiles: string[] = [];
 
+      // Check total image count
+      const totalImages = files.length + selectedFiles.length;
+      if (totalImages > 5) {
+        const remaining = 5 - files.length;
+        setImageError(
+          `You can only upload up to 5 images. You have ${
+            files.length
+          } selected, ${remaining} slot${
+            remaining === 1 ? "" : "s"
+          } remaining.`,
+        );
+        e.target.value = "";
+        return;
+      }
+
       Array.from(selectedFiles).forEach((file) => {
         if (file.size > maxSize) {
           oversizedFiles.push(file.name);
@@ -200,7 +215,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
       if (oversizedFiles.length > 0) {
         setImageError(
-          `Image(s) exceed 1MB limit: ${oversizedFiles.join(", ")}`
+          `Image(s) exceed 1MB limit: ${oversizedFiles.join(", ")}`,
         );
         e.target.value = ""; // Reset the input
         return;
@@ -314,7 +329,8 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         <div className="grid w-full max-w-sm items-center gap-1.5">
           <Label htmlFor="picture">Picture</Label>
           <span className="text-xs text-muted-foreground text-stone-400">
-            png | jpg | bmp | jpeg | webp (Max size: 1MB per image)
+            png | jpg | bmp | jpeg | webp (Max size: 1MB per image | Max 5
+            images)
           </span>
           <span className="text-xs text-blue-600">
             💡 You can select multiple images at once or add more images by
