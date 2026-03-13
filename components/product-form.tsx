@@ -58,6 +58,8 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   const [fileUrls, setFileUrls] = useState<string[]>([]);
   const [error, setError] = useState<string>("");
   const [imageError, setImageError] = useState<string>("");
+  // Track removed (crossed) images for backend update
+  const [crossedImages, setCrossedImages] = useState<string[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,7 +116,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
     // Validate image file sizes
     if (files.length > 0) {
-      const maxSize = 1 * 1024 * 1024; // 5MB in bytes
+      const maxSize = 50 * 1024 * 1024; // 10MB in bytes
       const oversizedFiles: string[] = [];
 
       files.forEach((file) => {
@@ -125,7 +127,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
       if (oversizedFiles.length > 0) {
         setImageError(
-          `Image(s) exceed 1MB limit: ${oversizedFiles.join(", ")}`,
+          `Image(s) exceed 50MB limit: ${oversizedFiles.join(", ")}`,
         );
         return;
       }
@@ -147,6 +149,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       length: length || 0,
       width: width || 0,
       height: height || 0,
+      crossedImages: crossedImages, // send crossed images to backend
     });
   };
 
@@ -189,19 +192,24 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     console.log("handleFileChange - current files state:", files);
 
     if (selectedFiles) {
-      const maxSize = 1 * 1024 * 1024; // 5MB in bytes
+      const maxSize = 50 * 1024 * 1024; // 50MB in bytes
       const oversizedFiles: string[] = [];
 
-      // Check total image count
-      const totalImages = files.length + selectedFiles.length;
+      // Count existing images that are NOT crossed out
+      const existingImagesCount = product?.images
+        ? product.images.filter((img) => !crossedImages.includes(img)).length
+        : 0;
+      // Check total image count (existing + new + selected)
+      const totalImages =
+        existingImagesCount + files.length + selectedFiles.length;
       if (totalImages > 5) {
-        const remaining = 5 - files.length;
+        const remaining = 5 - (existingImagesCount + files.length);
         setImageError(
           `You can only upload up to 5 images. You have ${
-            files.length
+            existingImagesCount + files.length
           } selected, ${remaining} slot${
             remaining === 1 ? "" : "s"
-          } remaining.`,
+          } remaining (including existing images).`,
         );
         e.target.value = "";
         return;
@@ -215,7 +223,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
       if (oversizedFiles.length > 0) {
         setImageError(
-          `Image(s) exceed 1MB limit: ${oversizedFiles.join(", ")}`,
+          `Image(s) exceed 50MB limit: ${oversizedFiles.join(", ")}`,
         );
         e.target.value = ""; // Reset the input
         return;
@@ -329,7 +337,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         <div className="grid w-full max-w-sm items-center gap-1.5">
           <Label htmlFor="picture">Picture</Label>
           <span className="text-xs text-muted-foreground text-stone-400">
-            png | jpg | bmp | jpeg | webp (Max size: 1MB per image | Max 5
+            png | jpg | bmp | jpeg | webp (Max size: 50MB per image | Max 5
             images)
           </span>
           <span className="text-xs text-blue-600">
@@ -358,21 +366,49 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
               Existing Product Images:
             </Label>
             <div className="flex flex-wrap gap-3 mt-2">
-              {product.images.map((image, index) => (
-                <div
-                  key={index}
-                  className="relative min-w-[103px] flex flex-col items-center justify-center group"
-                >
-                  <img
-                    src={image}
-                    alt={`Product ${index + 1}`}
-                    className="w-20 h-20 object-cover rounded-lg border border-gray-200"
-                  />
-                  <div className="text-xs text-gray-500 mt-1 text-center">
-                    Existing Image {index + 1}
+              {product.images.map((image, index) => {
+                const isCrossed = crossedImages.includes(image);
+                return (
+                  <div
+                    key={index}
+                    className="relative min-w-[103px] flex flex-col items-center justify-center group"
+                  >
+                    <img
+                      src={image}
+                      alt={`Product ${index + 1}`}
+                      className={`w-20 h-20 object-cover rounded-lg border border-gray-200 ${
+                        isCrossed ? "opacity-40 grayscale" : ""
+                      }`}
+                      style={
+                        isCrossed
+                          ? { filter: "grayscale(1)", opacity: 0.4 }
+                          : {}
+                      }
+                    />
+                    {/* Cross (remove) button */}
+                    {!isCrossed && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCrossedImages((prev) => [...prev, image]);
+                        }}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
+                        title="Remove image"
+                      >
+                        ×
+                      </button>
+                    )}
+                    {isCrossed && (
+                      <div className="absolute -top-2 -right-2 bg-gray-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold z-10 opacity-60 cursor-not-allowed">
+                        ×
+                      </div>
+                    )}
+                    <div className="text-xs text-gray-500 mt-1 text-center">
+                      Existing Image {index + 1}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -475,6 +511,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="weight">Weight (oz) *</Label>
+
         <Input
           id="weight"
           type="number"
@@ -490,6 +527,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label htmlFor="length">Length (cm)</Label>
+
           <Input
             id="length"
             type="number"
@@ -502,6 +540,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         </div>
         <div className="space-y-2">
           <Label htmlFor="width">Width (cm)</Label>
+
           <Input
             id="width"
             type="number"
@@ -514,6 +553,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         </div>
         <div className="space-y-2">
           <Label htmlFor="height">Height (cm)</Label>
+
           <Input
             id="height"
             type="number"

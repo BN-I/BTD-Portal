@@ -74,6 +74,7 @@ export interface ProductForm {
   length?: number;
   width?: number;
   height?: number;
+  crossedImages?: string[];
 }
 
 export interface Vendor {

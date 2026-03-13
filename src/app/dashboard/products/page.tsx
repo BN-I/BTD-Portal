@@ -57,7 +57,7 @@ export default function ProductsPage() {
   const totalPages = Math.ceil(products.length / Number(itemsPerPage));
   const paginatedProducts = products.slice(
     (currentPage - 1) * Number(itemsPerPage),
-    currentPage * Number(itemsPerPage)
+    currentPage * Number(itemsPerPage),
   );
 
   const handleAddProduct = (newProduct: ProductForm) => {
@@ -76,7 +76,7 @@ export default function ProductsPage() {
     formData.append("price", newProduct.price.toString());
     formData.append(
       "discountedPrice",
-      newProduct.discountedPrice ? newProduct.discountedPrice.toString() : ""
+      newProduct.discountedPrice ? newProduct.discountedPrice.toString() : "",
     );
     formData.append("vendorID", userObj?._id.toString() || "");
     formData.append("isFeatured", "false");
@@ -144,7 +144,7 @@ export default function ProductsPage() {
       "discountedPrice",
       updatedProduct.discountedPrice
         ? updatedProduct.discountedPrice.toString()
-        : ""
+        : "",
     );
 
     formData.append("isFeatured", "false");
@@ -170,6 +170,10 @@ export default function ProductsPage() {
     formData.append("width", (updatedProduct.width ?? 0).toString());
     formData.append("height", (updatedProduct.height ?? 0).toString());
 
+    updatedProduct.crossedImages?.forEach((image) => {
+      formData.append("crossedImages", image);
+    });
+
     // setProducts(
     //   products.map((p) => (p._id === updatedProduct?._id ? updatedProduct : p))
     // );
@@ -178,7 +182,7 @@ export default function ProductsPage() {
     axios
       .put(
         `${process.env.NEXT_PUBLIC_API_URL}/product/${updatedProduct._id}`,
-        formData
+        formData,
       )
       .then(() => {
         toast({
@@ -228,7 +232,7 @@ export default function ProductsPage() {
       var userObj = JSON.parse(user) as User;
       axios
         .get(
-          `${process.env.NEXT_PUBLIC_API_URL}/product/vendor/${userObj?._id}?perPage=9999`
+          `${process.env.NEXT_PUBLIC_API_URL}/product/vendor/${userObj?._id}?perPage=9999`,
         )
         .then((response) => {
           setProducts(response.data);
