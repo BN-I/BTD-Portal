@@ -53,7 +53,7 @@ export default function PaymentsPage() {
   const fetchOrders = async () => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/orders`
+        `${process.env.NEXT_PUBLIC_API_URL}/orders`,
       );
       const apiOrders = response.data;
 
@@ -71,20 +71,28 @@ export default function PaymentsPage() {
   };
 
   const totalPayments = useMemo(() => {
-    return orders.reduce((acc, order) => acc + order.totalAmount, 0);
+    return orders.reduce(
+      (acc, order) =>
+        acc + order.subtotal * 0.92 + order.shippingAmount + order.taxAmount,
+      0,
+    );
   }, [orders]);
 
   const pendingPayments = useMemo(() => {
     return orders.reduce((acc, order) => {
       if (order.amountDispatched) return acc;
-      return acc + order.totalAmount;
+      return (
+        acc + order.subtotal * 0.92 + order.shippingAmount + order.taxAmount
+      );
     }, 0);
   }, [orders]);
 
   const dispatchedPayments = useMemo(() => {
     return orders.reduce((acc, order) => {
       if (!order?.amountDispatched) return acc;
-      return acc + order.totalAmount;
+      return (
+        acc + order.subtotal * 0.92 + order.shippingAmount + order.taxAmount
+      );
     }, 0);
   }, [orders]);
 
@@ -117,7 +125,7 @@ export default function PaymentsPage() {
         icon: CheckCircle,
       },
     ],
-    [totalPayments, pendingPayments, dispatchedPayments, processedPayments]
+    [totalPayments, pendingPayments, dispatchedPayments, processedPayments],
   );
 
   const filteredPayments = orders.filter((order) => {
@@ -148,7 +156,7 @@ export default function PaymentsPage() {
 
       await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/orders/dispatch-amount`,
-        { orderID: order._id }
+        { orderID: order._id },
       );
       toast({
         title: "Dispatch Initiated",
@@ -242,13 +250,13 @@ export default function PaymentsPage() {
                 <TableCell>
                   <span
                     className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(
-                      order.status
+                      order.status,
                     )}`}
                   >
                     {order.status}
                   </span>
                 </TableCell>
-                <TableCell>${order.amount}</TableCell>
+                <TableCell>${order.subtotal}</TableCell>
                 <TableCell>${order.totalAmount}</TableCell>
                 <TableCell>
                   <Button
@@ -267,7 +275,7 @@ export default function PaymentsPage() {
 
       {/* Payment Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Payment Details</DialogTitle>
           </DialogHeader>
@@ -287,7 +295,7 @@ export default function PaymentsPage() {
                 <div className="flex gap-3">
                   <span
                     className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                      selectedOrder.status
+                      selectedOrder.status,
                     )}`}
                   >
                     {selectedOrder.status}
@@ -330,11 +338,104 @@ export default function PaymentsPage() {
                     Transaction Details
                   </div>
                   <p className="text-sm">
-                    Amount: ${selectedOrder.amount}
+                    Amount: ${selectedOrder.subtotal}
                     <br />
                     Total Paid: ${selectedOrder.totalAmount}
                     <br />
                     Type: Product
+                  </p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Note</h3>
+                <p className="mt-1 ">{selectedOrder.event?.note}</p>
+              </div>
+
+              <Separator />
+
+              {/* Payout Breakdown */}
+              <div className="rounded-lg overflow-hidden border border-gray-100">
+                <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
+                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                    Payout Breakdown
+                  </h3>
+                </div>
+
+                <div className="divide-y divide-gray-100">
+                  {/* Product Total */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                      <span className="text-sm text-gray-600">
+                        Product total
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-gray-800">
+                      + ${selectedOrder.subtotal}
+                    </span>
+                  </div>
+
+                  {/* Shipment Charges */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                      <span className="text-sm text-gray-600">
+                        Shipment charges
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-gray-800">
+                      + ${selectedOrder.shippingAmount}
+                    </span>
+                  </div>
+
+                  {/* tac Charges */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                      <span className="text-sm text-gray-600">Sales Tax</span>
+                    </div>
+                    <span className="text-sm font-medium text-gray-800">
+                      + ${selectedOrder.taxAmount}
+                    </span>
+                  </div>
+
+                  {/* Platform Fee */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
+                      <span className="text-sm text-gray-600">
+                        Platform fee (8%)
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-red-500">
+                      − ${(selectedOrder.subtotal * 0.08).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Payable Amount */}
+                <div className="flex items-center justify-between px-4 py-4 bg-[#00BFA6]/5 border-t-2 border-[#00BFA6]/20">
+                  <div>
+                    {/* {JSON.stringify(selectedOrder)} */}
+                    <p className="text-sm font-semibold text-gray-700">
+                      Payable to vendor
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      via {selectedOrder.selectedCarrier || "carrier"} ·{" "}
+                      {selectedOrder.address}, {selectedOrder.city}
+                    </p>
+                  </div>
+                  <p className="text-xl font-bold text-[#00BFA6]">
+                    $
+                    {(
+                      selectedOrder.subtotal +
+                      selectedOrder.taxAmount +
+                      selectedOrder.shippingAmount -
+                      selectedOrder.subtotal * 0.08
+                    ).toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -360,7 +461,33 @@ export default function PaymentsPage() {
                       {selectedOrder.gifts?.map((gift: any, index: number) => (
                         <TableRow key={index}>
                           <TableCell>
-                            {gift.product?.title || `Gift Item ${index + 1}`}
+                            <div className="flex items-center">
+                              {gift.product?.title || `Gift Item ${index + 1}`}{" "}
+                              |
+                              {gift.selectedVariations?.size
+                                ? ` ${gift.selectedVariations?.size}`
+                                : ""}
+                              {gift.selectedVariations?.color && (
+                                <>
+                                  |
+                                  <span
+                                    className="relative group inline-flex items-center"
+                                    title={gift.selectedVariations.color}
+                                  >
+                                    <span
+                                      className="w-4 h-4 rounded-full border border-gray-200 shadow-sm cursor-pointer"
+                                      style={{
+                                        backgroundColor:
+                                          gift.selectedVariations.color,
+                                      }}
+                                    />
+                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded bg-gray-800 text-white text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                                      {gift.selectedVariations.color}
+                                    </span>
+                                  </span>
+                                </>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
                             $
@@ -381,7 +508,7 @@ export default function PaymentsPage() {
                           Total
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          ${selectedOrder.totalAmount.toFixed(2)}
+                          ${selectedOrder.subtotal.toFixed(2)}
                         </TableCell>
                       </TableRow>
                     </TableBody>

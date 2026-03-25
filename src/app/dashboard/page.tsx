@@ -60,13 +60,18 @@ export default function DashboardPage() {
 
       await axios
         .get(
-          `${process.env.NEXT_PUBLIC_API_URL}/orders/vendor/${userObj?._id}?perPage=999999`
+          `${process.env.NEXT_PUBLIC_API_URL}/orders/vendor/${userObj?._id}?perPage=999999`,
         )
         .then((response) => {
           const allOrder = response.data;
 
           const totalRevenue = allOrder.reduce((acc: number, order: any) => {
-            return acc + order.totalAmount;
+            return (
+              acc +
+              order.subtotal * 0.92 +
+              order.shippingAmount +
+              order.taxAmount
+            );
           }, 0);
 
           const averageOrderValue = allOrder.length
@@ -75,7 +80,12 @@ export default function DashboardPage() {
 
           const totalBalance = allOrder.reduce((acc: number, order: any) => {
             if (!order.amountDispatched) {
-              return acc + order.totalAmount;
+              return (
+                acc +
+                order.subtotal * 0.92 +
+                order.shippingAmount +
+                order.taxAmount
+              );
             } else {
               return acc;
             }
@@ -115,10 +125,10 @@ export default function DashboardPage() {
           setDeliveryPercentage(deliveryPercentage);
           setSalesData(salesData);
           setTotalRevenueIncresement(
-            revenueIncrements[revenueIncrements.length - 1].incrementPercent
+            revenueIncrements[revenueIncrements.length - 1].incrementPercent,
           );
           setAverageOrderValueIncresement(
-            revenueIncrements[revenueIncrements.length - 1].incrementPercent
+            revenueIncrements[revenueIncrements.length - 1].incrementPercent,
           );
         });
     } catch (error) {

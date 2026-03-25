@@ -56,12 +56,22 @@ export default function AdminDashboard() {
 
           //
           const totalRevenue = allOrder.reduce((acc: number, order: any) => {
-            return acc + order.totalAmount;
+            return (
+              acc +
+              order.subtotal * 0.92 +
+              order.shippingAmount +
+              order.taxAmount
+            );
           }, 0);
           //
           const totalBalance = allOrder.reduce((acc: number, order: any) => {
             if (!order.amountDispatched) {
-              return acc + order.totalAmount;
+              return (
+                acc +
+                order.subtotal * 0.92 +
+                order.shippingAmount +
+                order.taxAmount
+              );
             } else {
               return acc;
             }
@@ -73,11 +83,11 @@ export default function AdminDashboard() {
           const totalVendors = allVendors.length;
           //
           const pendingVendors = allVendors.filter(
-            (vendor: any) => vendor.status === UserStatus.pending
+            (vendor: any) => vendor.status === UserStatus.pending,
           );
           //
           const blockedVendors = allVendors.filter(
-            (vendor: any) => vendor.status === UserStatus.blocked
+            (vendor: any) => vendor.status === UserStatus.blocked,
           );
           //
 
@@ -103,7 +113,7 @@ export default function AdminDashboard() {
           setNewOrders(currentWeekOrders);
           setSalesData(salesData);
           setRevenueIncrements(
-            revenueIncrements[revenueIncrements.length - 1].incrementPercent
+            revenueIncrements[revenueIncrements.length - 1].incrementPercent,
           );
         });
     } catch (e) {

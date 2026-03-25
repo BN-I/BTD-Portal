@@ -67,6 +67,7 @@ interface Payment {
 
 interface PaymentStats {
   totalReceived: number;
+  subtotal: number;
   totalAmount: number;
   pendingAmount: number;
   thisMonthAmount: number;
@@ -78,6 +79,7 @@ export default function PaymentsPage() {
   const [stats, setStats] = useState<PaymentStats>({
     totalReceived: 0,
     totalAmount: 0,
+    subtotal: 0,
     pendingAmount: 0,
     thisMonthAmount: 0,
   });
@@ -113,8 +115,10 @@ export default function PaymentsPage() {
           p._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
           p.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           p.gifts.some((gift: Gift) =>
-            gift.product?.title.toLowerCase().includes(searchTerm.toLowerCase())
-          )
+            gift.product?.title
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase()),
+          ),
       );
     }
 
@@ -258,7 +262,7 @@ export default function PaymentsPage() {
       const userObj = JSON.parse(user) as User;
 
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/paymentsStats/${userObj._id}`
+        `${process.env.NEXT_PUBLIC_API_URL}/paymentsStats/${userObj._id}`,
       );
 
       console.log("fetchPaymentsStats", response.data);
@@ -266,6 +270,7 @@ export default function PaymentsPage() {
       setStats({
         totalReceived: response.data.totalReceivedPaymentOrders || 0.0,
         totalAmount: response.data.totalEarnings || 0.0,
+        subtotal: response.data.subtotal || 0.0,
         pendingAmount: response.data.pendingPaymentOrdersAmount || 0.0,
         thisMonthAmount: response.data.thisMonthAmount || 0.0,
       });
@@ -317,7 +322,7 @@ export default function PaymentsPage() {
   const handleRequestPayment = async (paymentId: string) => {
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/orders/request-payment/${paymentId}`
+        `${process.env.NEXT_PUBLIC_API_URL}/orders/request-payment/${paymentId}`,
       );
       console.log("Request payment response:", response.data);
       fetchPaymentsStats();
@@ -343,7 +348,7 @@ export default function PaymentsPage() {
             <div>
               <p className="text-sm text-gray-500">Total Earnings</p>
               <p className="text-2xl font-bold">
-                {formatCurrency(stats.totalAmount)}
+                {formatCurrency(stats.subtotal)}
               </p>
             </div>
           </CardContent>
@@ -464,14 +469,14 @@ export default function PaymentsPage() {
                       </TableCell>
                       <TableCell>{payment.user.name}</TableCell>
                       <TableCell>
-                        {formatCurrency(payment.totalAmount)}
+                        {formatCurrency(payment.subtotal ?? 0)}
                       </TableCell>
                       <TableCell>
                         {formatCurrency(
                           payment.subtotal -
                             (payment.subtotal * 8) / 100 +
-                            payment.shippingAmount +
-                            payment.taxAmount
+                            (payment.taxAmount ?? 0) +
+                            (payment.shippingAmount ?? 0),
                         )}
                       </TableCell>
                       <TableCell>{formatDate(payment.createdAt)}</TableCell>
@@ -481,7 +486,7 @@ export default function PaymentsPage() {
                           {getStatusIcon(payment.status)}
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                              payment.status
+                              payment.status,
                             )}`}
                           >
                             {payment.status}
@@ -551,7 +556,7 @@ export default function PaymentsPage() {
                     {getStatusIcon(selectedPayment.status)}
                     <span
                       className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        selectedPayment.status
+                        selectedPayment.status,
                       )}`}
                     >
                       {selectedPayment.status}
@@ -591,19 +596,7 @@ export default function PaymentsPage() {
                     )}
                   </span>
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">
-                    Payable Amount
-                  </h3>
-                  <p className="mt-1 font-bold">
-                    {formatCurrency(
-                      selectedPayment.subtotal -
-                        (selectedPayment.subtotal * 8) / 100 +
-                        selectedPayment.shippingAmount +
-                        selectedPayment.taxAmount
-                    )}
-                  </p>
-                </div>
+
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">
                     Created Date
@@ -629,6 +622,77 @@ export default function PaymentsPage() {
                       ? formatDate(selectedPayment.deliveredAt)
                       : "-"}
                   </p>
+                </div>
+
+                {/* Payout Breakdown */}
+                <div className="rounded-lg overflow-hidden border border-gray-100 col-span-2">
+                  <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
+                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                      Payout Breakdown
+                    </h3>
+                  </div>
+
+                  <div className="divide-y divide-gray-100">
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                        <span className="text-sm text-gray-600">
+                          Product total
+                        </span>
+                      </div>
+                      <span className="text-sm font-medium text-gray-800">
+                        + {formatCurrency(selectedPayment.subtotal)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                        <span className="text-sm text-gray-600">
+                          Shipment charges
+                        </span>
+                      </div>
+                      <span className="text-sm font-medium text-gray-800">
+                        + {formatCurrency(selectedPayment.shippingAmount ?? 0)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                        <span className="text-sm text-gray-600">Sales tax</span>
+                      </div>
+                      <span className="text-sm font-medium text-gray-800">
+                        + {formatCurrency(selectedPayment.taxAmount ?? 0)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
+                        <span className="text-sm text-gray-600">
+                          Platform fee (8%)
+                        </span>
+                      </div>
+                      <span className="text-sm font-medium text-red-500">
+                        − {formatCurrency((selectedPayment.subtotal * 8) / 100)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between px-4 py-4 bg-[#00BFA6]/5 border-t-2 border-[#00BFA6]/20">
+                    <p className="text-sm font-semibold text-gray-700">
+                      Payable to you
+                    </p>
+                    <p className="text-xl font-bold text-[#00BFA6]">
+                      {formatCurrency(
+                        selectedPayment.subtotal -
+                          (selectedPayment.subtotal * 8) / 100 +
+                          (selectedPayment.taxAmount ?? 0) +
+                          (selectedPayment.shippingAmount ?? 0),
+                      )}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -661,17 +725,36 @@ export default function PaymentsPage() {
                               )}
                               <div>
                                 <p className="font-medium">
-                                  {gift.product?.title}
+                                  {gift.product?.title} |
+                                  {gift.selectedVariations?.size
+                                    ? ` ${gift.selectedVariations?.size}`
+                                    : ""}
+                                  {gift.selectedVariations?.color && (
+                                    <>
+                                      |
+                                      <span
+                                        className="relative group inline-flex items-center"
+                                        title={gift.selectedVariations.color}
+                                      >
+                                        <span
+                                          className="w-4 h-4 rounded-full border border-gray-200 shadow-sm cursor-pointer"
+                                          style={{
+                                            backgroundColor:
+                                              gift.selectedVariations.color,
+                                          }}
+                                        />
+                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded bg-gray-800 text-white text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                                          {gift.selectedVariations.color}
+                                        </span>
+                                      </span>
+                                    </>
+                                  )}
                                 </p>
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            {formatCurrency(
-                              gift.product?.discountedPrice ||
-                                gift.product?.price ||
-                                0
-                            )}
+                            {formatCurrency(gift?.price || 0)}
                           </TableCell>
                         </TableRow>
                       ))}

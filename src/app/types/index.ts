@@ -21,6 +21,7 @@ export interface Product {
   length?: number;
   width?: number;
   height?: number;
+  availableStates?: string[];
   createdAt: string;
   updatedAt: string;
   files: File[] | undefined;
@@ -55,6 +56,7 @@ export interface productForm {
   length?: number;
   width?: number;
   height?: number;
+  availableStates?: string[];
 }
 
 export interface ProductForm {
@@ -75,6 +77,7 @@ export interface ProductForm {
   width?: number;
   height?: number;
   crossedImages?: string[];
+  availableStates?: string[];
 }
 
 export interface Vendor {
@@ -136,6 +139,8 @@ export interface Order {
   vendor: User;
   amount: number;
   totalAmount: number;
+  subtotal: number;
+  taxAmount: number;
   status: string;
   user: User;
   event: Event;
@@ -151,6 +156,7 @@ export interface Order {
   zipcode: string;
   additionalAddressInfo: string;
   selectedCarrier: string | undefined;
+  shippingAmount: number;
 }
 
 export type SalesRecord = {

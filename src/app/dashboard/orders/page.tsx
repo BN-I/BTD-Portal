@@ -346,7 +346,7 @@ export default function OrdersPage() {
                 <TableCell>
                   {order.gifts.map((gift) => gift.product?.title).join(", ")}
                 </TableCell>
-                <TableCell>${order.totalAmount.toFixed(2)}</TableCell>
+                <TableCell>${order.subtotal.toFixed(2)}</TableCell>
                 <TableCell>
                   <button
                     onClick={() => {
@@ -406,7 +406,7 @@ export default function OrdersPage() {
 
       {/* Order Details Modal */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Order Details</DialogTitle>
             <DialogDescription>
@@ -464,7 +464,7 @@ export default function OrdersPage() {
                     Total Amount
                   </h3>
                   <p className="mt-1 font-bold">
-                    ${selectedOrder.amount.toFixed(2)}
+                    ${selectedOrder.subtotal.toFixed(2)}
                   </p>
                 </div>
 
@@ -508,6 +508,11 @@ export default function OrdersPage() {
               </div>
 
               <div>
+                <h3 className="text-sm font-medium text-gray-500">Note</h3>
+                <p className="mt-1 ">{selectedOrder.event.note}</p>
+              </div>
+
+              <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-2">
                   Items
                 </h3>
@@ -537,8 +542,31 @@ export default function OrdersPage() {
                                 />
                               )}
                               <div>
-                                <p className="font-medium">
-                                  {gift.product?.title}
+                                <p className="font-medium flex items-center">
+                                  {gift.product?.title} |
+                                  {gift.selectedVariations?.size
+                                    ? ` ${gift.selectedVariations?.size}`
+                                    : ""}
+                                  {gift.selectedVariations?.color && (
+                                    <>
+                                      |
+                                      <span
+                                        className="relative group inline-flex items-center"
+                                        title={gift.selectedVariations.color}
+                                      >
+                                        <span
+                                          className="w-4 h-4 rounded-full border border-gray-200 shadow-sm cursor-pointer"
+                                          style={{
+                                            backgroundColor:
+                                              gift.selectedVariations.color,
+                                          }}
+                                        />
+                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded bg-gray-800 text-white text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                                          {gift.selectedVariations.color}
+                                        </span>
+                                      </span>
+                                    </>
+                                  )}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {gift.product?.category}
@@ -548,15 +576,98 @@ export default function OrdersPage() {
                           </TableCell>
                           <TableCell>1</TableCell>
                           <TableCell>
-                            ${gift.product?.price.toFixed(2)}
+                            ${gift?.price?.toFixed(2) || "N/A"}
                           </TableCell>
                           <TableCell>
-                            ${(1 * gift.product?.price).toFixed(2)}
+                            {(1 * gift?.price)?.toFixed(2) || "N/A"}
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
+                </div>
+              </div>
+
+              {/* Payout Breakdown */}
+              <div className="rounded-lg overflow-hidden border border-gray-100">
+                <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
+                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                    Payout Breakdown
+                  </h3>
+                </div>
+
+                <div className="divide-y divide-gray-100">
+                  {/* Product Total */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                      <span className="text-sm text-gray-600">
+                        Product total
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-gray-800">
+                      + ${selectedOrder.subtotal.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Shipment Charges */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                      <span className="text-sm text-gray-600">
+                        Shipment charges
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-gray-800">
+                      + ${(selectedOrder.shippingAmount ?? 0).toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* tax Charges */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                      <span className="text-sm text-gray-600">sales tax</span>
+                    </div>
+                    <span className="text-sm font-medium text-gray-800">
+                      + ${(selectedOrder.taxAmount ?? 0).toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Platform Fee */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
+                      <span className="text-sm text-gray-600">
+                        Platform fee (8%)
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-red-500">
+                      − ${(selectedOrder.subtotal * 0.08).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Payable Amount */}
+                <div className="flex items-center justify-between px-4 py-4 bg-[#00BFA6]/5 border-t-2 border-[#00BFA6]/20">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-700">
+                      Payable to you
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      via {selectedOrder.selectedCarrier || "carrier"} ·{" "}
+                      {selectedOrder.address}, {selectedOrder.city}
+                    </p>
+                  </div>
+                  <p className="text-xl font-bold text-[#00BFA6]">
+                    $
+                    {(
+                      selectedOrder.subtotal +
+                      (selectedOrder.shippingAmount ?? 0) +
+                      (selectedOrder.taxAmount ?? 0) -
+                      selectedOrder.subtotal * 0.08
+                    ).toFixed(2)}
+                  </p>
                 </div>
               </div>
 
@@ -630,7 +741,7 @@ export default function OrdersPage() {
 
       {/* Change Status Modal */}
       <Dialog open={isStatusDialogOpen} onOpenChange={setIsStatusDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Update Order Status</DialogTitle>
             <DialogDescription>

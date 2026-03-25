@@ -60,7 +60,7 @@ export function isValidEmail(email: string): RegExpMatchArray | null {
   return String(email)
     .toLowerCase()
     .match(
-      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
     );
 }
 
@@ -102,7 +102,8 @@ export function generateSalesData(orders: Order[]): SalesDataItem[] {
   for (const order of orders) {
     const date = new Date(order.createdAt);
     const monthIndex = date.getMonth(); // 0 (Jan) to 11 (Dec)
-    monthlyTotals[monthIndex] += order.totalAmount;
+    monthlyTotals[monthIndex] +=
+      order.subtotal * 0.92 + order.shippingAmount + order.taxAmount;
   }
 
   return monthlyTotals.map((total, index) => ({

@@ -75,7 +75,7 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/orders`
+        `${process.env.NEXT_PUBLIC_API_URL}/orders`,
       );
       const apiOrders = response.data;
 
@@ -91,11 +91,17 @@ export default function OrdersPage() {
         items: order.gifts.map((gift: any, index: number) => ({
           id: index + 1,
           productId: gift._id,
-          name: gift.product?.name || `Gift Item ${index + 1}`,
+          name: gift.product?.title || `Gift Item ${index + 1}`,
           quantity: 1, // API doesn't provide quantity, assuming 1
           price: gift.price.toFixed(2),
+          selectedVariations: gift.selectedVariations,
         })),
-        totalAmount: order.totalAmount.toFixed(2),
+        event: order.event,
+        totalAmount: parseFloat(order.totalAmount.toFixed(2)),
+        amount: parseFloat(order.amount.toFixed(2)),
+        subtotal: parseFloat(order.subtotal.toFixed(2)),
+        taxAmount: parseFloat(order.taxAmount.toFixed(2)),
+        shippingAmount: parseFloat(order.shippingAmount.toFixed(2)),
         status: order.status.charAt(0).toUpperCase() + order.status.slice(1), // Capitalize (e.g., "delivered" → "Delivered")
         paymentStatus: order.amountDispatched ? "Paid" : "Pending", // Derive from amountDispatched
         paymentMethod: "Unknown", // Placeholder, as API doesn't provide this
@@ -131,7 +137,7 @@ export default function OrdersPage() {
 
   // Get unique vendors for filter
   const uniqueVendors = Array.from(
-    new Set(orders.map((order) => order.vendorName))
+    new Set(orders.map((order) => order.vendorName)),
   );
 
   // Filter orders based on search, status, and vendor
@@ -151,7 +157,7 @@ export default function OrdersPage() {
   const totalPages = Math.ceil(filteredOrders.length / Number(itemsPerPage));
   const paginatedOrders = filteredOrders.slice(
     (currentPage - 1) * Number(itemsPerPage),
-    currentPage * Number(itemsPerPage)
+    currentPage * Number(itemsPerPage),
   );
 
   // Display order details
@@ -284,7 +290,7 @@ export default function OrdersPage() {
                 <TableCell>
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                      order.status
+                      order.status,
                     )}`}
                   >
                     {order.status}
@@ -293,7 +299,7 @@ export default function OrdersPage() {
                 <TableCell>
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                      order.paymentStatus
+                      order.paymentStatus,
                     )}`}
                   >
                     {order.paymentStatus}
@@ -366,7 +372,7 @@ export default function OrdersPage() {
 
       {/* Order details dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Order Details</DialogTitle>
           </DialogHeader>
@@ -385,14 +391,14 @@ export default function OrdersPage() {
                 <div className="flex gap-3">
                   <span
                     className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                      selectedOrder.status
+                      selectedOrder.status,
                     )}`}
                   >
                     {selectedOrder.status}
                   </span>
                   <span
                     className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                      selectedOrder.paymentStatus
+                      selectedOrder.paymentStatus,
                     )}`}
                   >
                     {selectedOrder.paymentStatus}
@@ -451,6 +457,97 @@ export default function OrdersPage() {
                   </p>
                 </div>
               </div>
+              <Separator />
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Note</h3>
+                <p className="mt-1 ">{selectedOrder.event?.note}</p>
+              </div>
+
+              <Separator />
+
+              {/* Payout Breakdown */}
+              <div className="rounded-lg overflow-hidden border border-gray-100">
+                <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
+                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                    Payout Breakdown
+                  </h3>
+                </div>
+
+                <div className="divide-y divide-gray-100">
+                  {/* Product Total */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                      <span className="text-sm text-gray-600">
+                        Product total
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-gray-800">
+                      + ${selectedOrder.subtotal}
+                    </span>
+                  </div>
+
+                  {/* Shipment Charges */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                      <span className="text-sm text-gray-600">
+                        Shipment charges
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-gray-800">
+                      + ${selectedOrder.shippingAmount}
+                    </span>
+                  </div>
+
+                  {/* tac Charges */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                      <span className="text-sm text-gray-600">Sales Tax</span>
+                    </div>
+                    <span className="text-sm font-medium text-gray-800">
+                      + ${selectedOrder.taxAmount}
+                    </span>
+                  </div>
+
+                  {/* Platform Fee */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
+                      <span className="text-sm text-gray-600">
+                        Platform fee (8%)
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-red-500">
+                      − ${(selectedOrder.subtotal * 0.08).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Payable Amount */}
+                <div className="flex items-center justify-between px-4 py-4 bg-[#00BFA6]/5 border-t-2 border-[#00BFA6]/20">
+                  <div>
+                    {/* {JSON.stringify(selectedOrder)} */}
+                    <p className="text-sm font-semibold text-gray-700">
+                      Payable to vendor
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      via {selectedOrder.selectedCarrier || "carrier"} ·{" "}
+                      {selectedOrder.address}, {selectedOrder.city}
+                    </p>
+                  </div>
+                  <p className="text-xl font-bold text-[#00BFA6]">
+                    $
+                    {(
+                      selectedOrder.subtotal +
+                      selectedOrder.taxAmount +
+                      selectedOrder.shippingAmount -
+                      selectedOrder.subtotal * 0.08
+                    ).toFixed(2)}
+                  </p>
+                </div>
+              </div>
 
               <Separator />
 
@@ -473,7 +570,34 @@ export default function OrdersPage() {
                     <TableBody>
                       {selectedOrder.items.map((item: any) => (
                         <TableRow key={item.id}>
-                          <TableCell>{item.name}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              {item.name} |
+                              {item.selectedVariations?.size
+                                ? ` ${item.selectedVariations?.size}`
+                                : ""}
+                              {item.selectedVariations?.color && (
+                                <>
+                                  |
+                                  <span
+                                    className="relative group inline-flex items-center"
+                                    title={item.selectedVariations.color}
+                                  >
+                                    <span
+                                      className="w-4 h-4 rounded-full border border-gray-200 shadow-sm cursor-pointer"
+                                      style={{
+                                        backgroundColor:
+                                          item.selectedVariations.color,
+                                      }}
+                                    />
+                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded bg-gray-800 text-white text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                                      {item.selectedVariations.color}
+                                    </span>
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>${item.price}</TableCell>
                           <TableCell>{item.quantity}</TableCell>
                           <TableCell className="text-right">

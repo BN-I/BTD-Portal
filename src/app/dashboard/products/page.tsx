@@ -108,6 +108,10 @@ export default function ProductsPage() {
     formData.append("width", (newProduct.width ?? 0).toString());
     formData.append("height", (newProduct.height ?? 0).toString());
 
+    newProduct.availableStates?.forEach((state) => {
+      formData.append("availableStates", state);
+    });
+
     axios
       .post(`${process.env.NEXT_PUBLIC_API_URL}/product`, formData, {
         timeout: 18000,
@@ -172,6 +176,10 @@ export default function ProductsPage() {
 
     updatedProduct.crossedImages?.forEach((image) => {
       formData.append("crossedImages", image);
+    });
+
+    updatedProduct.availableStates?.forEach((state) => {
+      formData.append("availableStates", state);
     });
 
     // setProducts(
