@@ -610,30 +610,6 @@ export default function OrdersPage() {
                     </span>
                   </div>
 
-                  {/* Shipment Charges */}
-                  <div className="flex items-center justify-between px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
-                      <span className="text-sm text-gray-600">
-                        Shipment charges
-                      </span>
-                    </div>
-                    <span className="text-sm font-medium text-gray-800">
-                      + ${(selectedOrder.shippingAmount ?? 0).toFixed(2)}
-                    </span>
-                  </div>
-
-                  {/* tax Charges */}
-                  <div className="flex items-center justify-between px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
-                      <span className="text-sm text-gray-600">sales tax</span>
-                    </div>
-                    <span className="text-sm font-medium text-gray-800">
-                      + ${(selectedOrder.taxAmount ?? 0).toFixed(2)}
-                    </span>
-                  </div>
-
                   {/* Platform Fee */}
                   <div className="flex items-center justify-between px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -646,6 +622,30 @@ export default function OrdersPage() {
                       − ${(selectedOrder.subtotal * 0.08).toFixed(2)}
                     </span>
                   </div>
+                </div>
+
+                {/* Shipment Charges */}
+                <div className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                    <span className="text-sm text-gray-600">
+                      Shipment charges
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-800">
+                    + ${(selectedOrder.shippingAmount ?? 0).toFixed(2)}
+                  </span>
+                </div>
+
+                {/* tax Charges */}
+                <div className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                    <span className="text-sm text-gray-600">sales tax</span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-800">
+                    + ${(selectedOrder.taxAmount ?? 0).toFixed(2)}
+                  </span>
                 </div>
 
                 {/* Payable Amount */}

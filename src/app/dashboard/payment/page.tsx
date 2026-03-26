@@ -647,6 +647,18 @@ export default function PaymentsPage() {
 
                     <div className="flex items-center justify-between px-4 py-3">
                       <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
+                        <span className="text-sm text-gray-600">
+                          Platform fee (8%)
+                        </span>
+                      </div>
+                      <span className="text-sm font-medium text-red-500">
+                        − {formatCurrency((selectedPayment.subtotal * 8) / 100)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
                         <span className="text-sm text-gray-600">
                           Shipment charges
@@ -664,18 +676,6 @@ export default function PaymentsPage() {
                       </div>
                       <span className="text-sm font-medium text-gray-800">
                         + {formatCurrency(selectedPayment.taxAmount ?? 0)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
-                        <span className="text-sm text-gray-600">
-                          Platform fee (8%)
-                        </span>
-                      </div>
-                      <span className="text-sm font-medium text-red-500">
-                        − {formatCurrency((selectedPayment.subtotal * 8) / 100)}
                       </span>
                     </div>
                   </div>
