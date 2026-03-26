@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,10 +13,214 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import {
+  Info,
+  Upload,
+  Package,
+  Tag,
+  Truck,
+  Palette,
+  Layers,
+  DollarSign,
+  ImageIcon,
+  X,
+  Maximize2,
+} from "lucide-react";
 import type { Product, ProductForm } from "@/app/types";
 import { Block } from "@uiw/react-color";
 
+/* ── Tooltip ─────────────────────────────────────────────────────── */
+function FieldTooltip({ content }: { content: string }) {
+  return (
+    <TooltipPrimitive.Provider delayDuration={250}>
+      <TooltipPrimitive.Root>
+        <TooltipPrimitive.Trigger asChild>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-stone-200 hover:bg-stone-900 text-stone-500 hover:text-white cursor-help transition-all duration-150"
+          >
+            <Info className="h-2.5 w-2.5" />
+          </button>
+        </TooltipPrimitive.Trigger>
+        <TooltipPrimitive.Portal>
+          <TooltipPrimitive.Content
+            className="z-[200] max-w-[220px] rounded-lg bg-stone-900 px-3 py-2 text-xs leading-relaxed text-white shadow-xl"
+            sideOffset={6}
+          >
+            {content}
+            <TooltipPrimitive.Arrow className="fill-stone-900" />
+          </TooltipPrimitive.Content>
+        </TooltipPrimitive.Portal>
+      </TooltipPrimitive.Root>
+    </TooltipPrimitive.Provider>
+  );
+}
+
+/* ── Section card ─────────────────────────────────────────────────── */
+function Section({
+  icon,
+  title,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-stone-200 bg-stone-50/60 p-4 sm:p-5 space-y-4">
+      <div className="flex items-center gap-2.5">
+        <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-stone-900 text-white shrink-0">
+          {icon}
+        </span>
+        <h3 className="text-sm font-semibold text-stone-700 uppercase tracking-wide">
+          {title}
+        </h3>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/* ── Field label with optional tooltip ───────────────────────────── */
+function FL({
+  htmlFor,
+  children,
+  tip,
+  optional,
+  count,
+  max,
+}: {
+  htmlFor?: string;
+  children: React.ReactNode;
+  tip?: string;
+  optional?: boolean;
+  count?: number;
+  max?: number;
+}) {
+  return (
+    <div className="flex items-center justify-between mb-1.5">
+      <div className="flex items-center gap-1.5">
+        <Label
+          htmlFor={htmlFor}
+          className="text-sm font-medium text-stone-700 cursor-pointer"
+        >
+          {children}
+        </Label>
+        {optional && (
+          <span className="text-[10px] font-medium text-stone-400 bg-stone-100 rounded-full px-1.5 py-0.5">
+            optional
+          </span>
+        )}
+        {tip && <FieldTooltip content={tip} />}
+      </div>
+      {count !== undefined && max !== undefined && (
+        <span
+          className={`text-[11px] tabular-nums ${count >= max ? "text-red-400" : "text-stone-400"}`}
+        >
+          {count}/{max}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/* ── Image preview lightbox ──────────────────────────────────────── */
+function Lightbox({
+  src,
+  onClose,
+}: {
+  src: string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[150] bg-black/85 flex items-center justify-center p-4"
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white/80 hover:text-white bg-black/40 rounded-full p-1.5 transition-colors"
+      >
+        <X className="h-5 w-5" />
+      </button>
+      <img
+        src={src}
+        alt="Preview"
+        className="max-w-[92%] max-h-[88%] rounded-xl object-contain shadow-2xl"
+      />
+    </div>
+  );
+}
+
+/* ── Image tile ──────────────────────────────────────────────────── */
+function ImageTile({
+  src,
+  label,
+  faded,
+  onRemove,
+  onPreview,
+}: {
+  src: string;
+  label: string;
+  faded?: boolean;
+  onRemove?: () => void;
+  onPreview: () => void;
+}) {
+  return (
+    <div className="relative group flex flex-col items-center gap-1">
+      {/* tile */}
+      <div
+        className="relative w-full aspect-square rounded-lg overflow-hidden border border-stone-200 cursor-pointer bg-stone-100"
+        onClick={onPreview}
+      >
+        <img
+          src={src}
+          alt={label}
+          className={`w-full h-full object-cover transition-all duration-200 group-hover:brightness-75 ${
+            faded ? "opacity-35 grayscale" : ""
+          }`}
+        />
+        {/* hover overlay */}
+        {!faded && (
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <Maximize2 className="h-5 w-5 text-white drop-shadow" />
+          </div>
+        )}
+      </div>
+      {/* remove button */}
+      {onRemove && !faded && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      )}
+      {faded && (
+        <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-stone-400 text-white flex items-center justify-center shadow z-10">
+          <X className="h-3 w-3" />
+        </div>
+      )}
+      <span className="text-[10px] text-stone-500 text-center truncate w-full px-0.5">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+/* ── Main component ──────────────────────────────────────────────── */
 interface ProductFormProps {
   product?: Product;
   onSubmit: (product: ProductForm) => void;
@@ -41,13 +246,9 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   const [length, setLength] = useState<number>(product?.length || 0);
   const [width, setWidth] = useState<number>(product?.width || 0);
   const [height, setHeight] = useState<number>(product?.height || 0);
-
-const [colors, setColors] = useState<{ hex: string; isOpen: boolean }[]>(
+  const [colors, setColors] = useState<{ hex: string; isOpen: boolean }[]>(
     product?.colorVariations
-      ? product?.colorVariations?.map((color) => ({
-          hex: color,
-          isOpen: false,
-        }))
+      ? product.colorVariations.map((color) => ({ hex: color, isOpen: false }))
       : [],
   );
   const [customSizes, setCustomSizes] = useState<string[]>(
@@ -57,15 +258,79 @@ const [colors, setColors] = useState<{ hex: string; isOpen: boolean }[]>(
   const [fileUrls, setFileUrls] = useState<string[]>([]);
   const [error, setError] = useState<string>("");
   const [imageError, setImageError] = useState<string>("");
-  // Track removed (crossed) images for backend update
   const [crossedImages, setCrossedImages] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [draftRestored, setDraftRestored] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const savedScrollRef = useRef(0);
 
+  /* ── Draft: save to localStorage (new products only) ─────────── */
+  const DRAFT_KEY = "btd-product-form-draft";
+
+  useEffect(() => {
+    if (product) return;
+    const draft = localStorage.getItem(DRAFT_KEY);
+    if (!draft) return;
+    try {
+      const d = JSON.parse(draft);
+      if (d.name) setName(d.name);
+      if (d.description) setDescription(d.description);
+      if (d.price) setPrice(d.price);
+      if (d.discountedPrice) setDiscountedPrice(d.discountedPrice);
+      if (d.category) setCategory(d.category);
+      if (d.orderMinDays) setOrderMinDays(d.orderMinDays);
+      if (d.orderMaxDays) setOrderMaxDays(d.orderMaxDays);
+      if (d.weight) setWeight(d.weight);
+      if (d.length) setLength(d.length);
+      if (d.width) setWidth(d.width);
+      if (d.height) setHeight(d.height);
+      if (d.customSizes?.length) setCustomSizes(d.customSizes);
+      if (d.colors?.length) setColors(d.colors.map((hex: string) => ({ hex, isOpen: false })));
+      setDraftRestored(true);
+    } catch { /* ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (product) return;
+    localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({
+        name, description, price, discountedPrice, category,
+        orderMinDays, orderMaxDays, weight, length, width, height,
+        customSizes,
+        colors: colors.map((c) => c.hex),
+      }),
+    );
+  }, [name, description, price, discountedPrice, category, orderMinDays, orderMaxDays, weight, length, width, height, customSizes, colors, product]);
+
+  /* ── Scroll helpers for lightbox ─────────────────────────────── */
+  const getScrollParent = (node: HTMLElement | null): HTMLElement | null => {
+    if (!node) return null;
+    if (node.scrollHeight > node.clientHeight + 1) return node;
+    return getScrollParent(node.parentElement);
+  };
+
+  const openPreview = (src: string) => {
+    const scrollable = getScrollParent(formRef.current?.parentElement ?? null);
+    savedScrollRef.current = scrollable?.scrollTop ?? 0;
+    if (scrollable) scrollable.scrollTop = 0;
+    setPreviewImage(src);
+  };
+
+  const closePreview = () => {
+    setPreviewImage(null);
+    const scrollable = getScrollParent(formRef.current?.parentElement ?? null);
+    if (scrollable) {
+      // defer so the DOM has settled after state update
+      requestAnimationFrame(() => { scrollable.scrollTop = savedScrollRef.current; });
+    }
+  };
+
+  /* ── Validation & submit ─────────────────────────────────────── */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submission - files state:", files);
-    console.log("Form submission - fileUrls state:", fileUrls);
-
-    // Clear previous errors
     setError("");
     setImageError("");
 
@@ -73,60 +338,36 @@ const [colors, setColors] = useState<{ hex: string; isOpen: boolean }[]>(
       setError("Discounted price cannot be greater than price");
       return;
     }
-
-    if (!category) {
-      setError("Category is required");
-      return;
-    }
-
+    if (!category) { setError("Category is required"); return; }
     if (!orderMaxDays || !orderMinDays) {
       setError("Order min and max days are required");
       return;
     }
-
     if (orderMaxDays < orderMinDays) {
       setError("Order max days cannot be less than order min days");
       return;
     }
-
     const weightValue = parseFloat(weight);
     if (!weight || isNaN(weightValue) || weightValue <= 0) {
       setError("Weight is required and must be greater than 0");
       return;
     }
-
-    if (
-      length === undefined ||
-      length === null ||
-      isNaN(length) ||
-      length <= 0
-    ) {
+    if (!length || isNaN(length) || length <= 0) {
       setError("Length is required and must be greater than 0");
       return;
     }
-    if (width === undefined || width === null || isNaN(width) || width <= 0) {
+    if (!width || isNaN(width) || width <= 0) {
       setError("Width is required and must be greater than 0");
       return;
     }
-    if (
-      height === undefined ||
-      height === null ||
-      isNaN(height) ||
-      height <= 0
-    ) {
+    if (!height || isNaN(height) || height <= 0) {
       setError("Height is required and must be greater than 0");
       return;
     }
-
-    // Check if files are required and present
-    // For new products: require at least one image
-    // For editing products: either keep existing images or add new ones
     if (!product && files.length === 0) {
       setError("Please select at least one image file");
       return;
     }
-
-    // For editing products, ensure we have either existing images or new files
     if (
       product &&
       files.length === 0 &&
@@ -135,557 +376,602 @@ const [colors, setColors] = useState<{ hex: string; isOpen: boolean }[]>(
       setError("Please select at least one image file or keep existing images");
       return;
     }
-
-    // Validate image file sizes
     if (files.length > 0) {
-      const maxSize = 50 * 1024 * 1024; // 10MB in bytes
-      const oversizedFiles: string[] = [];
-
-      files.forEach((file) => {
-        if (file.size > maxSize) {
-          oversizedFiles.push(file.name);
-        }
-      });
-
-      if (oversizedFiles.length > 0) {
-        setImageError(
-          `Image(s) exceed 50MB limit: ${oversizedFiles.join(", ")}`,
-        );
+      const maxSize = 50 * 1024 * 1024;
+      const oversized = files.filter((f) => f.size > maxSize).map((f) => f.name);
+      if (oversized.length > 0) {
+        setImageError(`Image(s) exceed 50MB limit: ${oversized.join(", ")}`);
         return;
       }
     }
 
+    if (!product) localStorage.removeItem(DRAFT_KEY);
+
     onSubmit({
-      _id: product?._id ? product._id : "",
+      _id: product?._id ?? "",
       title: name,
       description,
       price: parseFloat(price),
       discountedPrice: discountedPrice ? parseFloat(discountedPrice) : 0,
       category,
-      orderMinDays: orderMinDays,
-      orderMaxDays: orderMaxDays,
-      colorVariations: colors.map((color) => color.hex),
-      sizeVariations: customSizes.filter((size) => size.trim() !== ""),
-      files: files,
+      orderMinDays,
+      orderMaxDays,
+      colorVariations: colors.map((c) => c.hex),
+      sizeVariations: customSizes.filter((s) => s.trim() !== ""),
+      files,
       weight: parseFloat(weight),
       length: length || 0,
       width: width || 0,
       height: height || 0,
-      crossedImages: crossedImages, // send crossed images to backend
+      crossedImages,
     });
   };
 
-  const handleSizeChange = (index: number, value: string) => {
-    const updatedSizes = [...customSizes];
-    updatedSizes[index] = value;
-    setCustomSizes(updatedSizes);
-  };
-
-  const addSizeInput = () => {
-    if (customSizes.length < 10) {
-      setCustomSizes([...customSizes, ""]);
-    }
-  };
-
-  const removeSizeInput = (index: number) => {
-    if (customSizes.length > 1) {
-      const updatedSizes = customSizes.filter((_, i) => i !== index);
-      setCustomSizes(updatedSizes);
-    }
-  };
-
-  const handleCloseAllColors = async () => {
-    new Promise((resolve) => {
-      setColors(
-        colors.map((color) => ({
-          ...color,
-          isOpen: false,
-        })),
+  /* ── File helpers ────────────────────────────────────────────── */
+  const processNewFiles = (selected: FileList | File[]) => {
+    setImageError("");
+    const arr = Array.from(selected);
+    const existingCount = product?.images
+      ? product.images.filter((img) => !crossedImages.includes(img)).length
+      : 0;
+    const total = existingCount + files.length + arr.length;
+    if (total > 5) {
+      const remaining = 5 - (existingCount + files.length);
+      setImageError(
+        `Max 5 images. You have ${existingCount + files.length} selected, ${remaining} slot${remaining === 1 ? "" : "s"} remaining.`,
       );
-      resolve(true);
-    });
+      return;
+    }
+    const maxSize = 50 * 1024 * 1024;
+    const oversized = arr.filter((f) => f.size > maxSize).map((f) => f.name);
+    if (oversized.length > 0) {
+      setImageError(`Image(s) exceed 50MB limit: ${oversized.join(", ")}`);
+      return;
+    }
+    setFiles((prev) => [...prev, ...arr]);
+    setFileUrls((prev) => [...prev, ...arr.map((f) => URL.createObjectURL(f))]);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = e.target.files;
-    setImageError(""); // Clear previous image errors
-
-    console.log("handleFileChange - selectedFiles:", selectedFiles);
-    console.log("handleFileChange - current files state:", files);
-
-    if (selectedFiles) {
-      const maxSize = 50 * 1024 * 1024; // 50MB in bytes
-      const oversizedFiles: string[] = [];
-
-      // Count existing images that are NOT crossed out
-      const existingImagesCount = product?.images
-        ? product.images.filter((img) => !crossedImages.includes(img)).length
-        : 0;
-      // Check total image count (existing + new + selected)
-      const totalImages =
-        existingImagesCount + files.length + selectedFiles.length;
-      if (totalImages > 5) {
-        const remaining = 5 - (existingImagesCount + files.length);
-        setImageError(
-          `You can only upload up to 5 images. You have ${
-            existingImagesCount + files.length
-          } selected, ${remaining} slot${
-            remaining === 1 ? "" : "s"
-          } remaining (including existing images).`,
-        );
-        e.target.value = "";
-        return;
-      }
-
-      Array.from(selectedFiles).forEach((file) => {
-        if (file.size > maxSize) {
-          oversizedFiles.push(file.name);
-        }
-      });
-
-      if (oversizedFiles.length > 0) {
-        setImageError(
-          `Image(s) exceed 50MB limit: ${oversizedFiles.join(", ")}`,
-        );
-        e.target.value = ""; // Reset the input
-        return;
-      }
-
-      // Convert selectedFiles to array and combine with existing files
-      const newFiles = Array.from(selectedFiles);
-      console.log("New files to add:", newFiles);
-
-      if (files.length > 0) {
-        console.log("Combining existing files with new files");
-        // Combine existing files with new files
-        const combinedFiles = [...files, ...newFiles];
-        console.log("Combined files:", combinedFiles);
-        setFiles(combinedFiles);
-
-        // Create URLs for new thumbnails and add to existing ones
-        const newUrls = newFiles.map((file) => URL.createObjectURL(file));
-        setFileUrls((prev) => [...prev, ...newUrls]);
-      } else {
-        console.log("First time selecting files");
-        // First time selecting files
-        setFiles(newFiles);
-
-        // Create URLs for thumbnails
-        const urls = newFiles.map((file) => URL.createObjectURL(file));
-        setFileUrls(urls);
-      }
-
-      // Reset the input so user can select more files
-      e.target.value = "";
-    }
+    if (e.target.files) processNewFiles(e.target.files);
+    e.target.value = "";
   };
 
-  const removeImage = (index: number) => {
-    if (files.length > 0) {
-      // Remove the file at the specified index
-      const updatedFiles = files.filter((_, i) => i !== index);
-      setFiles(updatedFiles);
-
-      // Update file URLs
-      const newUrls = [...fileUrls];
-      URL.revokeObjectURL(newUrls[index]); // Clean up the removed URL
-      newUrls.splice(index, 1);
-      setFileUrls(newUrls);
-    }
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const dropped = Array.from(e.dataTransfer.files).filter((f) =>
+      f.type.match(/^image\/(png|jpeg|bmp|webp)$/),
+    );
+    if (dropped.length) processNewFiles(dropped);
   };
 
-  // Clean up URLs when component unmounts
+  const removeNewImage = (index: number) => {
+    URL.revokeObjectURL(fileUrls[index]);
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setFileUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCloseAllColors = () => {
+    setColors((prev) => prev.map((c) => ({ ...c, isOpen: false })));
+  };
+
+  /* ── Size helpers ────────────────────────────────────────────── */
+  const handleSizeChange = (index: number, value: string) => {
+    const updated = [...customSizes];
+    updated[index] = value;
+    setCustomSizes(updated);
+  };
+  const addSizeInput = () => {
+    if (customSizes.length < 10) setCustomSizes((p) => [...p, ""]);
+  };
+  const removeSizeInput = (index: number) => {
+    if (customSizes.length > 1)
+      setCustomSizes((p) => p.filter((_, i) => i !== index));
+  };
+
+  /* ── Cleanup blob URLs ───────────────────────────────────────── */
   useEffect(() => {
-    return () => {
-      fileUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
+    return () => fileUrls.forEach((u) => URL.revokeObjectURL(u));
   }, [fileUrls]);
 
+  /* ── Derived ─────────────────────────────────────────────────── */
+  const existingImgCount = product?.images
+    ? product.images.filter((img) => !crossedImages.includes(img)).length
+    : 0;
+  const totalImageCount = existingImgCount + files.length;
+
+  /* ── Render ──────────────────────────────────────────────────── */
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="name">Product Name</Label>
-        <Input
-          id="name"
-          placeholder="Enter product name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={50}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          placeholder="Enter product description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          maxLength={1000}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="price">Price</Label>
-        <div className="input-icon">
-          <Input
-            id="price"
-            type="number"
-            placeholder="Enter price"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            required
-          />
-          <i>$</i>
-        </div>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="discounted-price">Discounted Price (optional)</Label>
+    <>
+      {previewImage && (
+        <Lightbox src={previewImage} onClose={closePreview} />
+      )}
 
-        <div className="input-icon">
-          <Input
-            id="discounted-price"
-            type="number"
-            placeholder="Enter Discounted price"
-            value={discountedPrice}
-            onChange={(e) => setDiscountedPrice(e.target.value)}
-            required={false}
-          />
-          <i>$</i>
-        </div>
-      </div>
+      <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
 
-      <div className="space-y-2">
-        <div className="grid w-full max-w-sm items-center gap-1.5">
-          <Label htmlFor="picture">Picture</Label>
-          <span className="text-xs text-muted-foreground text-stone-400">
-            png | jpg | bmp | jpeg | webp (Max size: 50MB per image | Max 5
-            images)
-          </span>
-          <span className="text-xs text-blue-600">
-            💡 You can select multiple images at once or add more images by
-            clicking "Choose Files" again
-            {product && product.images && product.images.length > 0 && (
-              <span className="block mt-1">
-                📸 New images will be added to existing ones
-              </span>
-            )}
-          </span>
-          <Input
-            className="cursor-pointer"
-            id="picture"
-            type="file"
-            accept="image/png,image/jpeg,image/bmp,image/jpg,image/webp"
-            multiple
-            onChange={handleFileChange}
-          />
-        </div>
-
-        {/* Show existing product images when editing */}
-        {product?.images && product.images.length > 0 && (
-          <div className="mt-3">
-            <Label className="text-sm font-medium">
-              Existing Product Images:
-            </Label>
-            <div className="flex flex-wrap gap-3 mt-2">
-              {product.images.map((image, index) => {
-                const isCrossed = crossedImages.includes(image);
-                return (
-                  <div
-                    key={index}
-                    className="relative min-w-[103px] flex flex-col items-center justify-center group"
-                  >
-                    <img
-                      src={image}
-                      alt={`Product ${index + 1}`}
-                      className={`w-20 h-20 object-cover rounded-lg border border-gray-200 ${
-                        isCrossed ? "opacity-40 grayscale" : ""
-                      }`}
-                      style={
-                        isCrossed
-                          ? { filter: "grayscale(1)", opacity: 0.4 }
-                          : {}
-                      }
-                    />
-                    {/* Cross (remove) button */}
-                    {!isCrossed && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCrossedImages((prev) => [...prev, image]);
-                        }}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
-                        title="Remove image"
-                      >
-                        ×
-                      </button>
-                    )}
-                    {isCrossed && (
-                      <div className="absolute -top-2 -right-2 bg-gray-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold z-10 opacity-60 cursor-not-allowed">
-                        ×
-                      </div>
-                    )}
-                    <div className="text-xs text-gray-500 mt-1 text-center">
-                      Existing Image {index + 1}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        {/* ── Draft restored banner ── */}
+        {draftRestored && (
+          <div className="flex items-center justify-between text-xs bg-amber-50 border border-amber-200 text-amber-700 rounded-lg px-3 py-2">
+            <span>Draft restored from your last session.</span>
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.removeItem(DRAFT_KEY);
+                setDraftRestored(false);
+              }}
+              className="ml-3 underline underline-offset-2 hover:text-amber-900 shrink-0"
+            >
+              Clear draft
+            </button>
           </div>
         )}
 
-        {/* Show thumbnails of newly uploaded images */}
-        {fileUrls.length > 0 && (
-          <div className="mt-3">
-            <Label className="text-sm font-medium">Uploaded Images:</Label>
-            <div className="flex flex-wrap gap-3 mt-2">
-              {fileUrls.map((url, index) => (
-                <div
-                  key={index}
-                  className="relative min-w-[103px] flex flex-col items-center justify-center group"
+        {/* ── General Information ── */}
+        <Section icon={<Package className="h-4 w-4" />} title="General Information">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <div className="flex flex-col gap-4">
+              <div>
+                <FL
+                  htmlFor="name"
+                  tip="Your product's display name shown to customers. Keep it clear and descriptive."
+                  count={name.length}
+                  max={50}
                 >
-                  <img
-                    src={url}
-                    alt={`Preview ${index + 1}`}
-                    className="w-20 h-20 object-cover rounded-lg border border-gray-200"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(index)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                    title="Remove image"
-                  >
-                    ×
-                  </button>
-                  <div className="text-xs text-gray-500 mt-1 text-center">
-                    {files[index]
-                      ? files[index].name.substring(0, 15) +
-                        (files[index].name.length > 15 ? "..." : "")
-                      : ""}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {imageError && (
-          <div className="text-red-500 text-sm mt-1">{imageError}</div>
-        )}
-
-        {/* Debug info - remove this after fixing the issue */}
-        {/* {process.env.NODE_ENV === "development" && (
-          <div className="text-xs text-gray-500 mt-2 p-2 bg-gray-100 rounded">
-            <div>Debug Info:</div>
-            <div>Files count: {files ? files.length : 0}</div>
-            <div>File URLs count: {fileUrls.length}</div>
-            {files &&
-              Array.from(files).map((file, index) => (
-                <div key={index}>
-                  File {index + 1}: {file.name} ({file.size} bytes)
-                </div>
-              ))}
-          </div>
-        )} */}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="category">Category</Label>
-        <Select value={category} onValueChange={setCategory} required>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="electronics">Electronics</SelectItem>
-            <SelectItem value="clothing">Clothing</SelectItem>
-            <SelectItem value="home">Home & Garden</SelectItem>
-            <SelectItem value="books">Books</SelectItem>
-            <SelectItem value="other">Other</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className=" flex flex-row space-x-4">
-        <div className="space-y-2">
-          <Label htmlFor="orderMinDays">Min days to order</Label>
-          <Input
-            id="orderMinDays"
-            type="number"
-            placeholder="Enter Min days to order"
-            value={orderMinDays}
-            onChange={(e) => setOrderMinDays(parseInt(e.target.value))}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="orderMaxDays">Max days to order</Label>
-          <Input
-            id="orderMaxDays"
-            type="number"
-            placeholder="Enter Max days to order"
-            value={orderMaxDays}
-            onChange={(e) => setOrderMaxDays(parseInt(e.target.value))}
-            required
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="weight">Weight (oz) *</Label>
-
-        <Input
-          id="weight"
-          type="number"
-          step="0.01"
-          min="0"
-          placeholder="Enter weight in ounces (e.g., 5.5)"
-          value={weight}
-          onChange={(e) => setWeight(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="length">Length (cm) *</Label>
-          <Input
-            id="length"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="Enter length"
-            value={length}
-            onChange={(e) => setLength(parseFloat(e.target.value) || 0)}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="width">Width (cm) *</Label>
-          <Input
-            id="width"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="Enter width"
-            value={width}
-            onChange={(e) => setWidth(parseFloat(e.target.value) || 0)}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="height">Height (cm) *</Label>
-          <Input
-            id="height"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="Enter height"
-            value={height}
-            onChange={(e) => setHeight(parseFloat(e.target.value) || 0)}
-            required
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2 ">
-        <Label htmlFor="color">Color</Label>
-
-        <div className="flex flex-row space-x-4">
-          {colors.map((color, index) => (
-            <div key={index} className="flex items-center  flex-col relative">
-              <div
-                className="absolute top-[-15px] right-0 cursor-pointer z-10 text-gray-400"
-                style={{ right: color.isOpen ? "50px" : "0" }}
-                onClick={() => {
-                  const updatedColors = [...colors];
-                  updatedColors.splice(index, 1);
-                  setColors(updatedColors);
-                }}
-              >
-                x
+                  Product Name
+                </FL>
+                <Input
+                  id="name"
+                  placeholder="e.g. Wireless Noise-Cancelling Headphones"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={50}
+                  required
+                  className="bg-white"
+                />
               </div>
-              <div
-                className="w-[50px] h-[50px]  rounded-[50%] cursor-pointer "
-                style={{ backgroundColor: color.hex }}
-                onClick={async () => {
-                  await handleCloseAllColors().then(() => {
-                    const updatedColors = [...colors];
-                    updatedColors[index].isOpen = !updatedColors[index].isOpen;
-                    setColors(updatedColors);
-                  });
-                }}
-              ></div>
-              <Block
-                color={color.hex}
-                onChange={(e) => {
-                  const updatedColors = [...colors];
-                  updatedColors[index].hex = e.hex;
-                  updatedColors[index].isOpen = false;
-                  setColors(updatedColors);
-                }}
-                className={`${color.isOpen ? "" : "hidden"} mt-3`}
+            </div>
+            <div>
+              <FL
+                htmlFor="description"
+                tip="A detailed description shown on the product page. Include key features, materials, and use cases."
+                count={description.length}
+                max={1000}
+              >
+                Description
+              </FL>
+              <Textarea
+                id="description"
+                placeholder="Describe your product in detail — features, materials, dimensions, use cases..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                maxLength={1000}
+                required
+                className="bg-white min-h-[90px] lg:min-h-[100px] resize-none"
               />
             </div>
-          ))}
-          <div
-            className="w-[50px] h-[50px] border border-black bg-gray-100 rounded-[50%] flex items-center justify-center cursor-pointer font-bold"
-            onClick={() => {
-              const updatedColors = [...colors];
-              updatedColors.push({ hex: "#000000", isOpen: true });
-              setColors(updatedColors);
-            }}
-          >
-            +
           </div>
-        </div>
-      </div>
+        </Section>
 
-      <div className="space-y-2">
-        <Label htmlFor="size">Variation Options</Label>
-        <div className="space-y-2">
-          {customSizes.map((size, index) => (
-            <div className="flex items-center space-x-2" key={index}>
-              <Input
-                placeholder={`Size ${index + 1} (e.g., XL, 42, 52 inches)`}
-                value={size}
-                onChange={(e) => handleSizeChange(index, e.target.value)}
-                maxLength={15}
-              />
-              {customSizes.length > 1 && (
-                // asdasd
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => removeSizeInput(index)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  ×
-                </Button>
+        {/* ── Pricing ── */}
+        <Section icon={<DollarSign className="h-4 w-4" />} title="Pricing">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <FL
+                htmlFor="price"
+                tip="The base selling price of this product in USD. Customers pay this unless a discounted price is set."
+              >
+                Price
+              </FL>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm pointer-events-none select-none">
+                  $
+                </span>
+                <Input
+                  id="price"
+                  type="number"
+                  placeholder="0.00"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  required
+                  className="pl-6 bg-white"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
+            <div>
+              <FL
+                htmlFor="discounted-price"
+                optional
+                tip="Sale price shown to customers. Must be lower than the original price. Leave blank if no discount applies."
+              >
+                Discounted Price
+              </FL>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm pointer-events-none select-none">
+                  $
+                </span>
+                <Input
+                  id="discounted-price"
+                  type="number"
+                  placeholder="0.00"
+                  value={discountedPrice}
+                  onChange={(e) => setDiscountedPrice(e.target.value)}
+                  className="pl-6 bg-white"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
+          </div>
+        </Section>
+
+        {/* ── Product Images ── */}
+        <Section icon={<ImageIcon className="h-4 w-4" />} title="Product Images">
+          <FL
+            tip="Upload up to 5 high-quality images. The first image will be the main display photo. Supports PNG, JPG, WEBP, BMP up to 50MB each."
+          >
+            Images
+            <span className="ml-1.5 text-[10px] text-stone-400 font-normal normal-case tracking-normal">
+              ({totalImageCount}/5 used)
+            </span>
+          </FL>
+
+          {/* Drop zone */}
+          <label
+            htmlFor="picture"
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            className={`flex flex-col items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed py-7 px-4 cursor-pointer transition-all duration-200 select-none
+              ${isDragging
+                ? "border-stone-900 bg-stone-100"
+                : "border-stone-300 bg-white hover:border-stone-400 hover:bg-stone-50"
+              }
+              ${totalImageCount >= 5 ? "pointer-events-none opacity-50" : ""}
+            `}
+          >
+            <div className={`rounded-full p-3 ${isDragging ? "bg-stone-200" : "bg-stone-100"} transition-colors`}>
+              <Upload className="h-5 w-5 text-stone-500" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-stone-700">
+                {isDragging ? "Drop images here" : "Click to upload or drag & drop"}
+              </p>
+              <p className="text-xs text-stone-400 mt-0.5">
+                PNG, JPG, WEBP, BMP · Max 50MB per image · Up to 5 images
+              </p>
+              {product?.images && product.images.length > 0 && (
+                <p className="text-xs text-stone-400 mt-0.5">
+                  New images will be added alongside existing ones
+                </p>
               )}
             </div>
-          ))}
-          {customSizes.length < 10 && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addSizeInput}
-              className="w-full"
-            >
-              + Add Variation
-            </Button>
-          )}
-        </div>
-      </div>
+            <input
+              id="picture"
+              type="file"
+              accept="image/png,image/jpeg,image/bmp,image/jpg,image/webp"
+              multiple
+              onChange={handleFileChange}
+              className="sr-only"
+            />
+          </label>
 
-      <Button type="submit">
-        {product ? "Update Product" : "Add Product"}
-      </Button>
-      <div>
-        <Label className="text-red-500">{error}</Label>
-      </div>
-    </form>
+          {/* Image grid */}
+          {(product?.images?.length || fileUrls.length) ? (
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 mt-1">
+              {/* Existing images */}
+              {product?.images?.map((img, i) => {
+                const isCrossed = crossedImages.includes(img);
+                return (
+                  <ImageTile
+                    key={`existing-${i}`}
+                    src={img}
+                    label={`Existing ${i + 1}`}
+                    faded={isCrossed}
+                    onRemove={
+                      !isCrossed
+                        ? () => setCrossedImages((prev) => [...prev, img])
+                        : undefined
+                    }
+                    onPreview={() => openPreview(img)}
+                  />
+                );
+              })}
+              {/* New uploads */}
+              {fileUrls.map((url, i) => (
+                <ImageTile
+                  key={`new-${i}`}
+                  src={url}
+                  label={
+                    files[i]
+                      ? files[i].name.length > 12
+                        ? files[i].name.substring(0, 12) + "…"
+                        : files[i].name
+                      : `New ${i + 1}`
+                  }
+                  onRemove={() => removeNewImage(i)}
+                  onPreview={() => openPreview(url)}
+                />
+              ))}
+            </div>
+          ) : null}
+
+          {imageError && (
+            <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mt-1">
+              {imageError}
+            </p>
+          )}
+        </Section>
+
+        {/* ── Category & Fulfillment ── */}
+        <Section icon={<Tag className="h-4 w-4" />} title="Category & Fulfillment">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <FL
+                htmlFor="category"
+                tip="Select the most relevant category so customers can find your product easily."
+              >
+                Category
+              </FL>
+              <Select value={category} onValueChange={setCategory} required>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="electronics">Electronics</SelectItem>
+                  <SelectItem value="clothing">Clothing</SelectItem>
+                  <SelectItem value="home">Home & Garden</SelectItem>
+                  <SelectItem value="books">Books</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <FL
+                htmlFor="orderMinDays"
+                tip="Minimum number of business days required to process and ship this order."
+              >
+                Min Order Days
+              </FL>
+              <Input
+                id="orderMinDays"
+                type="number"
+                placeholder="e.g. 3"
+                value={orderMinDays}
+                onChange={(e) => setOrderMinDays(parseInt(e.target.value))}
+                required
+                className="bg-white"
+                min="0"
+              />
+            </div>
+            <div>
+              <FL
+                htmlFor="orderMaxDays"
+                tip="Maximum number of business days the order fulfillment could take. Must be ≥ min days."
+              >
+                Max Order Days
+              </FL>
+              <Input
+                id="orderMaxDays"
+                type="number"
+                placeholder="e.g. 7"
+                value={orderMaxDays}
+                onChange={(e) => setOrderMaxDays(parseInt(e.target.value))}
+                required
+                className="bg-white"
+                min="0"
+              />
+            </div>
+          </div>
+        </Section>
+
+        {/* ── Shipping ── */}
+        <Section icon={<Truck className="h-4 w-4" />} title="Shipping Details">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div>
+              <FL
+                htmlFor="weight"
+                tip="Product weight in ounces (oz). Used to calculate accurate shipping rates at checkout."
+              >
+                Weight (oz)
+              </FL>
+              <Input
+                id="weight"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="e.g. 5.5"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                required
+                className="bg-white"
+              />
+            </div>
+            <div>
+              <FL
+                htmlFor="length"
+                tip="Package length in centimeters. Used with width and height to calculate shipping dimensions."
+              >
+                Length (cm)
+              </FL>
+              <Input
+                id="length"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="e.g. 30"
+                value={length || ""}
+                onChange={(e) => setLength(parseFloat(e.target.value) || 0)}
+                required
+                className="bg-white"
+              />
+            </div>
+            <div>
+              <FL
+                htmlFor="width"
+                tip="Package width in centimeters."
+              >
+                Width (cm)
+              </FL>
+              <Input
+                id="width"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="e.g. 20"
+                value={width || ""}
+                onChange={(e) => setWidth(parseFloat(e.target.value) || 0)}
+                required
+                className="bg-white"
+              />
+            </div>
+            <div>
+              <FL
+                htmlFor="height"
+                tip="Package height in centimeters."
+              >
+                Height (cm)
+              </FL>
+              <Input
+                id="height"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="e.g. 10"
+                value={height || ""}
+                onChange={(e) => setHeight(parseFloat(e.target.value) || 0)}
+                required
+                className="bg-white"
+              />
+            </div>
+          </div>
+        </Section>
+
+        {/* ── Colors + Variations: side by side on large screens ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+
+        {/* ── Colors ── */}
+        <Section icon={<Palette className="h-4 w-4" />} title="Color Variants">
+          <FL tip="Add color swatches that customers can choose from. Click a swatch to open the color picker, then pick a color.">
+            Colors
+            <span className="ml-1.5 text-[10px] text-stone-400 font-normal normal-case tracking-normal">
+              (optional)
+            </span>
+          </FL>
+          <div className="flex flex-wrap gap-3 items-start">
+            {colors.map((color, index) => (
+              <div key={index} className="flex flex-col items-center relative group/color">
+                {/* remove */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setColors((prev) => prev.filter((_, i) => i !== index))
+                  }
+                  className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-stone-400 hover:bg-red-500 text-white flex items-center justify-center z-10 opacity-0 group-hover/color:opacity-100 transition-opacity"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+                {/* swatch */}
+                <div
+                  className="w-10 h-10 rounded-full border-2 border-white shadow-md cursor-pointer ring-2 ring-stone-200 hover:ring-stone-400 transition-all"
+                  style={{ backgroundColor: color.hex }}
+                  onClick={() => {
+                    handleCloseAllColors();
+                    setColors((prev) =>
+                      prev.map((c, i) => ({
+                        ...c,
+                        isOpen: i === index ? !c.isOpen : false,
+                      })),
+                    );
+                  }}
+                />
+                <Block
+                  color={color.hex}
+                  onChange={(e) => {
+                    setColors((prev) =>
+                      prev.map((c, i) =>
+                        i === index ? { hex: e.hex, isOpen: false } : c,
+                      ),
+                    );
+                  }}
+                  className={`${color.isOpen ? "" : "hidden"} mt-2 z-20 absolute top-full left-0`}
+                />
+              </div>
+            ))}
+            {/* add button */}
+            <button
+              type="button"
+              onClick={() =>
+                setColors((prev) => [...prev, { hex: "#3b82f6", isOpen: true }])
+              }
+              className="w-10 h-10 rounded-full border-2 border-dashed border-stone-300 bg-white hover:border-stone-500 hover:bg-stone-50 flex items-center justify-center text-stone-400 hover:text-stone-600 transition-all font-bold text-lg"
+            >
+              +
+            </button>
+          </div>
+        </Section>
+
+        {/* ── Variations / Sizes ── */}
+        <Section icon={<Layers className="h-4 w-4" />} title="Size Variations">
+          <FL tip="Add size or variation options customers can select (e.g. XL, 42, 52 inches). Up to 10 variations allowed.">
+            Variations
+            <span className="ml-1.5 text-[10px] text-stone-400 font-normal normal-case tracking-normal">
+              (optional)
+            </span>
+          </FL>
+          <div className="space-y-2">
+            {customSizes.map((size, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input
+                  placeholder={`Variation ${index + 1} — e.g. XL, 42, 52"`}
+                  value={size}
+                  onChange={(e) => handleSizeChange(index, e.target.value)}
+                  maxLength={15}
+                  className="bg-white"
+                />
+                {customSizes.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeSizeInput(index)}
+                    className="w-8 h-8 rounded-md flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+            {customSizes.length < 10 && (
+              <button
+                type="button"
+                onClick={addSizeInput}
+                className="w-full h-9 rounded-lg border border-dashed border-stone-300 text-sm text-stone-500 hover:border-stone-500 hover:text-stone-700 hover:bg-stone-50 transition-all"
+              >
+                + Add Variation
+              </button>
+            )}
+          </div>
+        </Section>
+
+        </div>{/* end Colors + Variations grid */}
+
+        {/* ── Submit ── */}
+        <div className="pt-1 space-y-3">
+          {error && (
+            <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+              <X className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+          <Button
+            type="submit"
+            className="w-full h-11 text-sm font-semibold rounded-lg bg-stone-900 hover:bg-stone-800 text-white transition-colors"
+          >
+            {product ? "Save Changes" : "Add Product"}
+          </Button>
+        </div>
+      </form>
+    </>
   );
 }

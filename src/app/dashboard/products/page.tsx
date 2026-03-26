@@ -269,7 +269,8 @@ export default function ProductsPage() {
           <DialogTrigger asChild>
             <Button>Add Product</Button>
           </DialogTrigger>
-          <DialogContent className="max-h-[80vh] overflow-y-auto custom-scrollbar scrollbar">
+          <DialogContent className="max-h-[92vh] w-full sm:max-w-2xl lg:max-w-3xl overflow-y-auto custom-scrollbar scrollbar"
+            onInteractOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>Add New Product</DialogTitle>
             </DialogHeader>
@@ -304,7 +305,8 @@ export default function ProductsPage() {
                       Edit
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-h-[80vh] overflow-y-auto custom-scrollbar scrollbar">
+                  <DialogContent className="max-h-[92vh] w-full sm:max-w-2xl lg:max-w-3xl overflow-y-auto custom-scrollbar scrollbar"
+            onInteractOutside={(e) => e.preventDefault()}>
                     <DialogHeader>
                       <DialogTitle>Edit Product</DialogTitle>
                     </DialogHeader>
