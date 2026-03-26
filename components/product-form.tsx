@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Check } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -17,18 +16,6 @@ import {
 import type { Product, ProductForm } from "@/app/types";
 import { Block } from "@uiw/react-color";
 
-const US_STATES = [
-  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
-  "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho",
-  "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana",
-  "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota",
-  "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada",
-  "New Hampshire", "New Jersey", "New Mexico", "New York",
-  "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon",
-  "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
-  "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington",
-  "West Virginia", "Wisconsin", "Wyoming",
-];
 interface ProductFormProps {
   product?: Product;
   onSubmit: (product: ProductForm) => void;
@@ -55,13 +42,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   const [width, setWidth] = useState<number>(product?.width || 0);
   const [height, setHeight] = useState<number>(product?.height || 0);
 
-  const [availableStates, setAvailableStates] = useState<string[]>(
-    product?.availableStates || [],
-  );
-  const [statesOpen, setStatesOpen] = useState(false);
-  const statesDropdownRef = useRef<HTMLDivElement>(null);
-
-  const [colors, setColors] = useState<{ hex: string; isOpen: boolean }[]>(
+const [colors, setColors] = useState<{ hex: string; isOpen: boolean }[]>(
     product?.colorVariations
       ? product?.colorVariations?.map((color) => ({
           hex: color,
@@ -191,7 +172,6 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       width: width || 0,
       height: height || 0,
       crossedImages: crossedImages, // send crossed images to backend
-      availableStates: availableStates.length > 0 ? availableStates : undefined,
     });
   };
 
@@ -313,19 +293,6 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       setFileUrls(newUrls);
     }
   };
-
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (
-        statesDropdownRef.current &&
-        !statesDropdownRef.current.contains(e.target as Node)
-      ) {
-        setStatesOpen(false);
-      }
-    };
-    if (statesOpen) document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, [statesOpen]);
 
   // Clean up URLs when component unmounts
   useEffect(() => {
@@ -711,100 +678,6 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
             </Button>
           )}
         </div>
-      </div>
-      <div className="space-y-2">
-        <Label>Available States (optional)</Label>
-        <div ref={statesDropdownRef} className="relative">
-          <button
-            type="button"
-            className="w-full flex justify-between items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-            onClick={() => setStatesOpen((o) => !o)}
-          >
-            <span>
-              {availableStates.length === 0
-                ? "Select states..."
-                : availableStates.length === US_STATES.length
-                  ? "All states"
-                  : `${availableStates.length} state${availableStates.length > 1 ? "s" : ""} selected`}
-            </span>
-            <span className="opacity-50">{statesOpen ? "▴" : "▾"}</span>
-          </button>
-          {statesOpen && (
-            <div className="absolute z-50 mt-1 w-full rounded-md border border-stone-200 bg-white shadow-md">
-              <div className="flex justify-between items-center px-2 py-1.5 border-b border-stone-100">
-                <span className="text-xs text-muted-foreground">
-                  {availableStates.length} selected
-                </span>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    className="text-xs text-blue-600 hover:underline"
-                    onClick={() => setAvailableStates([...US_STATES])}
-                  >
-                    All
-                  </button>
-                  <button
-                    type="button"
-                    className="text-xs text-blue-600 hover:underline"
-                    onClick={() => setAvailableStates([])}
-                  >
-                    None
-                  </button>
-                </div>
-              </div>
-              <div className="max-h-60 overflow-y-auto p-1 space-y-0.5">
-                {US_STATES.map((state) => {
-                  const isChecked = availableStates.includes(state);
-                  return (
-                    <div
-                      key={state}
-                      className="flex items-center gap-2 px-2 py-1 rounded hover:bg-stone-100 cursor-pointer select-none"
-                      onClick={() =>
-                        setAvailableStates((prev) =>
-                          isChecked
-                            ? prev.filter((s) => s !== state)
-                            : [...prev, state],
-                        )
-                      }
-                    >
-                      <div
-                        className={`h-4 w-4 shrink-0 rounded-sm border flex items-center justify-center ${
-                          isChecked
-                            ? "bg-stone-900 border-stone-900"
-                            : "border-stone-300"
-                        }`}
-                      >
-                        {isChecked && <Check className="h-3 w-3 text-white" />}
-                      </div>
-                      <span className="text-sm">{state}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-        {availableStates.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-1">
-            {availableStates.map((state) => (
-              <span
-                key={state}
-                className="inline-flex items-center gap-1 bg-muted text-xs px-2 py-0.5 rounded-full"
-              >
-                {state}
-                <button
-                  type="button"
-                  className="text-muted-foreground hover:text-foreground"
-                  onClick={() =>
-                    setAvailableStates((prev) => prev.filter((s) => s !== state))
-                  }
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
       </div>
 
       <Button type="submit">
