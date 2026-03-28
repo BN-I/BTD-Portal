@@ -509,7 +509,7 @@ export default function OrdersPage() {
 
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Note</h3>
-                <p className="mt-1 ">{selectedOrder.event.note}</p>
+                <p className="mt-1 ">{selectedOrder.event?.note}</p>
               </div>
 
               <div>

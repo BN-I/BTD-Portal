@@ -76,7 +76,7 @@ export default function ProductsPage() {
   const totalPages = Math.ceil(filteredProducts.length / Number(itemsPerPage));
   const paginatedProducts = filteredProducts.slice(
     (currentPage - 1) * Number(itemsPerPage),
-    currentPage * Number(itemsPerPage)
+    currentPage * Number(itemsPerPage),
   );
 
   // Handle product visibility toggle
@@ -87,7 +87,7 @@ export default function ProductsPage() {
       "status",
       product.status === ProductStatus.Active
         ? ProductStatus.Inactive
-        : ProductStatus.Active
+        : ProductStatus.Active,
     );
 
     product.status =
@@ -100,7 +100,7 @@ export default function ProductsPage() {
     axios
       .put(
         `${process.env.NEXT_PUBLIC_API_URL}/product/${product._id}`,
-        formData
+        formData,
       )
       .then(() => {
         toast({
@@ -153,7 +153,9 @@ export default function ProductsPage() {
     return new Promise(async (resolve, reject) => {
       try {
         await axios
-          .get(`${process.env.NEXT_PUBLIC_API_URL}/product?&perPage=9999`)
+          .get(
+            `${process.env.NEXT_PUBLIC_API_URL}/product?&perPage=9999&source=admin`,
+          )
           .then((res) => {
             resolve(res.data);
           })
@@ -168,7 +170,7 @@ export default function ProductsPage() {
 
   // Extract unique categories for the filter
   const categories = Array.from(
-    new Set(products.map((product) => product.category))
+    new Set(products.map((product) => product.category)),
   );
 
   useEffect(() => {
@@ -293,7 +295,7 @@ export default function ProductsPage() {
           Showing {(currentPage - 1) * Number(itemsPerPage) + 1} to{" "}
           {Math.min(
             currentPage * Number(itemsPerPage),
-            filteredProducts.length
+            filteredProducts.length,
           )}{" "}
           of {filteredProducts.length} products
         </div>

@@ -240,7 +240,7 @@ export default function ProductsPage() {
       var userObj = JSON.parse(user) as User;
       axios
         .get(
-          `${process.env.NEXT_PUBLIC_API_URL}/product/vendor/${userObj?._id}?perPage=9999`,
+          `${process.env.NEXT_PUBLIC_API_URL}/product/vendor/${userObj?._id}?perPage=9999&source=vendor`,
         )
         .then((response) => {
           setProducts(response.data);
