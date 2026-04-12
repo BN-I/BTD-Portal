@@ -446,6 +446,20 @@ export default function VendorAccountPage() {
 
         console.log("store indormation", storeInformation);
         setFormData(mockVendorData);
+
+        // Pre-fill date of birth picker from stored dob fields
+        const { dobDay, dobMonth, dobYear } = mockVendorData;
+        if (dobDay && dobMonth && dobYear) {
+          const parsedDate = new Date(
+            parseInt(dobYear),
+            parseInt(dobMonth) - 1,
+            parseInt(dobDay),
+          );
+          if (!isNaN(parsedDate.getTime())) {
+            setDateOfBirth(parsedDate);
+          }
+        }
+
         // Set store logo if available
         setStoreLogo(storeInformation.data.storeInformation?.storeImage);
 
