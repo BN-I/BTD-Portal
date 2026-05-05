@@ -25,6 +25,7 @@ import {
   ImageIcon,
   X,
   Maximize2,
+  RotateCw,
 } from "lucide-react";
 import type { Product, ProductForm } from "@/app/types";
 import { Block } from "@uiw/react-color";
@@ -166,12 +167,14 @@ function ImageTile({
   label,
   faded,
   onRemove,
+  onRotate,
   onPreview,
 }: {
   src: string;
   label: string;
   faded?: boolean;
   onRemove?: () => void;
+  onRotate?: () => void;
   onPreview: () => void;
 }) {
   return (
@@ -206,6 +209,20 @@ function ImageTile({
           className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
         >
           <X className="h-3 w-3" />
+        </button>
+      )}
+      {onRotate && !faded && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRotate();
+          }}
+          className="absolute -top-1.5 left-1.5 w-5 h-5 rounded-full bg-stone-700 hover:bg-stone-900 text-white flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
+          aria-label={`Rotate ${label} 90 degrees`}
+          title="Rotate 90 degrees"
+        >
+          <RotateCw className="h-3 w-3" />
         </button>
       )}
       {faded && (
@@ -452,6 +469,73 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     setFileUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const rotateImage90 = async (index: number) => {
+    const sourceFile = files[index];
+    if (!sourceFile) return;
+
+    setImageError("");
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Failed to read image file."));
+        reader.readAsDataURL(sourceFile);
+      });
+
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error("Failed to load image for rotation."));
+        image.src = dataUrl;
+      });
+
+      const canvas = document.createElement("canvas");
+      canvas.width = img.height;
+      canvas.height = img.width;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Could not prepare image editor.");
+
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(Math.PI / 2);
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
+      const rotatedBlob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("Failed to generate rotated image."));
+              return;
+            }
+            resolve(blob);
+          },
+          sourceFile.type || "image/png",
+          0.95,
+        );
+      });
+
+      if (rotatedBlob.size > 50 * 1024 * 1024) {
+        setImageError(`Rotated image exceeds 50MB limit: ${sourceFile.name}`);
+        return;
+      }
+
+      const rotatedFile = new File([rotatedBlob], sourceFile.name, {
+        type: rotatedBlob.type || sourceFile.type,
+        lastModified: Date.now(),
+      });
+      const newUrl = URL.createObjectURL(rotatedFile);
+
+      setFiles((prev) => prev.map((file, i) => (i === index ? rotatedFile : file)));
+      setFileUrls((prev) => {
+        const existingUrl = prev[index];
+        if (existingUrl) URL.revokeObjectURL(existingUrl);
+        return prev.map((url, i) => (i === index ? newUrl : url));
+      });
+    } catch {
+      setImageError(`Unable to rotate image: ${sourceFile.name}`);
+    }
+  };
+
   const handleCloseAllColors = () => {
     setColors((prev) => prev.map((c) => ({ ...c, isOpen: false })));
   };
@@ -692,6 +776,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                       : `New ${i + 1}`
                   }
                   onRemove={() => removeNewImage(i)}
+                  onRotate={() => rotateImage90(i)}
                   onPreview={() => openPreview(url)}
                 />
               ))}
