@@ -281,6 +281,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   const [draftRestored, setDraftRestored] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const savedScrollRef = useRef(0);
+  const rotatingIndexesRef = useRef<Set<number>>(new Set());
 
   /* ── Draft: save to localStorage (new products only) ─────────── */
   const DRAFT_KEY = "btd-product-form-draft";
@@ -470,35 +471,37 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   };
 
   const rotateImage90 = async (index: number) => {
+    if (rotatingIndexesRef.current.has(index)) return;
+    rotatingIndexesRef.current.add(index);
+
     const sourceFile = files[index];
-    if (!sourceFile) return;
+    if (!sourceFile) {
+      rotatingIndexesRef.current.delete(index);
+      return;
+    }
 
     setImageError("");
     try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(new Error("Failed to read image file."));
-        reader.readAsDataURL(sourceFile);
-      });
-
-      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const image = new Image();
-        image.onload = () => resolve(image);
-        image.onerror = () => reject(new Error("Failed to load image for rotation."));
-        image.src = dataUrl;
-      });
+      let bitmap: ImageBitmap;
+      try {
+        bitmap = await createImageBitmap(sourceFile, {
+          imageOrientation: "from-image",
+        });
+      } catch {
+        bitmap = await createImageBitmap(sourceFile);
+      }
 
       const canvas = document.createElement("canvas");
-      canvas.width = img.height;
-      canvas.height = img.width;
+      canvas.width = bitmap.height;
+      canvas.height = bitmap.width;
 
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Could not prepare image editor.");
 
       ctx.translate(canvas.width / 2, canvas.height / 2);
       ctx.rotate(Math.PI / 2);
-      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+      ctx.drawImage(bitmap, -bitmap.width / 2, -bitmap.height / 2);
+      bitmap.close();
 
       const rotatedBlob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob(
@@ -509,8 +512,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
             }
             resolve(blob);
           },
-          sourceFile.type || "image/png",
-          0.95,
+          "image/png",
         );
       });
 
@@ -519,8 +521,9 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         return;
       }
 
-      const rotatedFile = new File([rotatedBlob], sourceFile.name, {
-        type: rotatedBlob.type || sourceFile.type,
+      const originalName = sourceFile.name.replace(/\.[^.]+$/, "");
+      const rotatedFile = new File([rotatedBlob], `${originalName}-rotated.png`, {
+        type: "image/png",
         lastModified: Date.now(),
       });
       const newUrl = URL.createObjectURL(rotatedFile);
@@ -533,6 +536,8 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       });
     } catch {
       setImageError(`Unable to rotate image: ${sourceFile.name}`);
+    } finally {
+      rotatingIndexesRef.current.delete(index);
     }
   };
 
