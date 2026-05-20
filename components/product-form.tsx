@@ -30,7 +30,62 @@ import {
 import type { Product, ProductForm } from "@/app/types";
 import { Block } from "@uiw/react-color";
 
-/* ── Tooltip ─────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Helpers                                                                      */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+function genId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+async function normalizeOrientation(
+  file: File,
+): Promise<{ file: File; previewUrl: string }> {
+  try {
+    const bitmap = await createImageBitmap(file, {
+      imageOrientation: "from-image",
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(bitmap, 0, 0);
+    bitmap.close();
+    const blob = await new Promise<Blob>((res, rej) =>
+      canvas.toBlob((b) => (b ? res(b) : rej(new Error("blob"))), "image/jpeg", 0.92),
+    );
+    const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+    const normalized = new File([blob], name, {
+      type: "image/jpeg",
+      lastModified: Date.now(),
+    });
+    return { file: normalized, previewUrl: URL.createObjectURL(normalized) };
+  } catch {
+    return { file, previewUrl: URL.createObjectURL(file) };
+  }
+}
+
+async function rotateBitmap(
+  bitmap: ImageBitmap,
+): Promise<{ blob: Blob; width: number; height: number }> {
+  const canvas = document.createElement("canvas");
+  canvas.width = bitmap.height;
+  canvas.height = bitmap.width;
+  const ctx = canvas.getContext("2d")!;
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate(Math.PI / 2);
+  ctx.drawImage(bitmap, -bitmap.width / 2, -bitmap.height / 2);
+  bitmap.close();
+  const blob = await new Promise<Blob>((res, rej) =>
+    canvas.toBlob((b) => (b ? res(b) : rej(new Error("blob"))), "image/jpeg", 0.92),
+  );
+  return { blob, width: canvas.width, height: canvas.height };
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Small UI components                                                          */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
 function FieldTooltip({ content }: { content: string }) {
   return (
     <TooltipPrimitive.Provider delayDuration={250}>
@@ -57,7 +112,6 @@ function FieldTooltip({ content }: { content: string }) {
   );
 }
 
-/* ── Section card ─────────────────────────────────────────────────── */
 function Section({
   icon,
   title,
@@ -82,7 +136,6 @@ function Section({
   );
 }
 
-/* ── Field label with optional tooltip ───────────────────────────── */
 function FL({
   htmlFor,
   children,
@@ -125,14 +178,7 @@ function FL({
   );
 }
 
-/* ── Image preview lightbox ──────────────────────────────────────── */
-function Lightbox({
-  src,
-  onClose,
-}: {
-  src: string;
-  onClose: () => void;
-}) {
+function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -142,9 +188,7 @@ function Lightbox({
   }, [onClose]);
 
   return (
-    <div
-      className="fixed inset-0 z-[150] bg-black/85 flex items-center justify-center p-4"
-    >
+    <div className="fixed inset-0 z-[150] bg-black/85 flex items-center justify-center p-4">
       <button
         type="button"
         onClick={onClose}
@@ -161,11 +205,11 @@ function Lightbox({
   );
 }
 
-/* ── Image tile ──────────────────────────────────────────────────── */
 function ImageTile({
   src,
   label,
   faded,
+  isProcessing,
   onRemove,
   onRotate,
   onPreview,
@@ -173,16 +217,16 @@ function ImageTile({
   src: string;
   label: string;
   faded?: boolean;
+  isProcessing?: boolean;
   onRemove?: () => void;
   onRotate?: () => void;
   onPreview: () => void;
 }) {
   return (
     <div className="relative group flex flex-col items-center gap-1">
-      {/* tile */}
       <div
-        className="relative w-full aspect-square rounded-lg overflow-hidden border border-stone-200 cursor-pointer bg-stone-100"
-        onClick={onPreview}
+        className="relative w-full aspect-square rounded-lg overflow-hidden border border-stone-200 bg-stone-100 cursor-pointer"
+        onClick={!isProcessing ? onPreview : undefined}
       >
         <img
           src={src}
@@ -191,45 +235,50 @@ function ImageTile({
             faded ? "opacity-35 grayscale" : ""
           }`}
         />
-        {/* hover overlay */}
-        {!faded && (
+        {/* Processing spinner */}
+        {isProcessing && (
+          <div className="absolute inset-0 bg-black/45 flex items-center justify-center">
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+        {/* Preview icon on hover */}
+        {!faded && !isProcessing && (
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             <Maximize2 className="h-5 w-5 text-white drop-shadow" />
           </div>
         )}
       </div>
-      {/* remove button */}
-      {onRemove && !faded && (
+
+      {/* Remove button */}
+      {onRemove && !faded && !isProcessing && (
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
+          onClick={(e) => { e.stopPropagation(); onRemove(); }}
           className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
         >
           <X className="h-3 w-3" />
         </button>
       )}
-      {onRotate && !faded && (
+
+      {/* Rotate button */}
+      {onRotate && !faded && !isProcessing && (
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRotate();
-          }}
+          onClick={(e) => { e.stopPropagation(); onRotate(); }}
           className="absolute -top-1.5 left-1.5 w-5 h-5 rounded-full bg-stone-700 hover:bg-stone-900 text-white flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
-          aria-label={`Rotate ${label} 90 degrees`}
-          title="Rotate 90 degrees"
+          title="Rotate 90°"
         >
           <RotateCw className="h-3 w-3" />
         </button>
       )}
+
+      {/* Deletion marker */}
       {faded && (
         <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-stone-400 text-white flex items-center justify-center shadow z-10">
           <X className="h-3 w-3" />
         </div>
       )}
+
       <span className="text-[10px] text-stone-500 text-center truncate w-full px-0.5">
         {label}
       </span>
@@ -237,13 +286,32 @@ function ImageTile({
   );
 }
 
-/* ── Main component ──────────────────────────────────────────────── */
-interface ProductFormProps {
-  product?: Product;
-  onSubmit: (product: ProductForm) => void;
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Types                                                                        */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+interface ExistingImage {
+  url: string;
+  crossed: boolean;
 }
 
+interface NewImage {
+  id: string;
+  file: File;
+  previewUrl: string;
+}
+
+interface ProductFormProps {
+  product?: Product;
+  onSubmit: (data: ProductForm) => Promise<void>;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Main component                                                               */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
 export function ProductForm({ product, onSubmit }: ProductFormProps) {
+  /* ── Non-image fields ──────────────────────────────────────────── */
   const [name, setName] = useState(product?.title || "");
   const [description, setDescription] = useState(product?.description || "");
   const [price, setPrice] = useState(product?.price?.toString() || "");
@@ -251,47 +319,63 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     product?.discountedPrice?.toString() || "",
   );
   const [category, setCategory] = useState(product?.category || "");
-  const [orderMaxDays, setOrderMaxDays] = useState<number>(
-    product?.orderMaxDays || 0,
-  );
-  const [orderMinDays, setOrderMinDays] = useState<number>(
-    product?.orderMinDays || 0,
-  );
-  const [weight, setWeight] = useState<string>(
-    product?.weight?.toString() || "",
-  );
+  const [orderMaxDays, setOrderMaxDays] = useState<number>(product?.orderMaxDays || 0);
+  const [orderMinDays, setOrderMinDays] = useState<number>(product?.orderMinDays || 0);
+  const [weight, setWeight] = useState<string>(product?.weight?.toString() || "");
   const [length, setLength] = useState<number>(product?.length || 0);
   const [width, setWidth] = useState<number>(product?.width || 0);
   const [height, setHeight] = useState<number>(product?.height || 0);
   const [colors, setColors] = useState<{ hex: string; isOpen: boolean }[]>(
     product?.colorVariations
-      ? product.colorVariations.map((color) => ({ hex: color, isOpen: false }))
+      ? product.colorVariations.map((c) => ({ hex: c, isOpen: false }))
       : [],
   );
   const [customSizes, setCustomSizes] = useState<string[]>(
     product?.sizeVariations?.length ? product.sizeVariations : [""],
   );
-  const [files, setFiles] = useState<File[]>([]);
-  const [fileUrls, setFileUrls] = useState<string[]>([]);
-  const [error, setError] = useState<string>("");
-  const [imageError, setImageError] = useState<string>("");
-  const [crossedImages, setCrossedImages] = useState<string[]>([]);
+
+  /* ── Image state ───────────────────────────────────────────────── */
+  const [existingImgs, setExistingImgs] = useState<ExistingImage[]>(
+    () => (product?.images ?? []).map((url) => ({ url, crossed: false })),
+  );
+  const [newImgs, setNewImgs] = useState<NewImage[]>([]);
+  // IDs / URLs of images currently being processed (rotation, fetch)
+  const [processingSet, setProcessingSet] = useState<Set<string>>(new Set());
+
+  /* ── UI state ──────────────────────────────────────────────────── */
   const [isDragging, setIsDragging] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  const [imageError, setImageError] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
+
   const formRef = useRef<HTMLFormElement>(null);
   const savedScrollRef = useRef(0);
-  const rotatingIndexesRef = useRef<Set<number>>(new Set());
 
-  /* ── Draft: save to localStorage (new products only) ─────────── */
+  /* ── Derived image counts ──────────────────────────────────────── */
+  const activeExistingCount = existingImgs.filter((e) => !e.crossed).length;
+  const totalImageCount = activeExistingCount + newImgs.length;
+  const atLimit = totalImageCount >= 5;
+
+  /* ── Cleanup blob URLs on unmount ──────────────────────────────── */
+  const newImgsRef = useRef(newImgs);
+  newImgsRef.current = newImgs;
+  useEffect(() => {
+    return () => {
+      newImgsRef.current.forEach((n) => URL.revokeObjectURL(n.previewUrl));
+    };
+  }, []);
+
+  /* ── Draft (new products only) ─────────────────────────────────── */
   const DRAFT_KEY = "btd-product-form-draft";
 
   useEffect(() => {
     if (product) return;
-    const draft = localStorage.getItem(DRAFT_KEY);
-    if (!draft) return;
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
     try {
-      const d = JSON.parse(draft);
+      const d = JSON.parse(raw);
       if (d.name) setName(d.name);
       if (d.description) setDescription(d.description);
       if (d.price) setPrice(d.price);
@@ -304,10 +388,11 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       if (d.width) setWidth(d.width);
       if (d.height) setHeight(d.height);
       if (d.customSizes?.length) setCustomSizes(d.customSizes);
-      if (d.colors?.length) setColors(d.colors.map((hex: string) => ({ hex, isOpen: false })));
+      if (d.colors?.length)
+        setColors(d.colors.map((hex: string) => ({ hex, isOpen: false })));
       setDraftRestored(true);
     } catch { /* ignore */ }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -323,7 +408,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     );
   }, [name, description, price, discountedPrice, category, orderMinDays, orderMaxDays, weight, length, width, height, customSizes, colors, product]);
 
-  /* ── Scroll helpers for lightbox ─────────────────────────────── */
+  /* ── Scroll helpers for lightbox ───────────────────────────────── */
   const getScrollParent = (node: HTMLElement | null): HTMLElement | null => {
     if (!node) return null;
     if (node.scrollHeight > node.clientHeight + 1) return node;
@@ -331,123 +416,52 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   };
 
   const openPreview = (src: string) => {
-    const scrollable = getScrollParent(formRef.current?.parentElement ?? null);
-    savedScrollRef.current = scrollable?.scrollTop ?? 0;
-    if (scrollable) scrollable.scrollTop = 0;
-    setPreviewImage(src);
+    const sp = getScrollParent(formRef.current?.parentElement ?? null);
+    savedScrollRef.current = sp?.scrollTop ?? 0;
+    if (sp) sp.scrollTop = 0;
+    setPreviewSrc(src);
   };
 
   const closePreview = () => {
-    setPreviewImage(null);
-    const scrollable = getScrollParent(formRef.current?.parentElement ?? null);
-    if (scrollable) {
-      // defer so the DOM has settled after state update
-      requestAnimationFrame(() => { scrollable.scrollTop = savedScrollRef.current; });
-    }
+    setPreviewSrc(null);
+    const sp = getScrollParent(formRef.current?.parentElement ?? null);
+    if (sp) requestAnimationFrame(() => { sp.scrollTop = savedScrollRef.current; });
   };
 
-  /* ── Validation & submit ─────────────────────────────────────── */
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setImageError("");
-
-    if (discountedPrice && parseFloat(discountedPrice) > parseFloat(price)) {
-      setError("Discounted price cannot be greater than price");
-      return;
-    }
-    if (!category) { setError("Category is required"); return; }
-    if (!orderMaxDays || !orderMinDays) {
-      setError("Order min and max days are required");
-      return;
-    }
-    if (orderMaxDays < orderMinDays) {
-      setError("Order max days cannot be less than order min days");
-      return;
-    }
-    const weightValue = parseFloat(weight);
-    if (!weight || isNaN(weightValue) || weightValue <= 0) {
-      setError("Weight is required and must be greater than 0");
-      return;
-    }
-    if (!length || isNaN(length) || length <= 0) {
-      setError("Length is required and must be greater than 0");
-      return;
-    }
-    if (!width || isNaN(width) || width <= 0) {
-      setError("Width is required and must be greater than 0");
-      return;
-    }
-    if (!height || isNaN(height) || height <= 0) {
-      setError("Height is required and must be greater than 0");
-      return;
-    }
-    if (!product && files.length === 0) {
-      setError("Please select at least one image file");
-      return;
-    }
-    if (
-      product &&
-      files.length === 0 &&
-      (!product.images || product.images.length === 0)
-    ) {
-      setError("Please select at least one image file or keep existing images");
-      return;
-    }
-    if (files.length > 0) {
-      const maxSize = 50 * 1024 * 1024;
-      const oversized = files.filter((f) => f.size > maxSize).map((f) => f.name);
-      if (oversized.length > 0) {
-        setImageError(`Image(s) exceed 50MB limit: ${oversized.join(", ")}`);
-        return;
-      }
-    }
-
-    if (!product) localStorage.removeItem(DRAFT_KEY);
-
-    onSubmit({
-      _id: product?._id ?? "",
-      title: name,
-      description,
-      price: parseFloat(price),
-      discountedPrice: discountedPrice ? parseFloat(discountedPrice) : 0,
-      category,
-      orderMinDays,
-      orderMaxDays,
-      colorVariations: colors.map((c) => c.hex),
-      sizeVariations: customSizes.filter((s) => s.trim() !== ""),
-      files,
-      weight: parseFloat(weight),
-      length: length || 0,
-      width: width || 0,
-      height: height || 0,
-      crossedImages,
+  /* ── Processing set helpers ────────────────────────────────────── */
+  const startProcessing = (id: string) =>
+    setProcessingSet((prev) => new Set([...prev, id]));
+  const stopProcessing = (id: string) =>
+    setProcessingSet((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
     });
-  };
 
-  /* ── File helpers ────────────────────────────────────────────── */
-  const processNewFiles = (selected: FileList | File[]) => {
+  /* ── Add new images ────────────────────────────────────────────── */
+  const processNewFiles = async (selected: FileList | File[]) => {
     setImageError("");
     const arr = Array.from(selected);
-    const existingCount = product?.images
-      ? product.images.filter((img) => !crossedImages.includes(img)).length
-      : 0;
-    const total = existingCount + files.length + arr.length;
-    if (total > 5) {
-      const remaining = 5 - (existingCount + files.length);
+
+    if (totalImageCount + arr.length > 5) {
+      const remaining = 5 - totalImageCount;
       setImageError(
-        `Max 5 images. You have ${existingCount + files.length} selected, ${remaining} slot${remaining === 1 ? "" : "s"} remaining.`,
+        `Max 5 images. ${remaining} slot${remaining === 1 ? "" : "s"} remaining.`,
       );
       return;
     }
-    const maxSize = 50 * 1024 * 1024;
-    const oversized = arr.filter((f) => f.size > maxSize).map((f) => f.name);
-    if (oversized.length > 0) {
-      setImageError(`Image(s) exceed 50MB limit: ${oversized.join(", ")}`);
+
+    const oversized = arr.filter((f) => f.size > 50 * 1024 * 1024);
+    if (oversized.length) {
+      setImageError(`Exceeds 50 MB: ${oversized.map((f) => f.name).join(", ")}`);
       return;
     }
-    setFiles((prev) => [...prev, ...arr]);
-    setFileUrls((prev) => [...prev, ...arr.map((f) => URL.createObjectURL(f))]);
+
+    const normalized = await Promise.all(arr.map(normalizeOrientation));
+    setNewImgs((prev) => [
+      ...prev,
+      ...normalized.map((n) => ({ id: genId(), file: n.file, previewUrl: n.previewUrl })),
+    ]);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -464,88 +478,118 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     if (dropped.length) processNewFiles(dropped);
   };
 
-  const removeNewImage = (index: number) => {
-    URL.revokeObjectURL(fileUrls[index]);
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-    setFileUrls((prev) => prev.filter((_, i) => i !== index));
+  /* ── Remove images ─────────────────────────────────────────────── */
+  const removeNewImage = (id: string) => {
+    setNewImgs((prev) => {
+      const img = prev.find((n) => n.id === id);
+      if (img) URL.revokeObjectURL(img.previewUrl);
+      return prev.filter((n) => n.id !== id);
+    });
   };
 
-  const rotateImage90 = async (index: number) => {
-    if (rotatingIndexesRef.current.has(index)) return;
-    rotatingIndexesRef.current.add(index);
+  const crossExisting = (url: string) =>
+    setExistingImgs((prev) =>
+      prev.map((e) => (e.url === url ? { ...e, crossed: true } : e)),
+    );
 
-    const sourceFile = files[index];
-    if (!sourceFile) {
-      rotatingIndexesRef.current.delete(index);
-      return;
-    }
-
-    setImageError("");
+  /* ── Rotate new image (already in newImgs) ─────────────────────── */
+  const rotateNewImage = async (id: string) => {
+    if (processingSet.has(id)) return;
+    startProcessing(id);
     try {
+      const img = newImgs.find((n) => n.id === id);
+      if (!img) return;
+
       let bitmap: ImageBitmap;
       try {
-        bitmap = await createImageBitmap(sourceFile, {
-          imageOrientation: "from-image",
-        });
+        bitmap = await createImageBitmap(img.file, { imageOrientation: "from-image" });
       } catch {
-        bitmap = await createImageBitmap(sourceFile);
+        bitmap = await createImageBitmap(img.file);
       }
 
-      const canvas = document.createElement("canvas");
-      canvas.width = bitmap.height;
-      canvas.height = bitmap.width;
+      const { blob } = await rotateBitmap(bitmap);
 
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Could not prepare image editor.");
-
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate(Math.PI / 2);
-      ctx.drawImage(bitmap, -bitmap.width / 2, -bitmap.height / 2);
-      bitmap.close();
-
-      const rotatedBlob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error("Failed to generate rotated image."));
-              return;
-            }
-            resolve(blob);
-          },
-          "image/png",
-        );
-      });
-
-      if (rotatedBlob.size > 50 * 1024 * 1024) {
-        setImageError(`Rotated image exceeds 50MB limit: ${sourceFile.name}`);
+      if (blob.size > 50 * 1024 * 1024) {
+        setImageError("Rotated image exceeds 50 MB.");
         return;
       }
 
-      const originalName = sourceFile.name.replace(/\.[^.]+$/, "");
-      const rotatedFile = new File([rotatedBlob], `${originalName}-rotated.png`, {
-        type: "image/png",
+      // Use the image's unique id in the filename so every file is distinct.
+      const rotatedFile = new File([blob], `img-${id}.jpg`, {
+        type: "image/jpeg",
         lastModified: Date.now(),
       });
-      const newUrl = URL.createObjectURL(rotatedFile);
+      const rotatedUrl = URL.createObjectURL(rotatedFile);
 
-      setFiles((prev) => prev.map((file, i) => (i === index ? rotatedFile : file)));
-      setFileUrls((prev) => {
-        const existingUrl = prev[index];
-        if (existingUrl) URL.revokeObjectURL(existingUrl);
-        return prev.map((url, i) => (i === index ? newUrl : url));
-      });
+      setNewImgs((prev) =>
+        prev.map((n) => {
+          if (n.id !== id) return n;
+          URL.revokeObjectURL(n.previewUrl);
+          return { id, file: rotatedFile, previewUrl: rotatedUrl };
+        }),
+      );
     } catch {
-      setImageError(`Unable to rotate image: ${sourceFile.name}`);
+      setImageError("Unable to rotate image.");
     } finally {
-      rotatingIndexesRef.current.delete(index);
+      stopProcessing(id);
     }
   };
 
-  const handleCloseAllColors = () => {
-    setColors((prev) => prev.map((c) => ({ ...c, isOpen: false })));
+  /* ── Rotate existing (server) image ────────────────────────────── */
+  const rotateExistingImage = async (url: string) => {
+    if (processingSet.has(url)) return;
+    startProcessing(url);
+    setImageError("");
+    try {
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
+      const resp = await fetch(proxyUrl);
+      if (!resp.ok) throw new Error("proxy error");
+      const blob = await resp.blob();
+      const srcFile = new File([blob], "src.jpg", {
+        type: blob.type || "image/jpeg",
+      });
+
+      let bitmap: ImageBitmap;
+      try {
+        bitmap = await createImageBitmap(srcFile, { imageOrientation: "from-image" });
+      } catch {
+        bitmap = await createImageBitmap(srcFile);
+      }
+
+      const { blob: rotatedBlob } = await rotateBitmap(bitmap);
+
+      if (rotatedBlob.size > 50 * 1024 * 1024) {
+        setImageError("Rotated image exceeds 50 MB.");
+        return;
+      }
+
+      // Unique ID ensures a unique filename — critical when rotating multiple
+      // images, as the server uses filenames as storage keys.
+      const id = genId();
+      const rotatedFile = new File([rotatedBlob], `img-${id}.jpg`, {
+        type: "image/jpeg",
+        lastModified: Date.now(),
+      });
+      const previewUrl = URL.createObjectURL(rotatedFile);
+
+      // Cross out the original; add the rotated copy as a new upload.
+      // Net count is neutral: –1 existing active, +1 new.
+      setExistingImgs((prev) =>
+        prev.map((e) => (e.url === url ? { ...e, crossed: true } : e)),
+      );
+      setNewImgs((prev) => [...prev, { id, file: rotatedFile, previewUrl }]);
+    } catch {
+      setImageError("Unable to rotate image.");
+    } finally {
+      stopProcessing(url);
+    }
   };
 
-  /* ── Size helpers ────────────────────────────────────────────── */
+  /* ── Colors ────────────────────────────────────────────────────── */
+  const closeAllColorPickers = () =>
+    setColors((prev) => prev.map((c) => ({ ...c, isOpen: false })));
+
+  /* ── Sizes ─────────────────────────────────────────────────────── */
   const handleSizeChange = (index: number, value: string) => {
     const updated = [...customSizes];
     updated[index] = value;
@@ -559,36 +603,94 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       setCustomSizes((p) => p.filter((_, i) => i !== index));
   };
 
-  /* ── Cleanup blob URLs ───────────────────────────────────────── */
-  useEffect(() => {
-    return () => fileUrls.forEach((u) => URL.revokeObjectURL(u));
-  }, [fileUrls]);
+  /* ── Submit ────────────────────────────────────────────────────── */
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setImageError("");
 
-  /* ── Derived ─────────────────────────────────────────────────── */
-  const existingImgCount = product?.images
-    ? product.images.filter((img) => !crossedImages.includes(img)).length
-    : 0;
-  const totalImageCount = existingImgCount + files.length;
+    if (discountedPrice && parseFloat(discountedPrice) > parseFloat(price)) {
+      setError("Discounted price cannot be greater than original price.");
+      return;
+    }
+    if (!category) { setError("Category is required."); return; }
+    if (!orderMaxDays || !orderMinDays) {
+      setError("Order min and max days are required.");
+      return;
+    }
+    if (orderMaxDays < orderMinDays) {
+      setError("Order max days cannot be less than order min days.");
+      return;
+    }
+    const weightValue = parseFloat(weight);
+    if (!weight || isNaN(weightValue) || weightValue <= 0) {
+      setError("Weight is required and must be greater than 0.");
+      return;
+    }
+    if (!length || isNaN(length) || length <= 0) {
+      setError("Length is required and must be greater than 0.");
+      return;
+    }
+    if (!width || isNaN(width) || width <= 0) {
+      setError("Width is required and must be greater than 0.");
+      return;
+    }
+    if (!height || isNaN(height) || height <= 0) {
+      setError("Height is required and must be greater than 0.");
+      return;
+    }
 
-  /* ── Render ──────────────────────────────────────────────────── */
+    const hasImages = totalImageCount > 0;
+    if (!hasImages) {
+      setImageError("Please upload at least one image.");
+      return;
+    }
+
+    if (!product) localStorage.removeItem(DRAFT_KEY);
+
+    setIsSubmitting(true);
+    try {
+      await onSubmit({
+        _id: product?._id ?? "",
+        title: name,
+        description,
+        price: parseFloat(price),
+        discountedPrice: discountedPrice ? parseFloat(discountedPrice) : 0,
+        category,
+        orderMinDays,
+        orderMaxDays,
+        colorVariations: colors.map((c) => c.hex),
+        sizeVariations: customSizes.filter((s) => s.trim() !== ""),
+        files: newImgs.map((n) => n.file),
+        crossedImages: existingImgs.filter((e) => e.crossed).map((e) => e.url),
+        weight: parseFloat(weight),
+        length: length || 0,
+        width: width || 0,
+        height: height || 0,
+      });
+    } catch {
+      // error shown via toast in parent
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  /* ─────────────────────────────────────────────────────────────── */
+  /* Render                                                           */
+  /* ─────────────────────────────────────────────────────────────── */
   return (
     <>
-      {previewImage && (
-        <Lightbox src={previewImage} onClose={closePreview} />
-      )}
+      {previewSrc && <Lightbox src={previewSrc} onClose={closePreview} />}
 
       <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
 
-        {/* ── Draft restored banner ── */}
+        {/* Draft banner */}
         {draftRestored && (
           <div className="flex items-center justify-between text-xs bg-amber-50 border border-amber-200 text-amber-700 rounded-lg px-3 py-2">
             <span>Draft restored from your last session.</span>
             <button
               type="button"
-              onClick={() => {
-                localStorage.removeItem(DRAFT_KEY);
-                setDraftRestored(false);
-              }}
+              onClick={() => { localStorage.removeItem(DRAFT_KEY); setDraftRestored(false); }}
               className="ml-3 underline underline-offset-2 hover:text-amber-900 shrink-0"
             >
               Clear draft
@@ -596,34 +698,32 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           </div>
         )}
 
-        {/* ── General Information ── */}
+        {/* General Information */}
         <Section icon={<Package className="h-4 w-4" />} title="General Information">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-            <div className="flex flex-col gap-4">
-              <div>
-                <FL
-                  htmlFor="name"
-                  tip="Your product's display name shown to customers. Keep it clear and descriptive."
-                  count={name.length}
-                  max={50}
-                >
-                  Product Name
-                </FL>
-                <Input
-                  id="name"
-                  placeholder="e.g. Wireless Noise-Cancelling Headphones"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  maxLength={50}
-                  required
-                  className="bg-white"
-                />
-              </div>
+            <div>
+              <FL
+                htmlFor="name"
+                tip="Your product's display name shown to customers."
+                count={name.length}
+                max={50}
+              >
+                Product Name
+              </FL>
+              <Input
+                id="name"
+                placeholder="e.g. Wireless Noise-Cancelling Headphones"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={50}
+                required
+                className="bg-white"
+              />
             </div>
             <div>
               <FL
                 htmlFor="description"
-                tip="A detailed description shown on the product page. Include key features, materials, and use cases."
+                tip="A detailed description shown on the product page."
                 count={description.length}
                 max={1000}
               >
@@ -631,7 +731,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
               </FL>
               <Textarea
                 id="description"
-                placeholder="Describe your product in detail — features, materials, dimensions, use cases..."
+                placeholder="Describe your product in detail…"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={1000}
@@ -642,20 +742,13 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           </div>
         </Section>
 
-        {/* ── Pricing ── */}
+        {/* Pricing */}
         <Section icon={<DollarSign className="h-4 w-4" />} title="Pricing">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <FL
-                htmlFor="price"
-                tip="The base selling price of this product in USD. Customers pay this unless a discounted price is set."
-              >
-                Price
-              </FL>
+              <FL htmlFor="price" tip="Base selling price in USD.">Price</FL>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm pointer-events-none select-none">
-                  $
-                </span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm pointer-events-none select-none">$</span>
                 <Input
                   id="price"
                   type="number"
@@ -670,17 +763,11 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
               </div>
             </div>
             <div>
-              <FL
-                htmlFor="discounted-price"
-                optional
-                tip="Sale price shown to customers. Must be lower than the original price. Leave blank if no discount applies."
-              >
+              <FL htmlFor="discounted-price" optional tip="Sale price. Must be lower than the original price.">
                 Discounted Price
               </FL>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm pointer-events-none select-none">
-                  $
-                </span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm pointer-events-none select-none">$</span>
                 <Input
                   id="discounted-price"
                   type="number"
@@ -696,11 +783,9 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           </div>
         </Section>
 
-        {/* ── Product Images ── */}
+        {/* Product Images */}
         <Section icon={<ImageIcon className="h-4 w-4" />} title="Product Images">
-          <FL
-            tip="Upload up to 5 high-quality images. The first image will be the main display photo. Supports PNG, JPG, WEBP, BMP up to 50MB each."
-          >
+          <FL tip="Upload up to 5 images. PNG, JPG, WEBP, BMP · max 50 MB each.">
             Images
             <span className="ml-1.5 text-[10px] text-stone-400 font-normal normal-case tracking-normal">
               ({totalImageCount}/5 used)
@@ -714,11 +799,8 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
             className={`flex flex-col items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed py-7 px-4 cursor-pointer transition-all duration-200 select-none
-              ${isDragging
-                ? "border-stone-900 bg-stone-100"
-                : "border-stone-300 bg-white hover:border-stone-400 hover:bg-stone-50"
-              }
-              ${totalImageCount >= 5 ? "pointer-events-none opacity-50" : ""}
+              ${isDragging ? "border-stone-900 bg-stone-100" : "border-stone-300 bg-white hover:border-stone-400 hover:bg-stone-50"}
+              ${atLimit ? "pointer-events-none opacity-50" : ""}
             `}
           >
             <div className={`rounded-full p-3 ${isDragging ? "bg-stone-200" : "bg-stone-100"} transition-colors`}>
@@ -729,7 +811,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                 {isDragging ? "Drop images here" : "Click to upload or drag & drop"}
               </p>
               <p className="text-xs text-stone-400 mt-0.5">
-                PNG, JPG, WEBP, BMP · Max 50MB per image · Up to 5 images
+                PNG, JPG, WEBP, BMP · Max 50 MB per image · Up to 5 images
               </p>
               {product?.images && product.images.length > 0 && (
                 <p className="text-xs text-stone-400 mt-0.5">
@@ -748,45 +830,39 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           </label>
 
           {/* Image grid */}
-          {(product?.images?.length || fileUrls.length) ? (
+          {(existingImgs.length > 0 || newImgs.length > 0) && (
             <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 mt-1">
               {/* Existing images */}
-              {product?.images?.map((img, i) => {
-                const isCrossed = crossedImages.includes(img);
-                return (
-                  <ImageTile
-                    key={`existing-${i}`}
-                    src={img}
-                    label={`Existing ${i + 1}`}
-                    faded={isCrossed}
-                    onRemove={
-                      !isCrossed
-                        ? () => setCrossedImages((prev) => [...prev, img])
-                        : undefined
-                    }
-                    onPreview={() => openPreview(img)}
-                  />
-                );
-              })}
-              {/* New uploads */}
-              {fileUrls.map((url, i) => (
+              {existingImgs.map((img) => (
                 <ImageTile
-                  key={`new-${i}`}
-                  src={url}
+                  key={img.url}
+                  src={img.url}
+                  label={img.crossed ? "Will be removed" : "Existing"}
+                  faded={img.crossed}
+                  isProcessing={processingSet.has(img.url)}
+                  onRemove={!img.crossed ? () => crossExisting(img.url) : undefined}
+                  onRotate={!img.crossed ? () => rotateExistingImage(img.url) : undefined}
+                  onPreview={() => openPreview(img.url)}
+                />
+              ))}
+              {/* New uploads */}
+              {newImgs.map((img) => (
+                <ImageTile
+                  key={img.id}
+                  src={img.previewUrl}
                   label={
-                    files[i]
-                      ? files[i].name.length > 12
-                        ? files[i].name.substring(0, 12) + "…"
-                        : files[i].name
-                      : `New ${i + 1}`
+                    img.file.name.length > 12
+                      ? img.file.name.substring(0, 12) + "…"
+                      : img.file.name
                   }
-                  onRemove={() => removeNewImage(i)}
-                  onRotate={() => rotateImage90(i)}
-                  onPreview={() => openPreview(url)}
+                  isProcessing={processingSet.has(img.id)}
+                  onRemove={() => removeNewImage(img.id)}
+                  onRotate={() => rotateNewImage(img.id)}
+                  onPreview={() => openPreview(img.previewUrl)}
                 />
               ))}
             </div>
-          ) : null}
+          )}
 
           {imageError && (
             <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mt-1">
@@ -795,16 +871,11 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           )}
         </Section>
 
-        {/* ── Category & Fulfillment ── */}
+        {/* Category & Fulfillment */}
         <Section icon={<Tag className="h-4 w-4" />} title="Category & Fulfillment">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <FL
-                htmlFor="category"
-                tip="Select the most relevant category so customers can find your product easily."
-              >
-                Category
-              </FL>
+              <FL htmlFor="category" tip="Select the most relevant category.">Category</FL>
               <Select value={category} onValueChange={setCategory} required>
                 <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Select a category" />
@@ -819,10 +890,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
               </Select>
             </div>
             <div>
-              <FL
-                htmlFor="orderMinDays"
-                tip="Minimum number of business days required to process and ship this order."
-              >
+              <FL htmlFor="orderMinDays" tip="Minimum business days to process and ship.">
                 Min Order Days
               </FL>
               <Input
@@ -837,10 +905,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
               />
             </div>
             <div>
-              <FL
-                htmlFor="orderMaxDays"
-                tip="Maximum number of business days the order fulfillment could take. Must be ≥ min days."
-              >
+              <FL htmlFor="orderMaxDays" tip="Maximum business days for fulfillment. Must be ≥ min days.">
                 Max Order Days
               </FL>
               <Input
@@ -857,16 +922,11 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           </div>
         </Section>
 
-        {/* ── Shipping ── */}
+        {/* Shipping */}
         <Section icon={<Truck className="h-4 w-4" />} title="Shipping Details">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
-              <FL
-                htmlFor="weight"
-                tip="Product weight in ounces (oz). Used to calculate accurate shipping rates at checkout."
-              >
-                Weight (oz)
-              </FL>
+              <FL htmlFor="weight" tip="Product weight in ounces (oz).">Weight (oz)</FL>
               <Input
                 id="weight"
                 type="number"
@@ -880,12 +940,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
               />
             </div>
             <div>
-              <FL
-                htmlFor="length"
-                tip="Package length in centimeters. Used with width and height to calculate shipping dimensions."
-              >
-                Length (cm)
-              </FL>
+              <FL htmlFor="length" tip="Package length in centimeters.">Length (cm)</FL>
               <Input
                 id="length"
                 type="number"
@@ -899,12 +954,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
               />
             </div>
             <div>
-              <FL
-                htmlFor="width"
-                tip="Package width in centimeters."
-              >
-                Width (cm)
-              </FL>
+              <FL htmlFor="width" tip="Package width in centimeters.">Width (cm)</FL>
               <Input
                 id="width"
                 type="number"
@@ -918,12 +968,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
               />
             </div>
             <div>
-              <FL
-                htmlFor="height"
-                tip="Package height in centimeters."
-              >
-                Height (cm)
-              </FL>
+              <FL htmlFor="height" tip="Package height in centimeters.">Height (cm)</FL>
               <Input
                 id="height"
                 type="number"
@@ -939,114 +984,94 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           </div>
         </Section>
 
-        {/* ── Colors + Variations: side by side on large screens ── */}
+        {/* Colors + Sizes */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-
-        {/* ── Colors ── */}
-        <Section icon={<Palette className="h-4 w-4" />} title="Color Variants">
-          <FL tip="Add color swatches that customers can choose from. Click a swatch to open the color picker, then pick a color.">
-            Colors
-            <span className="ml-1.5 text-[10px] text-stone-400 font-normal normal-case tracking-normal">
-              (optional)
-            </span>
-          </FL>
-          <div className="flex flex-wrap gap-3 items-start">
-            {colors.map((color, index) => (
-              <div key={index} className="flex flex-col items-center relative group/color">
-                {/* remove */}
-                <button
-                  type="button"
-                  onClick={() =>
-                    setColors((prev) => prev.filter((_, i) => i !== index))
-                  }
-                  className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-stone-400 hover:bg-red-500 text-white flex items-center justify-center z-10 opacity-0 group-hover/color:opacity-100 transition-opacity"
-                >
-                  <X className="h-2.5 w-2.5" />
-                </button>
-                {/* swatch */}
-                <div
-                  className="w-10 h-10 rounded-full border-2 border-white shadow-md cursor-pointer ring-2 ring-stone-200 hover:ring-stone-400 transition-all"
-                  style={{ backgroundColor: color.hex }}
-                  onClick={() => {
-                    handleCloseAllColors();
-                    setColors((prev) =>
-                      prev.map((c, i) => ({
-                        ...c,
-                        isOpen: i === index ? !c.isOpen : false,
-                      })),
-                    );
-                  }}
-                />
-                <Block
-                  color={color.hex}
-                  onChange={(e) => {
-                    setColors((prev) =>
-                      prev.map((c, i) =>
-                        i === index ? { hex: e.hex, isOpen: false } : c,
-                      ),
-                    );
-                  }}
-                  className={`${color.isOpen ? "" : "hidden"} mt-2 z-20 absolute top-full left-0`}
-                />
-              </div>
-            ))}
-            {/* add button */}
-            <button
-              type="button"
-              onClick={() =>
-                setColors((prev) => [...prev, { hex: "#3b82f6", isOpen: true }])
-              }
-              className="w-10 h-10 rounded-full border-2 border-dashed border-stone-300 bg-white hover:border-stone-500 hover:bg-stone-50 flex items-center justify-center text-stone-400 hover:text-stone-600 transition-all font-bold text-lg"
-            >
-              +
-            </button>
-          </div>
-        </Section>
-
-        {/* ── Variations / Sizes ── */}
-        <Section icon={<Layers className="h-4 w-4" />} title="Size Variations">
-          <FL tip="Add size or variation options customers can select (e.g. XL, 42, 52 inches). Up to 10 variations allowed.">
-            Variations
-            <span className="ml-1.5 text-[10px] text-stone-400 font-normal normal-case tracking-normal">
-              (optional)
-            </span>
-          </FL>
-          <div className="space-y-2">
-            {customSizes.map((size, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Input
-                  placeholder={`Variation ${index + 1} — e.g. XL, 42, 52"`}
-                  value={size}
-                  onChange={(e) => handleSizeChange(index, e.target.value)}
-                  maxLength={15}
-                  className="bg-white"
-                />
-                {customSizes.length > 1 && (
+          <Section icon={<Palette className="h-4 w-4" />} title="Color Variants">
+            <FL tip="Add color swatches customers can choose from.">
+              Colors
+              <span className="ml-1.5 text-[10px] text-stone-400 font-normal normal-case tracking-normal">(optional)</span>
+            </FL>
+            <div className="flex flex-wrap gap-3 items-start">
+              {colors.map((color, index) => (
+                <div key={index} className="flex flex-col items-center relative group/color">
                   <button
                     type="button"
-                    onClick={() => removeSizeInput(index)}
-                    className="w-8 h-8 rounded-md flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+                    onClick={() => setColors((prev) => prev.filter((_, i) => i !== index))}
+                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-stone-400 hover:bg-red-500 text-white flex items-center justify-center z-10 opacity-0 group-hover/color:opacity-100 transition-opacity"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-2.5 w-2.5" />
                   </button>
-                )}
-              </div>
-            ))}
-            {customSizes.length < 10 && (
+                  <div
+                    className="w-10 h-10 rounded-full border-2 border-white shadow-md cursor-pointer ring-2 ring-stone-200 hover:ring-stone-400 transition-all"
+                    style={{ backgroundColor: color.hex }}
+                    onClick={() => {
+                      closeAllColorPickers();
+                      setColors((prev) =>
+                        prev.map((c, i) => ({ ...c, isOpen: i === index ? !c.isOpen : false })),
+                      );
+                    }}
+                  />
+                  <Block
+                    color={color.hex}
+                    onChange={(e) =>
+                      setColors((prev) =>
+                        prev.map((c, i) => (i === index ? { hex: e.hex, isOpen: false } : c)),
+                      )
+                    }
+                    className={`${color.isOpen ? "" : "hidden"} mt-2 z-20 absolute top-full left-0`}
+                  />
+                </div>
+              ))}
               <button
                 type="button"
-                onClick={addSizeInput}
-                className="w-full h-9 rounded-lg border border-dashed border-stone-300 text-sm text-stone-500 hover:border-stone-500 hover:text-stone-700 hover:bg-stone-50 transition-all"
+                onClick={() => setColors((prev) => [...prev, { hex: "#3b82f6", isOpen: true }])}
+                className="w-10 h-10 rounded-full border-2 border-dashed border-stone-300 bg-white hover:border-stone-500 hover:bg-stone-50 flex items-center justify-center text-stone-400 hover:text-stone-600 transition-all font-bold text-lg"
               >
-                + Add Variation
+                +
               </button>
-            )}
-          </div>
-        </Section>
+            </div>
+          </Section>
 
-        </div>{/* end Colors + Variations grid */}
+          <Section icon={<Layers className="h-4 w-4" />} title="Size Variations">
+            <FL tip="Add size options customers can select (e.g. XL, 42). Up to 10.">
+              Variations
+              <span className="ml-1.5 text-[10px] text-stone-400 font-normal normal-case tracking-normal">(optional)</span>
+            </FL>
+            <div className="space-y-2">
+              {customSizes.map((size, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    placeholder={`Variation ${index + 1} — e.g. XL, 42`}
+                    value={size}
+                    onChange={(e) => handleSizeChange(index, e.target.value)}
+                    maxLength={15}
+                    className="bg-white"
+                  />
+                  {customSizes.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeSizeInput(index)}
+                      className="w-8 h-8 rounded-md flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              {customSizes.length < 10 && (
+                <button
+                  type="button"
+                  onClick={addSizeInput}
+                  className="w-full h-9 rounded-lg border border-dashed border-stone-300 text-sm text-stone-500 hover:border-stone-500 hover:text-stone-700 hover:bg-stone-50 transition-all"
+                >
+                  + Add Variation
+                </button>
+              )}
+            </div>
+          </Section>
+        </div>
 
-        {/* ── Submit ── */}
+        {/* Submit */}
         <div className="pt-1 space-y-3">
           {error && (
             <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
@@ -1056,11 +1081,13 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
           )}
           <Button
             type="submit"
-            className="w-full h-11 text-sm font-semibold rounded-lg bg-stone-900 hover:bg-stone-800 text-white transition-colors"
+            disabled={isSubmitting}
+            className="w-full h-11 text-sm font-semibold rounded-lg bg-stone-900 hover:bg-stone-800 text-white transition-colors disabled:opacity-60"
           >
-            {product ? "Save Changes" : "Add Product"}
+            {isSubmitting ? "Saving…" : product ? "Save Changes" : "Add Product"}
           </Button>
         </div>
+
       </form>
     </>
   );

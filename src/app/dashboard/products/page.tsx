@@ -60,17 +60,12 @@ export default function ProductsPage() {
     currentPage * Number(itemsPerPage),
   );
 
-  const handleAddProduct = (newProduct: ProductForm) => {
-    console.log("handleAddProduct - newProduct:", newProduct);
-    console.log("handleAddProduct - files:", newProduct.files);
-    console.log("handleAddProduct - files length:", newProduct.files?.length);
-    var user = localStorage.getItem("user") as string | null;
-    var userObj = null;
-    if (user) {
-      userObj = JSON.parse(user) as User;
-    }
-    const formData = new FormData();
+  const handleAddProduct = async (newProduct: ProductForm): Promise<void> => {
+    const user = localStorage.getItem("user") as string | null;
+    let userObj: User | null = null;
+    if (user) userObj = JSON.parse(user) as User;
 
+    const formData = new FormData();
     formData.append("title", newProduct.title);
     formData.append("description", newProduct.description);
     formData.append("price", newProduct.price.toString());
@@ -84,63 +79,47 @@ export default function ProductsPage() {
     formData.append("orderMaxDays", newProduct.orderMaxDays.toString());
     formData.append("orderMinDays", newProduct.orderMinDays.toString());
 
-    newProduct.sizeVariations?.forEach((size) => {
-      formData.append("sizeVariations", size);
-    });
-
-    newProduct.colorVariations?.forEach((color) => {
-      formData.append("colorVariations", color);
-    });
-
-    if (newProduct.files && newProduct.files.length > 0) {
-      console.log("Adding files to FormData:", newProduct.files);
-      newProduct.files.forEach((image: any) => {
-        console.log("Adding file to FormData:", image.name, image.size);
-        formData.append("files", image);
-      });
-    } else {
-      console.log("No files to add to FormData");
-    }
-
+    newProduct.sizeVariations?.forEach((size) =>
+      formData.append("sizeVariations", size),
+    );
+    newProduct.colorVariations?.forEach((color) =>
+      formData.append("colorVariations", color),
+    );
+    newProduct.files?.forEach((image) => formData.append("files", image));
     formData.append("category", newProduct.category);
     formData.append("weight", newProduct.weight?.toString() || "0");
     formData.append("length", (newProduct.length ?? 0).toString());
     formData.append("width", (newProduct.width ?? 0).toString());
     formData.append("height", (newProduct.height ?? 0).toString());
+    newProduct.availableStates?.forEach((state) =>
+      formData.append("availableStates", state),
+    );
 
-    newProduct.availableStates?.forEach((state) => {
-      formData.append("availableStates", state);
-    });
-
-    axios
-      .post(`${process.env.NEXT_PUBLIC_API_URL}/product`, formData, {
+    try {
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/product`, formData, {
         timeout: 18000,
-      })
-      .then(() => {
-        toast({
-          variant: "default",
-          title: "Success",
-          description: "Product added successfully",
-        });
-        setDialogOpen(false);
-      })
-      .catch((error) => {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message,
-        });
-        setDialogOpen(false);
       });
-
-    setTimeout(() => {
-      setShouldUpdate(!shouldUpdate);
-    }, 1000);
+      toast({
+        variant: "default",
+        title: "Success",
+        description: "Product added successfully",
+      });
+      setDialogOpen(false);
+      setShouldUpdate((v) => !v);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+      throw error;
+    }
   };
 
-  const handleEditProduct = (updatedProduct: ProductForm) => {
+  const handleEditProduct = async (
+    updatedProduct: ProductForm,
+  ): Promise<void> => {
     const formData = new FormData();
-
     formData.append("title", updatedProduct.title);
     formData.append("description", updatedProduct.description);
     formData.append("price", updatedProduct.price.toString());
@@ -150,65 +129,51 @@ export default function ProductsPage() {
         ? updatedProduct.discountedPrice.toString()
         : "",
     );
-
     formData.append("isFeatured", "false");
     formData.append("status", "Active");
     formData.append("orderMaxDays", updatedProduct.orderMaxDays.toString());
     formData.append("orderMinDays", updatedProduct.orderMinDays.toString());
 
-    updatedProduct.sizeVariations?.forEach((size) => {
-      formData.append("sizeVariations", size);
-    });
-
-    updatedProduct.colorVariations?.forEach((color) => {
-      formData.append("colorVariations", color);
-    });
-
-    updatedProduct.files?.forEach((image) => {
-      formData.append("files", image);
-    });
-
+    updatedProduct.sizeVariations?.forEach((size) =>
+      formData.append("sizeVariations", size),
+    );
+    updatedProduct.colorVariations?.forEach((color) =>
+      formData.append("colorVariations", color),
+    );
+    updatedProduct.files?.forEach((image) => formData.append("files", image));
     formData.append("category", updatedProduct.category);
     formData.append("weight", updatedProduct.weight?.toString() || "0");
     formData.append("length", (updatedProduct.length ?? 0).toString());
     formData.append("width", (updatedProduct.width ?? 0).toString());
     formData.append("height", (updatedProduct.height ?? 0).toString());
+    updatedProduct.crossedImages?.forEach((image) =>
+      formData.append("crossedImages", image),
+    );
+    updatedProduct.availableStates?.forEach((state) =>
+      formData.append("availableStates", state),
+    );
 
-    updatedProduct.crossedImages?.forEach((image) => {
-      formData.append("crossedImages", image);
-    });
-
-    updatedProduct.availableStates?.forEach((state) => {
-      formData.append("availableStates", state);
-    });
-
-    // setProducts(
-    //   products.map((p) => (p._id === updatedProduct?._id ? updatedProduct : p))
-    // );
-    setEditingProduct(null);
-
-    axios
-      .put(
+    try {
+      await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/product/${updatedProduct._id}`,
         formData,
-      )
-      .then(() => {
-        toast({
-          variant: "default",
-          title: "Success",
-          description: "Product edited successfully",
-        });
-        setEditDialogOpen(false);
-      })
-      .catch((error) => {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message,
-        });
-        setEditDialogOpen(false);
+      );
+      toast({
+        variant: "default",
+        title: "Success",
+        description: "Product edited successfully",
       });
-    setShouldUpdate(!shouldUpdate);
+      setEditDialogOpen(false);
+      setEditingProduct(null);
+      setShouldUpdate((v) => !v);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+      throw error;
+    }
   };
 
   const handleDeleteProduct = (id: string | undefined) => {
