@@ -15,24 +15,8 @@ import { Diamond, CreditCard, Users, Store } from "lucide-react";
 import axios from "axios";
 import { UserStatus } from "@/lib/auth-types";
 import { useEffect, useMemo, useState } from "react";
-import { set } from "date-fns";
 import { calculateRevenueIncrements, generateSalesData } from "../common";
 import { SalesDataItem } from "../types";
-
-const salesData = [
-  { month: "Jan", revenue: 65000, expense: 45000 },
-  { month: "Feb", revenue: 75000, expense: 50000 },
-  { month: "Mar", revenue: 85000, expense: 55000 },
-  { month: "Apr", revenue: 95000, expense: 60000 },
-  { month: "May", revenue: 105000, expense: 65000 },
-  { month: "Jun", revenue: 115000, expense: 70000 },
-  { month: "Jul", revenue: 125000, expense: 75000 },
-  { month: "Aug", revenue: 135000, expense: 80000 },
-  { month: "Sep", revenue: 145000, expense: 85000 },
-  { month: "Oct", revenue: 155000, expense: 90000 },
-  { month: "Nov", revenue: 165000, expense: 95000 },
-  { month: "Dec", revenue: 175000, expense: 100000 },
-];
 
 export default function AdminDashboard() {
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -43,7 +27,6 @@ export default function AdminDashboard() {
   const [blockedVendors, setBlockedVendors] = useState(0);
   const [newOrders, setNewOrders] = useState(0);
   const [salesData, setSalesData] = useState<SalesDataItem[]>([]);
-  const [revenueIncrements, setRevenueIncrements] = useState(0);
 
   const getAllStats = async () => {
     try {
@@ -112,9 +95,6 @@ export default function AdminDashboard() {
           setBlockedVendors(blockedVendors.length);
           setNewOrders(currentWeekOrders);
           setSalesData(salesData);
-          setRevenueIncrements(
-            revenueIncrements[revenueIncrements.length - 1].incrementPercent,
-          );
         });
     } catch (e) {
       console.log(e);
@@ -157,20 +137,13 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Dashboard</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">Data Refreshed</span>
-          <span className="text-sm">
-            {new Date().toLocaleString("en-US", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-              hour: "numeric",
-              minute: "numeric",
-              hour12: true,
-            })}
-          </span>
+        <div>
+          <h2 className="text-2xl font-bold text-stone-800">Admin Dashboard</h2>
+          <p className="text-sm text-stone-400 mt-0.5">Platform overview</p>
         </div>
+        <span className="flex items-center gap-2 px-3 py-2 rounded-xl border border-stone-200 bg-white/80 text-sm text-stone-500 shadow-sm">
+          {new Date().toLocaleString("en-US", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "numeric", hour12: true })}
+        </span>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

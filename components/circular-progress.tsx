@@ -28,7 +28,7 @@ export function CircularProgress({
           cy={size / 2}
         />
         <circle
-          className="text-[#FF725E]"
+          className="text-green-300"
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
@@ -42,7 +42,7 @@ export function CircularProgress({
       </svg>
       <div className="absolute flex flex-col items-center">
         <span className="text-2xl font-bold">{value}%</span>
-        {label && <span className="text-sm text-gray-500">{label}</span>}
+        {label && <span className="text-sm text-black">{label}</span>}
       </div>
     </div>
   );

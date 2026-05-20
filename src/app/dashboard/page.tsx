@@ -40,10 +40,34 @@ export default function DashboardPage() {
     useState(0);
 
   const orderStats = [
-    { title: "Orders Completed", value: ordersCompleted, icon: Package2 },
-    { title: "Orders Cancelled", value: orderCancelled, icon: RefreshCcw },
-    { title: "Orders Processing", value: orderProcessing, icon: Package2 },
-    { title: "Orders Shipped", value: orderShipped, icon: RefreshCcw },
+    {
+      title: "Orders Completed",
+      value: ordersCompleted,
+      icon: Package2,
+      shadow: "shadow-[0_4px_14px_rgba(16,185,129,0.35)]",
+      cardBg: "bg-gradient-to-br from-emerald-400 to-emerald-600",
+    },
+    {
+      title: "Orders Cancelled",
+      value: orderCancelled,
+      icon: RefreshCcw,
+      shadow: "shadow-[0_4px_14px_rgba(244,63,94,0.35)]",
+      cardBg: "bg-gradient-to-br from-rose-400 to-rose-600",
+    },
+    {
+      title: "Orders Processing",
+      value: orderProcessing,
+      icon: Package2,
+      shadow: "shadow-[0_4px_14px_rgba(59,130,246,0.35)]",
+      cardBg: "bg-gradient-to-br from-blue-400 to-blue-600",
+    },
+    {
+      title: "Orders Shipped",
+      value: orderShipped,
+      icon: RefreshCcw,
+      shadow: "shadow-[0_4px_14px_rgba(139,92,246,0.35)]",
+      cardBg: "bg-gradient-to-br from-violet-400 to-violet-600",
+    },
   ];
 
   useEffect(() => {
@@ -138,134 +162,144 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Dashboard</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">Data Refreshed</span>
-          <RefreshCcw
-            onClick={() => window.location.reload()}
-            className="h-4 w-4 text-[#00BFA6] cursor-pointer"
-            aria-hidden="true"
-          />
-          <span className="text-sm">
+        <div>
+          <h2 className="text-2xl font-bold text-stone-800">Dashboard</h2>
+          <p className="text-sm text-stone-400 mt-0.5">
+            Welcome back — here's what's happening
+          </p>
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-stone-200 bg-white/80 text-sm text-stone-500 hover:text-teal-600 hover:border-teal-200 hover:bg-teal-50/50 transition-all duration-150 shadow-sm"
+        >
+          <RefreshCcw className="h-3.5 w-3.5" />
+          <span>
             {new Date().toLocaleString("en-US", {
               day: "numeric",
               month: "short",
               year: "numeric",
               hour: "numeric",
               minute: "numeric",
-              second: "numeric",
               hour12: true,
             })}
           </span>
-        </div>
+        </button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
-        {/* A card (not a stats card) for total revenue but without change. */}
-
-        <div className="flex items- p-4 bg-white rounded-lg shadow-sm">
-          <div className="mr-4">
-            <Diamond className="h-6 w-6 text-[#00BFA6]" />{" "}
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Total Revenue */}
+        <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-500 to-teal-600 p-5 text-white shadow-[0_4px_14px_rgba(20,184,166,0.25)]">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-medium text-teal-100">Total Revenue</p>
+            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+              <Diamond className="h-4 w-4 text-white" />
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm text-gray-500">Total Revenue</h3>
-            <p className="text-2xl font-bold">${totalRevenue.toFixed(2)}</p>
-          </div>
+          <p className="text-3xl font-bold">${totalRevenue.toFixed(2)}</p>
         </div>
-        <div className="flex items- p-4 bg-white rounded-lg shadow-sm">
-          <div className="mr-4">
-            <CreditCard className="h-6 w-6 text-[#00BFA6]" />{" "}
-          </div>
-          <div>
-            <h3 className="text-sm text-gray-500">Average Order Value</h3>
-            <p className="text-2xl font-bold">
-              ${averageOrderValue.toFixed(2)}
+
+        {/* Average Order Value */}
+        <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-500 to-violet-600 p-5 text-white shadow-[0_4px_14px_rgba(139,92,246,0.25)]">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-medium text-violet-100">
+              Avg Order Value
             </p>
+            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+              <CreditCard className="h-4 w-4 text-white" />
+            </div>
           </div>
+          <p className="text-3xl font-bold">${averageOrderValue.toFixed(2)}</p>
         </div>
 
-        {/* <StatsCard
-          icon={<Diamond className="h-6 w-6 text-[#00BFA6]" />}
-          title="Total Revenue"
-          value={`$${totalRevenue.toFixed(2)}`}
-          change={{ value: `+45.00%`, trend: "up" }}
-        />
-        <StatsCard
-          icon={<CreditCard className="h-6 w-6 text-[#00BFA6]" />}
-          title="Average Order Value"
-          value={`$${averageOrderValue.toFixed(2)}`}
-          change={{ value: "-12.45%", trend: "down" }}
-        /> */}
-        <div className="lg:col-span-2 md:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Total Balance</CardTitle>
-            </CardHeader>
-            <CardContent className="flex justify-center">
-              <div className="w-48 h-48 bg-gray-100 rounded-full flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-3xl font-bold">
-                    {"$"}
-                    {totalBalance.toFixed(2)}
-                  </div>
-                  <div className="text-sm text-gray-500">Total Balance</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Total Balance */}
+        <div className="rounded-2xl border-0 bg-gradient-to-br from-amber-400 to-orange-500 p-5 text-white shadow-[0_4px_14px_rgba(251,146,60,0.35)]">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-medium text-white/80">Total Balance</p>
+            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+              <Car className="h-4 w-4 text-white" />
+            </div>
+          </div>
+          <p className="text-3xl font-bold">${totalBalance.toFixed(2)}</p>
+          <p className="text-xs text-white/60 mt-1">Pending payout</p>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {orderStats.map((stat, index) => (
-          <Card key={index}>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-gray-100 rounded-lg">
-                  <stat.icon className="h-6 w-6 text-gray-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">{stat.title}</p>
-                  <p className="text-2xl font-bold">{stat.value}</p>
+          <Card
+            key={index}
+            className={`${stat.cardBg} ${stat.shadow} border-0 text-white`}
+          >
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium text-white/80">
+                  {stat.title}
+                </p>
+                <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                  <stat.icon className="h-4 w-4 text-white" />
                 </div>
               </div>
+              <p className="text-3xl font-bold">{stat.value}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        <Card className="md:col-span-2">
+        <Card className="md:col-span-2 border-0 bg-gradient-to-br from-slate-700 to-slate-900 shadow-[0_4px_14px_rgba(15,23,42,0.35)]">
           <CardHeader>
-            <CardTitle>Sales Statistic {new Date().getFullYear()}</CardTitle>
+            <CardTitle className="text-white">
+              Sales Statistic {new Date().getFullYear()}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={salesData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="revenue" fill="#00BFA6" />
-                  <Bar dataKey="expense" fill="#FF725E" />
+                <BarChart data={salesData} barCategoryGap="30%">
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="rgba(255,255,255,0.08)"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="month"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: "rgba(255,255,255,0.45)" }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: "rgba(255,255,255,0.45)" }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "12px",
+                      border: "none",
+                      background: "rgba(30,41,59,0.95)",
+                      color: "#fff",
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+                      fontSize: "12px",
+                    }}
+                    cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                  />
+                  <Bar dataKey="revenue" fill="#00BFA6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="expense" fill="#fb7185" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-0 bg-gradient-to-br from-blue-700 to-indigo-900 shadow-[0_4px_14px_rgba(30,58,138,0.4)]">
           <CardHeader>
-            <CardTitle>Delivery Percentage</CardTitle>
+            <CardTitle className="text-white">Delivery Percentage</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center">
             <CircularProgress
               value={parseFloat(deliveryPercentage.toFixed(2))}
-              label="Delivery Rate"
+              label=""
             />
           </CardContent>
-          {/* asdas */}
-          {/* sadfsdfdg */}
         </Card>
       </div>
     </div>
