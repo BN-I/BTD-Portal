@@ -259,87 +259,82 @@ export default function ProductsPage() {
               <TableCell>${product.price.toFixed(2)}</TableCell>
               <TableCell>{product.category || "-"} </TableCell>
               <TableCell>
-                <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mr-2"
-                      onClick={() => setEditingProduct(product)}
-                    >
-                      Edit
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-h-[92vh] w-full sm:max-w-2xl lg:max-w-3xl overflow-y-auto custom-scrollbar scrollbar"
-            onInteractOutside={(e) => e.preventDefault()}>
-                    <DialogHeader>
-                      <DialogTitle>Edit Product</DialogTitle>
-                    </DialogHeader>
-                    {editingProduct && (
-                      <ProductFormComponent
-                        product={editingProduct}
-                        onSubmit={handleEditProduct}
-                      />
-                    )}
-                  </DialogContent>
-                </Dialog>
-                <Dialog
-                  open={deleteDialogOpen}
-                  onOpenChange={setDeleteDialogOpen}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mr-2"
+                  onClick={() => {
+                    setEditingProduct(product);
+                    setEditDialogOpen(true);
+                  }}
                 >
-                  <DialogTrigger>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="mr-2"
-                      onClick={() => setDeletingProduct(product)}
-                    >
-                      Delete
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Confirm Deletion</DialogTitle>
-                    </DialogHeader>
-                    <div className="py-4">
-                      <p>
-                        Are you sure you want to delete{" "}
-                        <span className="font-semibold">
-                          {deletingProduct?.title}
-                        </span>
-                        ?
-                      </p>
-                      <p className="text-sm text-gray-500 mt-2">
-                        This action is irreversible.
-                      </p>
-                    </div>
-                    <div className="flex justify-end gap-3">
-                      <DialogTrigger asChild>
-                        <Button variant="outline">Cancel</Button>
-                      </DialogTrigger>
-                      <Button
-                        variant="destructive"
-                        onClick={() =>
-                          handleDeleteProduct(deletingProduct?._id)
-                        }
-                      >
-                        Confirm Delete
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-                {/* <Button
+                  Edit
+                </Button>
+                <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => handleDeleteProduct(product._id)}
+                  className="mr-2"
+                  onClick={() => {
+                    setDeletingProduct(product);
+                    setDeleteDialogOpen(true);
+                  }}
                 >
                   Delete
-                </Button> */}
+                </Button>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      {/* Edit dialog — single page-level instance so only one ProductFormComponent
+          is ever mounted. key={_id} ensures clean state when switching products. */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent
+          className="max-h-[92vh] w-full sm:max-w-2xl lg:max-w-3xl overflow-y-auto custom-scrollbar scrollbar"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+          </DialogHeader>
+          {editingProduct && (
+            <ProductFormComponent
+              key={editingProduct._id}
+              product={editingProduct}
+              onSubmit={handleEditProduct}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete dialog — single page-level instance */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p>
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">{deletingProduct?.title}</span>?
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              This action is irreversible.
+            </p>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => handleDeleteProduct(deletingProduct?._id)}
+            >
+              Confirm Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Pagination controls */}
       <div className="flex items-center justify-between">

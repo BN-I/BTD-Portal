@@ -157,6 +157,12 @@ export interface Order {
   additionalAddressInfo: string;
   selectedCarrier: string | undefined;
   shippingAmount: number;
+  recipientName: string | undefined;
+  billingAddress: string | undefined;
+  billingState: string | undefined;
+  billingCity: string | undefined;
+  billingZipcode: string | undefined;
+  billingAdditionalAddressInfo: string | undefined;
 }
 
 export type SalesRecord = {

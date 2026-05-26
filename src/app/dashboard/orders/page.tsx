@@ -468,35 +468,6 @@ export default function OrdersPage() {
                   </p>
                 </div>
 
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Address</h3>
-                  <p className="mt-1 ">{selectedOrder.address}</p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">State</h3>
-                  <p className="mt-1 ">{selectedOrder.state}</p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">City</h3>
-                  <p className="mt-1 ">{selectedOrder.city}</p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Zipcode</h3>
-                  <p className="mt-1 ">{selectedOrder.zipcode}</p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">
-                    Additional Address Info
-                  </h3>
-                  <p className="mt-1 ">
-                    {selectedOrder.additionalAddressInfo || "-"}{" "}
-                  </p>
-                </div>
-
                 {selectedOrder.selectedCarrier && (
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">
@@ -505,6 +476,84 @@ export default function OrdersPage() {
                     <p className="mt-1 ">{selectedOrder.selectedCarrier}</p>
                   </div>
                 )}
+              </div>
+
+              {/* Shipping Address */}
+              <div className="rounded-lg border border-gray-100 overflow-hidden">
+                <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
+                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                    Shipping Address
+                  </h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4 px-4 py-4">
+                  {selectedOrder.recipientName && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">
+                        Recipient Name
+                      </h3>
+                      <p className="mt-1">{selectedOrder.recipientName}</p>
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Address</h3>
+                    <p className="mt-1">{selectedOrder.address}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">City</h3>
+                    <p className="mt-1">{selectedOrder.city}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">State</h3>
+                    <p className="mt-1">{selectedOrder.state}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Zipcode</h3>
+                    <p className="mt-1">{selectedOrder.zipcode}</p>
+                  </div>
+                  {selectedOrder.additionalAddressInfo && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">
+                        Additional Info
+                      </h3>
+                      <p className="mt-1">{selectedOrder.additionalAddressInfo}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Billing Address */}
+              <div className="rounded-lg border border-gray-100 overflow-hidden">
+                <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
+                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                    Billing Address
+                  </h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4 px-4 py-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Address</h3>
+                    <p className="mt-1">{selectedOrder.billingAddress || selectedOrder.address}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">City</h3>
+                    <p className="mt-1">{selectedOrder.billingCity || selectedOrder.city}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">State</h3>
+                    <p className="mt-1">{selectedOrder.billingState || selectedOrder.state}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Zipcode</h3>
+                    <p className="mt-1">{selectedOrder.billingZipcode || selectedOrder.zipcode}</p>
+                  </div>
+                  {(selectedOrder.billingAdditionalAddressInfo || selectedOrder.additionalAddressInfo) && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">
+                        Additional Info
+                      </h3>
+                      <p className="mt-1">{selectedOrder.billingAdditionalAddressInfo || selectedOrder.additionalAddressInfo}</p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
