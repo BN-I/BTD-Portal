@@ -33,12 +33,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Product, ProductForm, DeletingProduct } from "@/app/types";
+import { Product, ProductForm, DeletingProduct, ProductStatus } from "@/app/types";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@/lib/auth-types";
 import { ProductForm as ProductFormComponent } from "../../../../components/product-form";
 import { Toaster } from "@/components/ui/toaster";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -199,6 +200,42 @@ export default function ProductsPage() {
       });
   };
 
+  const handleVisibilityToggle = (product: Product) => {
+    const newStatus =
+      product.status === ProductStatus.Active
+        ? ProductStatus.Inactive
+        : ProductStatus.Active;
+
+    setProducts((prev) =>
+      prev.map((p) => (p._id === product._id ? { ...p, status: newStatus } : p)),
+    );
+
+    const formData = new FormData();
+    formData.append("status", newStatus);
+
+    axios
+      .put(`${process.env.NEXT_PUBLIC_API_URL}/product/${product._id}`, formData)
+      .then(() => {
+        toast({
+          variant: "default",
+          title: newStatus === ProductStatus.Active ? "Product Visible" : "Product Hidden",
+          description: "Product visibility updated successfully",
+        });
+      })
+      .catch((error) => {
+        setProducts((prev) =>
+          prev.map((p) =>
+            p._id === product._id ? { ...p, status: product.status } : p,
+          ),
+        );
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+        });
+      });
+  };
+
   useEffect(() => {
     var user = localStorage.getItem("user") as string | null;
     if (user) {
@@ -249,15 +286,34 @@ export default function ProductsPage() {
             <TableHead>Name</TableHead>
             <TableHead>Price</TableHead>
             <TableHead>Category</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {paginatedProducts.map((product) => (
-            <TableRow key={product._id}>
-              <TableCell>{product.title}</TableCell>
+            <TableRow
+              key={product._id}
+              className={
+                product.status === ProductStatus.Inactive
+                  ? "opacity-50 grayscale bg-stone-50/80"
+                  : ""
+              }
+            >
+              <TableCell className="font-medium">{product.title}</TableCell>
               <TableCell>${product.price.toFixed(2)}</TableCell>
-              <TableCell>{product.category || "-"} </TableCell>
+              <TableCell>{product.category || "-"}</TableCell>
+              <TableCell>
+                {product.status === ProductStatus.Active ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                    <Eye className="h-3 w-3" /> Visible
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-stone-100 text-stone-500">
+                    <EyeOff className="h-3 w-3" /> Hidden
+                  </span>
+                )}
+              </TableCell>
               <TableCell>
                 <Button
                   variant="outline"
@@ -271,9 +327,24 @@ export default function ProductsPage() {
                   Edit
                 </Button>
                 <Button
+                  variant={product.status === ProductStatus.Active ? "outline" : "outline"}
+                  size="sm"
+                  className={`mr-2 ${
+                    product.status === ProductStatus.Active
+                      ? "text-stone-600 hover:text-rose-600 hover:border-rose-200"
+                      : "text-emerald-600 hover:text-emerald-700 hover:border-emerald-200"
+                  }`}
+                  onClick={() => handleVisibilityToggle(product)}
+                >
+                  {product.status === ProductStatus.Active ? (
+                    <><EyeOff className="h-3.5 w-3.5 mr-1" /> Hide</>
+                  ) : (
+                    <><Eye className="h-3.5 w-3.5 mr-1" /> Show</>
+                  )}
+                </Button>
+                <Button
                   variant="destructive"
                   size="sm"
-                  className="mr-2"
                   onClick={() => {
                     setDeletingProduct(product);
                     setDeleteDialogOpen(true);
