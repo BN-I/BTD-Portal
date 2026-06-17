@@ -39,10 +39,12 @@ import { useToast } from "@/hooks/use-toast";
 import { User } from "@/lib/auth-types";
 import { ProductForm as ProductFormComponent } from "../../../../components/product-form";
 import { Toaster } from "@/components/ui/toaster";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Package } from "lucide-react";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -201,11 +203,13 @@ export default function ProductsPage() {
   };
 
   const handleVisibilityToggle = (product: Product) => {
+    if (togglingId) return;
     const newStatus =
       product.status === ProductStatus.Active
         ? ProductStatus.Inactive
         : ProductStatus.Active;
 
+    setTogglingId(product._id);
     setProducts((prev) =>
       prev.map((p) => (p._id === product._id ? { ...p, status: newStatus } : p)),
     );
@@ -233,13 +237,15 @@ export default function ProductsPage() {
           title: "Error",
           description: error.message,
         });
-      });
+      })
+      .finally(() => setTogglingId(null));
   };
 
   useEffect(() => {
     var user = localStorage.getItem("user") as string | null;
     if (user) {
       var userObj = JSON.parse(user) as User;
+      setLoading(true);
       axios
         .get(
           `${process.env.NEXT_PUBLIC_API_URL}/product/vendor/${userObj?._id}?perPage=9999&source=vendor`,
@@ -253,7 +259,8 @@ export default function ProductsPage() {
             title: "Error",
             description: error.message,
           });
-        });
+        })
+        .finally(() => setLoading(false));
     }
   }, [shouldUpdate, dialogOpen, editDialogOpen]);
 
@@ -266,7 +273,10 @@ export default function ProductsPage() {
     <div className="space-y-4">
       <Toaster />
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Products</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-stone-800">Products</h2>
+          <p className="text-sm text-stone-400 mt-0.5">Manage your listings</p>
+        </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>Add Product</Button>
@@ -291,7 +301,28 @@ export default function ProductsPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {paginatedProducts.map((product) => (
+          {loading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={i}>
+                <TableCell><div className="skeleton h-4 w-40" /></TableCell>
+                <TableCell><div className="skeleton h-4 w-16" /></TableCell>
+                <TableCell><div className="skeleton h-4 w-24" /></TableCell>
+                <TableCell><div className="skeleton h-5 w-16 rounded-full" /></TableCell>
+                <TableCell><div className="skeleton h-8 w-44" /></TableCell>
+              </TableRow>
+            ))
+          ) : paginatedProducts.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={5} className="py-16 text-center">
+                <Package className="h-10 w-10 text-stone-200 mx-auto mb-3" />
+                <p className="text-stone-500 font-medium">No products yet</p>
+                <p className="text-stone-400 text-xs mt-1">
+                  Click &ldquo;Add Product&rdquo; to create your first listing
+                </p>
+              </TableCell>
+            </TableRow>
+          ) : null}
+          {!loading && paginatedProducts.map((product) => (
             <TableRow
               key={product._id}
               className={
@@ -315,43 +346,54 @@ export default function ProductsPage() {
                 )}
               </TableCell>
               <TableCell>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mr-2"
-                  onClick={() => {
-                    setEditingProduct(product);
-                    setEditDialogOpen(true);
-                  }}
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant={product.status === ProductStatus.Active ? "outline" : "outline"}
-                  size="sm"
-                  className={`mr-2 ${
-                    product.status === ProductStatus.Active
-                      ? "text-stone-600 hover:text-rose-600 hover:border-rose-200"
-                      : "text-emerald-600 hover:text-emerald-700 hover:border-emerald-200"
-                  }`}
-                  onClick={() => handleVisibilityToggle(product)}
-                >
-                  {product.status === ProductStatus.Active ? (
-                    <><EyeOff className="h-3.5 w-3.5 mr-1" /> Hide</>
-                  ) : (
-                    <><Eye className="h-3.5 w-3.5 mr-1" /> Show</>
-                  )}
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    setDeletingProduct(product);
-                    setDeleteDialogOpen(true);
-                  }}
-                >
-                  Delete
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setEditingProduct(product);
+                      setEditDialogOpen(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={
+                      product.status === ProductStatus.Active
+                        ? "text-stone-500 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50/50"
+                        : "text-emerald-600 hover:text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50/50"
+                    }
+                    disabled={togglingId === product._id}
+                    onClick={() => handleVisibilityToggle(product)}
+                  >
+                    {togglingId === product._id ? (
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                        Saving…
+                      </span>
+                    ) : product.status === ProductStatus.Active ? (
+                      <span className="flex items-center gap-1.5">
+                        <EyeOff className="h-3.5 w-3.5" /> Hide
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5">
+                        <Eye className="h-3.5 w-3.5" /> Show
+                      </span>
+                    )}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      setDeletingProduct(product);
+                      setDeleteDialogOpen(true);
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}

@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -332,67 +331,60 @@ export default function PaymentsPage() {
     }
   };
 
+  const statCards = [
+    {
+      label: "Total Earnings",
+      value: formatCurrency(stats.subtotal),
+      icon: DollarSign,
+      bg: "bg-gradient-to-br from-teal-500 to-teal-600",
+      shadow: "shadow-[0_4px_14px_rgba(20,184,166,0.25)]",
+    },
+    {
+      label: "Pending Amount",
+      value: formatCurrency(stats.pendingAmount),
+      icon: Clock,
+      bg: "bg-gradient-to-br from-amber-400 to-orange-500",
+      shadow: "shadow-[0_4px_14px_rgba(251,146,60,0.3)]",
+    },
+    {
+      label: "Payments Received",
+      value: stats.totalReceived,
+      icon: CheckCircle,
+      bg: "bg-gradient-to-br from-emerald-500 to-emerald-600",
+      shadow: "shadow-[0_4px_14px_rgba(16,185,129,0.25)]",
+    },
+    {
+      label: "This Month",
+      value: formatCurrency(stats.thisMonthAmount),
+      icon: Calendar,
+      bg: "bg-gradient-to-br from-blue-500 to-blue-600",
+      shadow: "shadow-[0_4px_14px_rgba(59,130,246,0.25)]",
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Payment Management</h2>
+      <div>
+        <h2 className="text-2xl font-bold text-stone-800">Payments</h2>
+        <p className="text-sm text-stone-400 mt-0.5">Track earnings and payout history</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="p-2 bg-[#00BFA6]/10 rounded-lg">
-              <DollarSign className="h-6 w-6 text-[#00BFA6]" />
+        {statCards.map((card) => (
+          <div
+            key={card.label}
+            className={`rounded-2xl p-5 text-white border-0 ${card.bg} ${card.shadow}`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-medium text-white/80">{card.label}</p>
+              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                <card.icon className="h-4 w-4 text-white" />
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Earnings</p>
-              <p className="text-2xl font-bold">
-                {formatCurrency(stats.subtotal)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <Clock className="h-6 w-6 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Pending Amount</p>
-              <p className="text-2xl font-bold">
-                {formatCurrency(stats.pendingAmount)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <CheckCircle className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Payments Received</p>
-              <p className="text-2xl font-bold">{stats.totalReceived}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Calendar className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">This Month</p>
-              <p className="text-2xl font-bold">
-                {formatCurrency(stats.thisMonthAmount)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+            <p className="text-2xl font-bold">{card.value}</p>
+          </div>
+        ))}
       </div>
 
       {/* Filters and Search */}
@@ -447,8 +439,7 @@ export default function PaymentsPage() {
               </p>
             </div>
           ) : (
-            <div className="rounded-md border bg-white overflow-hidden">
-              <Table>
+            <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Payment ID</TableHead>
@@ -510,7 +501,6 @@ export default function PaymentsPage() {
                   ))}
                 </TableBody>
               </Table>
-            </div>
           )}
         </TabsContent>
       </Tabs>

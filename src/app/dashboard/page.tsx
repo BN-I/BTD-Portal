@@ -26,6 +26,7 @@ type Order = {
 };
 
 export default function DashboardPage() {
+  const [statsLoading, setStatsLoading] = useState(true);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [averageOrderValue, setAverageOrderValue] = useState(0);
   const [totalBalance, setTotalBalance] = useState(0);
@@ -142,6 +143,7 @@ export default function DashboardPage() {
           setTotalRevenue(totalRevenue);
           setAverageOrderValue(averageOrderValue);
           setTotalBalance(totalBalance);
+          setStatsLoading(false);
           setOrdersCompleted(ordersCompleted);
           setOrderCancelled(orderCancelled);
           setOrderProcessing(orderProcessing);
@@ -195,7 +197,9 @@ export default function DashboardPage() {
               <Diamond className="h-4 w-4 text-white" />
             </div>
           </div>
-          <p className="text-3xl font-bold">${totalRevenue.toFixed(2)}</p>
+          {statsLoading
+            ? <div className="h-9 w-32 rounded-lg bg-white/25 animate-pulse" />
+            : <p className="text-3xl font-bold">${totalRevenue.toFixed(2)}</p>}
         </div>
 
         {/* Average Order Value */}
@@ -208,7 +212,9 @@ export default function DashboardPage() {
               <CreditCard className="h-4 w-4 text-white" />
             </div>
           </div>
-          <p className="text-3xl font-bold">${averageOrderValue.toFixed(2)}</p>
+          {statsLoading
+            ? <div className="h-9 w-28 rounded-lg bg-white/25 animate-pulse" />
+            : <p className="text-3xl font-bold">${averageOrderValue.toFixed(2)}</p>}
         </div>
 
         {/* Total Balance */}
@@ -219,7 +225,9 @@ export default function DashboardPage() {
               <Car className="h-4 w-4 text-white" />
             </div>
           </div>
-          <p className="text-3xl font-bold">${totalBalance.toFixed(2)}</p>
+          {statsLoading
+            ? <div className="h-9 w-28 rounded-lg bg-white/25 animate-pulse" />
+            : <p className="text-3xl font-bold">${totalBalance.toFixed(2)}</p>}
           <p className="text-xs text-white/60 mt-1">Pending payout</p>
         </div>
       </div>

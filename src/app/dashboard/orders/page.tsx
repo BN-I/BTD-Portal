@@ -45,6 +45,7 @@ type StatsCardProps = {
 export default function OrdersPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
   const [displayOrders, setDisplayOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState<StatsCardProps[]>([]);
@@ -120,7 +121,8 @@ export default function OrdersPage() {
         .then((response) => {
           setOrders(response.data);
           setDisplayOrders(response.data);
-        });
+        })
+        .finally(() => setOrdersLoading(false));
     } catch (error) {
       console.error("Error fetching orders:", error);
     }
@@ -273,33 +275,56 @@ export default function OrdersPage() {
     [selectedOrder],
   );
 
+  const statCardStyles = [
+    {
+      bg: "bg-gradient-to-br from-teal-500 to-teal-600",
+      shadow: "shadow-[0_4px_14px_rgba(20,184,166,0.25)]",
+    },
+    {
+      bg: "bg-gradient-to-br from-blue-500 to-blue-600",
+      shadow: "shadow-[0_4px_14px_rgba(59,130,246,0.25)]",
+    },
+    {
+      bg: "bg-gradient-to-br from-rose-500 to-rose-600",
+      shadow: "shadow-[0_4px_14px_rgba(244,63,94,0.25)]",
+    },
+  ];
+
   return (
     <div className="space-y-6">
+
+      {/* Page header */}
+      <div>
+        <h2 className="text-2xl font-bold text-stone-800">Orders</h2>
+        <p className="text-sm text-stone-400 mt-0.5">Track and manage incoming orders</p>
+      </div>
+
       {/* Stats Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {stats.map((stat, index) => (
-          <Card key={index}>
-            <CardContent className="flex items-center gap-4 p-6">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <stat.icon className="h-6 w-6 text-gray-600" />
+          <div
+            key={index}
+            className={`rounded-2xl p-5 text-white border-0 ${statCardStyles[index % 3].bg} ${statCardStyles[index % 3].shadow}`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-medium text-white/80">{stat.title}</p>
+              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                <stat.icon className="h-4 w-4 text-white" />
               </div>
-              <div>
-                <p className="text-sm text-gray-500">{stat.title}</p>
-                <p className="text-2xl font-bold">{stat.value}</p>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+            <p className="text-3xl font-bold">{stat.value}</p>
+          </div>
         ))}
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
           <Input
             type="search"
-            placeholder="Search orders..."
-            className="pl-8 bg-white"
+            placeholder="Search by order ID, customer, product…"
+            className="pl-9 bg-white"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -313,19 +338,16 @@ export default function OrdersPage() {
         </Button>
       </div>
 
-      {/* Guide Text */}
-      <div className="flex items-start gap-2 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
-        <p className="text-sm text-blue-800">
-          <strong>Tip:</strong> Click on any order status badge to update it.
-          You can change the status and add tracking information when marking an
-          order as "shipped".
+      {/* Tip */}
+      <div className="flex items-start gap-2.5 px-4 py-3 bg-teal-50/60 border border-teal-100 rounded-xl">
+        <Info className="h-4 w-4 text-teal-500 mt-0.5 shrink-0" />
+        <p className="text-xs text-teal-700">
+          <strong>Tip:</strong> Click any status badge to update it. Add tracking info when marking an order as &ldquo;shipped&rdquo;.
         </p>
       </div>
 
       {/* Orders Table */}
-      <div className="rounded-lg border bg-white">
-        <Table>
+      <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-48">Order ID</TableHead>
@@ -338,7 +360,32 @@ export default function OrdersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {displayOrders.map((order) => (
+            {ordersLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><div className="skeleton h-4 w-32" /></TableCell>
+                  <TableCell><div className="skeleton h-4 w-24" /></TableCell>
+                  <TableCell><div className="skeleton h-4 w-20" /></TableCell>
+                  <TableCell><div className="skeleton h-4 w-28" /></TableCell>
+                  <TableCell><div className="skeleton h-4 w-16" /></TableCell>
+                  <TableCell><div className="skeleton h-6 w-24 rounded-full" /></TableCell>
+                  <TableCell><div className="skeleton h-8 w-24 ml-auto" /></TableCell>
+                </TableRow>
+              ))
+            ) : displayOrders.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="py-16 text-center">
+                  <Package2 className="h-10 w-10 text-stone-200 mx-auto mb-3" />
+                  <p className="text-stone-500 font-medium">
+                    {searchTerm || filterStatus !== "All" ? "No orders match your filters" : "No orders yet"}
+                  </p>
+                  <p className="text-stone-400 text-xs mt-1">
+                    {searchTerm || filterStatus !== "All" ? "Try adjusting your search or filter" : "Orders will appear here once customers place them"}
+                  </p>
+                </TableCell>
+              </TableRow>
+            ) : null}
+            {!ordersLoading && displayOrders.map((order) => (
               <TableRow key={order._id}>
                 <TableCell className="font-medium">{order._id}</TableCell>
                 <TableCell>{order.user.name}</TableCell>
@@ -402,7 +449,6 @@ export default function OrdersPage() {
             ))}
           </TableBody>
         </Table>
-      </div>
 
       {/* Order Details Modal */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
