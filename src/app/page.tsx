@@ -51,10 +51,7 @@ export default function HomePage() {
           <Link href="/" className="flex items-center gap-2.5">
             <Image src="/logo.png" alt="Logo" width={36} height={36} className="object-contain" />
             <span className="font-bold text-sm text-stone-800">
-              Before the{" "}
-              <span className="bg-gradient-to-r from-teal-500 to-teal-700 bg-clip-text text-transparent">
-                Dates
-              </span>
+              Before the Dates
             </span>
           </Link>
           <nav className="flex items-center gap-6">

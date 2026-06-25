@@ -98,10 +98,7 @@ export default function SignInPage() {
               className="object-contain"
             />
             <span className="text-2xl font-bold tracking-tight text-stone-800">
-              Before the{" "}
-              <span className="bg-gradient-to-r from-teal-500 to-teal-700 bg-clip-text text-transparent">
-                Dates
-              </span>
+              Before the Dates
             </span>
           </div>
           <p className="text-sm text-stone-400">

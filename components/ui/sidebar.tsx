@@ -44,14 +44,9 @@ export function Sidebar({ className }: SidebarProps) {
             alt="Logo"
             className="h-[60px] w-[60px] object-contain flex-shrink-0"
           />
-          <div className="leading-tight gap-0.5 flex">
-            <span className="block text-[16px] font-bold text-stone-700">
-              Before the
-            </span>
-            <span className="block text-[16px] font-extrabold bg-gradient-to-r from-teal-500 to-teal-700 bg-clip-text text-transparent">
-              Dates
-            </span>
-          </div>
+          <span className="text-[16px] font-bold text-stone-800">
+            Before the Dates
+          </span>
         </Link>
       </div>
 
