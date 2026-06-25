@@ -9,6 +9,10 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "BTD Portal",
   description: "Portal for Before the Dates application",
+  icons: {
+    icon: "/fav/favicon.ico",
+    apple: "/fav/favicon.ico",
+  },
 };
 
 export default function RootLayout({
