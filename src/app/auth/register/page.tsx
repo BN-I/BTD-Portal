@@ -314,7 +314,7 @@ export default function RegisterPage() {
                     preload="auto"
                     onError={() => setVideoError(true)}
                   >
-                    <source src="/tutorial-video.mp4" type="video/mp4" />
+                    <source src="/tutorial-video-2.MP4" type="video/mp4" />
                   </video>
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-teal-500 to-teal-700">
