@@ -29,8 +29,7 @@ export default function SignInPage() {
 
   useEffect(() => {
     trackPageView("login", "auth");
-    const timer = setTimeout(() => setShowVideo(true), 800);
-    return () => clearTimeout(timer);
+    setShowVideo(true);
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,7 +47,9 @@ export default function SignInPage() {
     try {
       await login(formData).then(async (response) => {
         const userCookie = JSON.stringify(response);
-        document.cookie = `user=${encodeURIComponent(userCookie)}; path=/; max-age=${60 * 60 * 24 * 365}`;
+        document.cookie = `user=${encodeURIComponent(
+          userCookie,
+        )}; path=/; max-age=${60 * 60 * 24 * 365}`;
         localStorage.setItem("auth_token", response.token);
         localStorage.setItem("user", JSON.stringify(response));
 
@@ -70,7 +71,7 @@ export default function SignInPage() {
       setErrorMessage("");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Invalid credentials"
+        error instanceof Error ? error.message : "Invalid credentials",
       );
       toast({
         variant: "destructive",
@@ -86,19 +87,16 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-4xl mx-auto space-y-10">
-
         {/* Brand */}
         <div className="text-center">
           <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-lg shadow-teal-500/30">
-              <Image
-                src="/logo.png"
-                alt="Logo"
-                width={28}
-                height={28}
-                className="object-contain"
-              />
-            </div>
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              width={60}
+              height={60}
+              className="object-contain"
+            />
             <span className="text-2xl font-bold tracking-tight text-stone-800">
               Before the{" "}
               <span className="bg-gradient-to-r from-teal-500 to-teal-700 bg-clip-text text-transparent">
@@ -113,11 +111,12 @@ export default function SignInPage() {
 
         {/* Two-panel grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-
           {/* Form panel */}
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-stone-200/60 shadow-[0_8px_40px_rgba(0,0,0,0.07)] p-8 flex flex-col justify-center">
             <div className="mb-7">
-              <h2 className="text-xl font-semibold text-stone-800">Welcome back</h2>
+              <h2 className="text-xl font-semibold text-stone-800">
+                Welcome back
+              </h2>
               <p className="text-sm text-stone-400 mt-1">
                 Enter your credentials to continue
               </p>
@@ -233,7 +232,9 @@ export default function SignInPage() {
           {/* Tutorial panel */}
           <div
             className={`bg-white/80 backdrop-blur-sm rounded-3xl border border-stone-200/60 shadow-[0_8px_40px_rgba(0,0,0,0.07)] overflow-hidden flex flex-col transition-all duration-700 ${
-              showVideo ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+              showVideo
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-6"
             }`}
           >
             <div className="p-6 flex-1 flex flex-col">
@@ -252,7 +253,7 @@ export default function SignInPage() {
                     className="w-full h-full object-contain"
                     controls
                     poster="/logo.png"
-                    preload="metadata"
+                    preload="auto"
                     onError={() => setVideoError(true)}
                   >
                     <source src="/tutorial-video.mp4" type="video/mp4" />
@@ -281,7 +282,6 @@ export default function SignInPage() {
               </p>
             </div>
           </div>
-
         </div>
       </div>
     </div>

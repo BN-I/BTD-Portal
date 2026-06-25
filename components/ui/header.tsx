@@ -89,7 +89,7 @@ export function Header() {
           className="rounded-xl border-stone-200 shadow-sm"
         >
           <Link href="/dashboard/account" className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
+            <div className="w-5 h-5 rounded-full bg-teal-500 flex items-center justify-center">
               <span className="text-[9px] font-bold text-white">{initials}</span>
             </div>
             <span className="text-stone-600">Profile</span>

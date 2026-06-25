@@ -39,14 +39,16 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Brand */}
       <div className="px-5 py-5 border-b border-stone-100">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-sm">
-            <img src="/logo.png" alt="Logo" className="h-6 w-6 object-contain" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="Logo"
+            className="h-[60px] w-[60px] object-contain flex-shrink-0"
+          />
           <div className="leading-tight gap-0.5 flex">
-            <span className="block text-[13px] font-bold text-stone-700">
+            <span className="block text-[16px] font-bold text-stone-700">
               Before the
             </span>
-            <span className="block text-[13px] font-extrabold bg-gradient-to-r from-teal-500 to-teal-700 bg-clip-text text-transparent">
+            <span className="block text-[16px] font-extrabold bg-gradient-to-r from-teal-500 to-teal-700 bg-clip-text text-transparent">
               Dates
             </span>
           </div>

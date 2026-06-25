@@ -49,9 +49,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-stone-200/60">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-sm">
-              <Image src="/logo.png" alt="Logo" width={18} height={18} className="object-contain" />
-            </div>
+            <Image src="/logo.png" alt="Logo" width={36} height={36} className="object-contain" />
             <span className="font-bold text-sm text-stone-800">
               Before the{" "}
               <span className="bg-gradient-to-r from-teal-500 to-teal-700 bg-clip-text text-transparent">
@@ -147,16 +145,16 @@ export default function HomePage() {
               {/* Fake stat cards */}
               <div className="grid grid-cols-3 gap-3 mb-4">
                 {[
-                  { label: "Total Revenue", value: "$12,480", color: "from-teal-500 to-teal-600" },
-                  { label: "Avg Order", value: "$94.20", color: "from-violet-500 to-violet-600" },
-                  { label: "Balance", value: "$3,210", color: "from-amber-400 to-orange-500" },
+                  { label: "Total Revenue", value: "$12,480" },
+                  { label: "Avg Order", value: "$94.20" },
+                  { label: "Balance", value: "$3,210" },
                 ].map((card) => (
                   <div
                     key={card.label}
-                    className={`rounded-2xl bg-gradient-to-br ${card.color} p-4 text-white`}
+                    className="rounded-2xl bg-white border border-stone-200/80 p-4 shadow-sm"
                   >
-                    <p className="text-xs text-white/75 font-medium">{card.label}</p>
-                    <p className="text-xl font-bold mt-1">{card.value}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">{card.label}</p>
+                    <p className="text-lg font-bold mt-1 text-stone-800">{card.value}</p>
                   </div>
                 ))}
               </div>
@@ -249,9 +247,7 @@ export default function HomePage() {
       <footer className="border-t border-stone-200/60 py-8 px-6">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
-              <Image src="/logo.png" alt="Logo" width={14} height={14} className="object-contain" />
-            </div>
+            <Image src="/logo.png" alt="Logo" width={36} height={36} className="object-contain" />
             <p className="text-xs text-stone-400">
               © {new Date().getFullYear()} Before the Dates. All rights reserved.
             </p>
