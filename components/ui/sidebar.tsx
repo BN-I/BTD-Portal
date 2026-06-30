@@ -24,27 +24,24 @@ const iconStyle: Record<string, string> = {
   Payment: "bg-rose-50 text-rose-500",
 };
 
-interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface SidebarContentProps {
+  onNavigate?: () => void;
+}
 
-export function Sidebar({ className }: SidebarProps) {
+export function SidebarContent({ onNavigate }: SidebarContentProps) {
   const pathname = usePathname();
 
   return (
-    <div
-      className={cn(
-        "flex flex-col pb-6 w-[260px] bg-white border-r border-stone-200/70 shadow-[2px_0_16px_rgba(0,0,0,0.05)]",
-        className,
-      )}
-    >
+    <>
       {/* Brand */}
-      <div className="px-5 py-5 border-b border-stone-100">
-        <Link href="/dashboard" className="flex items-center gap-3">
+      <div className="px-5 py-4 sm:py-5 border-b border-stone-100">
+        <Link href="/dashboard" className="flex items-center gap-3" onClick={onNavigate}>
           <img
             src="/logo.png"
             alt="Logo"
-            className="h-[60px] w-[60px] object-contain flex-shrink-0"
+            className="h-12 w-12 sm:h-[60px] sm:w-[60px] object-contain flex-shrink-0"
           />
-          <span className="text-[16px] font-bold text-stone-800">
+          <span className="text-[15px] sm:text-[16px] font-bold text-stone-800">
             Before the Dates
           </span>
         </Link>
@@ -65,6 +62,7 @@ export function Sidebar({ className }: SidebarProps) {
             <Link
               key={item.title}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150",
                 isActive
@@ -94,6 +92,21 @@ export function Sidebar({ className }: SidebarProps) {
         <p className="text-[11px] font-semibold text-teal-700">Vendor Portal</p>
         <p className="text-[10px] text-teal-500 mt-0.5">Manage your store</p>
       </div>
+    </>
+  );
+}
+
+interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+export function Sidebar({ className }: SidebarProps) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col pb-6 w-[260px] bg-white border-r border-stone-200/70 shadow-[2px_0_16px_rgba(0,0,0,0.05)]",
+        className,
+      )}
+    >
+      <SidebarContent />
     </div>
   );
 }

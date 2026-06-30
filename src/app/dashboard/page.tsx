@@ -136,19 +136,19 @@ export default function DashboardPage() {
   };
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-stone-800">Dashboard</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-stone-800">Dashboard</h2>
           <p className="text-sm text-stone-400 mt-0.5">
             Welcome back — here's what's happening
           </p>
         </div>
         <button
           onClick={() => window.location.reload()}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-stone-200 bg-white/80 text-sm text-stone-500 hover:text-teal-600 hover:border-teal-200 hover:bg-teal-50/50 transition-all duration-150 shadow-sm"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-stone-200 bg-white/80 text-xs sm:text-sm text-stone-500 hover:text-teal-600 hover:border-teal-200 hover:bg-teal-50/50 transition-all duration-150 shadow-sm self-start sm:self-auto shrink-0"
         >
-          <RefreshCcw className="h-3.5 w-3.5" />
-          <span>
+          <RefreshCcw className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">
             {new Date().toLocaleString("en-US", {
               day: "numeric",
               month: "short",
@@ -161,7 +161,7 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
         {/* Total Revenue */}
         <div className="rounded-2xl bg-white/90 backdrop-blur-sm border border-stone-200/60 shadow-[0_1px_6px_rgba(0,0,0,0.06)] p-5 hover:shadow-[0_4px_14px_rgba(0,0,0,0.08)] transition-shadow">
           <div className="flex items-center justify-between mb-3">
@@ -203,7 +203,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         {orderStats.map((stat, index) => (
           <div
             key={index}
@@ -223,11 +223,11 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        <div className="md:col-span-2 rounded-2xl bg-white/90 backdrop-blur-sm border border-stone-200/60 shadow-[0_1px_6px_rgba(0,0,0,0.06)] p-6">
+        <div className="md:col-span-2 rounded-2xl bg-white/90 backdrop-blur-sm border border-stone-200/60 shadow-[0_1px_6px_rgba(0,0,0,0.06)] p-4 sm:p-6">
           <p className="text-sm font-semibold text-stone-700 mb-5">
             Sales Statistic {new Date().getFullYear()}
           </p>
-          <div className="h-[300px]">
+          <div className="h-[220px] sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={salesData} barCategoryGap="30%">
                 <CartesianGrid
@@ -263,7 +263,7 @@ export default function DashboardPage() {
             </ResponsiveContainer>
           </div>
         </div>
-        <div className="rounded-2xl bg-white/90 backdrop-blur-sm border border-stone-200/60 shadow-[0_1px_6px_rgba(0,0,0,0.06)] p-6 flex flex-col">
+        <div className="rounded-2xl bg-white/90 backdrop-blur-sm border border-stone-200/60 shadow-[0_1px_6px_rgba(0,0,0,0.06)] p-4 sm:p-6 flex flex-col">
           <p className="text-sm font-semibold text-stone-700 mb-5">Delivery Percentage</p>
           <div className="flex-1 flex items-center justify-center">
             <CircularProgress

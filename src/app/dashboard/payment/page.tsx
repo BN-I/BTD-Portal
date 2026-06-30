@@ -365,12 +365,12 @@ export default function PaymentsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-stone-800">Payments</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-stone-800">Payments</h2>
         <p className="text-sm text-stone-400 mt-0.5">Track earnings and payout history</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((card) => (
           <div
             key={card.label}
@@ -388,26 +388,27 @@ export default function PaymentsPage() {
       </div>
 
       {/* Filters and Search */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+        <div className="relative flex-1 w-full md:max-w-md">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             type="search"
-            placeholder="Search by order ID, customer, or product?..."
-            className="pl-8 bg-white"
+            placeholder="Search by order ID, customer, or product…"
+            className="pl-8 bg-white w-full"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
         <DateRangePicker
+          className="w-full md:w-auto"
           onChange={(e) => {
             handleDateChange(e as DateRange);
           }}
         />
 
         <Select value={activeTab} onValueChange={setActiveTab}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full md:w-[180px]">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
@@ -419,7 +420,7 @@ export default function PaymentsPage() {
       </div>
       {/* Tabs and Payments Table */}
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="w-full sm:w-auto overflow-x-auto">
           <TabsTrigger value="all">All Payments</TabsTrigger>
           <TabsTrigger value="pending">Pending</TabsTrigger>
           <TabsTrigger value="received">Received</TabsTrigger>
@@ -439,6 +440,7 @@ export default function PaymentsPage() {
               </p>
             </div>
           ) : (
+            <div className="rounded-2xl border border-stone-200/60 bg-white/90 overflow-x-auto">
             <Table>
                 <TableHeader>
                   <TableRow>
@@ -501,6 +503,7 @@ export default function PaymentsPage() {
                   ))}
                 </TableBody>
               </Table>
+            </div>
           )}
         </TabsContent>
       </Tabs>

@@ -272,14 +272,14 @@ export default function ProductsPage() {
   return (
     <div className="space-y-4">
       <Toaster />
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-stone-800">Products</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-stone-800">Products</h2>
           <p className="text-sm text-stone-400 mt-0.5">Manage your listings</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>Add Product</Button>
+            <Button className="w-full sm:w-auto shrink-0">Add Product</Button>
           </DialogTrigger>
           <DialogContent className="max-h-[92vh] w-full sm:max-w-2xl lg:max-w-3xl overflow-y-auto custom-scrollbar scrollbar"
             onInteractOutside={(e) => e.preventDefault()}>
@@ -290,6 +290,7 @@ export default function ProductsPage() {
           </DialogContent>
         </Dialog>
       </div>
+      <div className="rounded-2xl border border-stone-200/60 bg-white/90 overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -399,6 +400,7 @@ export default function ProductsPage() {
           ))}
         </TableBody>
       </Table>
+      </div>
 
       {/* Edit dialog — single page-level instance so only one ProductFormComponent
           is ever mounted. key={_id} ensures clean state when switching products. */}
@@ -450,7 +452,7 @@ export default function ProductsPage() {
       </Dialog>
 
       {/* Pagination controls */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-500">Items per page:</span>
           <Select value={itemsPerPage} onValueChange={setItemsPerPage}>
@@ -466,13 +468,13 @@ export default function ProductsPage() {
           </Select>
         </div>
 
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-gray-500 text-center sm:text-left">
           Showing {(currentPage - 1) * Number(itemsPerPage) + 1} to{" "}
           {Math.min(currentPage * Number(itemsPerPage), products.length)} of{" "}
           {products.length} products
         </div>
 
-        <Pagination>
+        <Pagination className="justify-center sm:justify-end">
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious

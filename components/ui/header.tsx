@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, LogOut, UserIcon } from "lucide-react";
+import { Bell, LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -20,7 +20,11 @@ import axios from "axios";
 import { Notification } from "@/app/types";
 import { deleteAllCookies } from "@/app/common";
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
   const [unreadNotifications, setUnreadNotifications] = useState(false);
   const [userName, setUserName] = useState("");
 
@@ -58,13 +62,30 @@ export function Header() {
     ? userName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
     : "V";
 
+  const firstName = userName ? userName.split(" ")[0] : "";
+
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-stone-200/60 bg-white/80 backdrop-blur-md px-6 shadow-[0_1px_8px_rgba(0,0,0,0.05)]">
+    <header className="sticky top-0 z-40 flex h-14 sm:h-16 items-center gap-2 sm:gap-4 border-b border-stone-200/60 bg-white/80 backdrop-blur-md px-4 sm:px-6 shadow-[0_1px_8px_rgba(0,0,0,0.05)]">
+      {onMenuClick && (
+        <button
+          type="button"
+          className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl border border-stone-200 bg-white text-stone-600 hover:bg-stone-50 transition-colors shrink-0"
+          onClick={onMenuClick}
+          aria-label="Open menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      )}
+
       {/* Left: greeting */}
-      <div className="flex-1">
-        <p className="text-sm font-medium text-stone-700">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-stone-700 truncate">
           {userName ? (
-            <>Good day, <span className="text-teal-600 font-semibold">{userName}</span> 👋</>
+            <>
+              <span className="hidden sm:inline">Good day, </span>
+              <span className="text-teal-600 font-semibold">{firstName}</span>
+              <span className="hidden sm:inline"> 👋</span>
+            </>
           ) : (
             <span className="text-stone-400 text-xs">Vendor Dashboard</span>
           )}
@@ -72,7 +93,7 @@ export function Header() {
       </div>
 
       {/* Right: actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* Notifications */}
         <Link
           href="/dashboard/notifications"
@@ -92,7 +113,7 @@ export function Header() {
             <div className="w-5 h-5 rounded-full bg-teal-500 flex items-center justify-center">
               <span className="text-[9px] font-bold text-white">{initials}</span>
             </div>
-            <span className="text-stone-600">Profile</span>
+            <span className="hidden sm:inline text-stone-600">Profile</span>
           </Link>
         </Button>
 
@@ -105,7 +126,7 @@ export function Header() {
               className="rounded-xl border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:border-rose-200 shadow-sm"
             >
               <LogOut className="h-4 w-4" />
-              <span>Logout</span>
+              <span className="hidden sm:inline">Logout</span>
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>

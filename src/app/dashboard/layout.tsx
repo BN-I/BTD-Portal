@@ -1,14 +1,14 @@
 "use client";
 
-import { Sidebar } from "../../../components/ui/sidebar";
+import { Sidebar, SidebarContent } from "../../../components/ui/sidebar";
 import { Header } from "../../../components/ui/header";
 import { useEffect, useState } from "react";
 import { User } from "@/lib/auth-types";
-import { hasStoreData } from "@/lib/auth";
-import { get } from "http";
-import { getCookie } from "../common";
-
-// sdasda
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 export default function DashboardLayout({
   children,
@@ -16,15 +16,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [showSidebar, setShowSidebar] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     try {
       const user = localStorage.getItem("user");
-
-      // const storeData = getCookie("storeData");
-      // const businessInformation = getCookie("businessInformation");
-      // const paymentInformation = getCookie("paymentInformation");
-      // const subscription = getCookie("subscription");
 
       const storeData = localStorage.getItem("storeData");
       const businessInformation = localStorage.getItem("businessInformation");
@@ -43,7 +39,6 @@ export default function DashboardLayout({
           !paymentInformation ||
           !subscription)
       ) {
-        const userData = JSON.parse(user) as User;
         setShowSidebar(false);
       } else {
         setShowSidebar(true);
@@ -53,12 +48,28 @@ export default function DashboardLayout({
     }
   }, []);
 
+  const closeMobileSidebar = () => setMobileSidebarOpen(false);
+
   return (
-    <div className="flex min-h-screen bg-transparent">
-      {showSidebar && <Sidebar />}
-      <div className="flex-1">
-        <Header />
-        <main className="p-6">{children}</main>
+    <div className="flex min-h-screen bg-transparent overflow-x-hidden">
+      {showSidebar && (
+        <>
+          <Sidebar className="hidden lg:flex shrink-0" />
+          <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+            <SheetContent side="left" className="p-0 w-[min(100vw-2rem,280px)] flex flex-col h-full">
+              <SheetTitle className="sr-only">Navigation menu</SheetTitle>
+              <div className="flex flex-col h-full pb-6 overflow-y-auto">
+                <SidebarContent onNavigate={closeMobileSidebar} />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </>
+      )}
+      <div className="flex-1 min-w-0 flex flex-col">
+        <Header
+          onMenuClick={showSidebar ? () => setMobileSidebarOpen(true) : undefined}
+        />
+        <main className="flex-1 p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );

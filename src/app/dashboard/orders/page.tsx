@@ -295,12 +295,12 @@ export default function OrdersPage() {
 
       {/* Page header */}
       <div>
-        <h2 className="text-2xl font-bold text-stone-800">Orders</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-stone-800">Orders</h2>
         <p className="text-sm text-stone-400 mt-0.5">Track and manage incoming orders</p>
       </div>
 
       {/* Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {stats.map((stat, index) => (
           <div
             key={index}
@@ -318,8 +318,8 @@ export default function OrdersPage() {
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div className="relative flex-1 w-full sm:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
           <Input
             type="search"
@@ -331,7 +331,7 @@ export default function OrdersPage() {
         </div>
         <Button
           variant="outline"
-          className="shrink-0"
+          className="shrink-0 w-full sm:w-auto"
           onClick={() => setIsFilterDialogOpen(true)}
         >
           Filter
@@ -347,6 +347,7 @@ export default function OrdersPage() {
       </div>
 
       {/* Orders Table */}
+      <div className="rounded-2xl border border-stone-200/60 bg-white/90 overflow-x-auto">
       <Table>
           <TableHeader>
             <TableRow>
@@ -449,6 +450,7 @@ export default function OrdersPage() {
             ))}
           </TableBody>
         </Table>
+      </div>
 
       {/* Order Details Modal */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
