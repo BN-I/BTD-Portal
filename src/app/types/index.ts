@@ -28,6 +28,31 @@ export interface Product {
   __v: number;
 }
 
+export interface Review {
+  _id: string;
+  order: string;
+  product: {
+    _id: string;
+    title: string;
+    images: string[];
+  };
+  user: {
+    _id: string;
+    name: string;
+  };
+  // Populated with {_id, name} on endpoints that need it (e.g. the admin
+  // reported-reviews queue); a plain id string elsewhere.
+  vendor: string | { _id: string; name: string };
+  rating: number;
+  comment: string;
+  reportStatus?: "none" | "pending" | "resolved" | "dismissed";
+  reportReason?: string;
+  reportedAt?: string;
+  isDeleted?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export enum ProductStatus {
   Active = "Active",
   Inactive = "Inactive",

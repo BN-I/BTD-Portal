@@ -8,12 +8,14 @@ import {
   Package,
   ShoppingCart,
   CreditCard,
+  Star,
 } from "lucide-react";
 
 const sidebarItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Products", href: "/dashboard/products", icon: Package },
   { title: "Orders", href: "/dashboard/orders", icon: ShoppingCart },
+  { title: "Reviews", href: "/dashboard/reviews", icon: Star },
   { title: "Payment", href: "/dashboard/payment", icon: CreditCard },
 ];
 
@@ -21,6 +23,7 @@ const iconStyle: Record<string, string> = {
   Dashboard: "bg-teal-50 text-teal-600",
   Products: "bg-violet-50 text-violet-600",
   Orders: "bg-blue-50 text-blue-600",
+  Reviews: "bg-amber-50 text-amber-600",
   Payment: "bg-rose-50 text-rose-500",
 };
 

@@ -18,6 +18,7 @@ import {
   Package,
   ShieldCheck,
   ClipboardList,
+  Flag,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -50,6 +51,11 @@ const sidebarItems = [
     title: "Orders",
     href: "/admin/orders",
     icon: ClipboardList,
+  },
+  {
+    title: "Reported Reviews",
+    href: "/admin/reviews",
+    icon: Flag,
   },
   {
     title: "Events",

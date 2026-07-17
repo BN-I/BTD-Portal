@@ -17,6 +17,16 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Search, Eye, EyeOff } from "lucide-react";
+import { Search, Eye, EyeOff, Star, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -40,7 +50,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import axios from "axios";
-import { Product, ProductStatus, Vendor } from "@/app/types";
+import { Product, ProductStatus, Review, Vendor } from "@/app/types";
 import { User } from "@/lib/auth-types";
 import { toast } from "@/hooks/use-toast";
 
@@ -53,6 +63,11 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [productReviews, setProductReviews] = useState<Review[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState<string | null>(null);
+  const [isDeleteReviewDialogOpen, setIsDeleteReviewDialogOpen] =
+    useState(false);
 
   const vendors = products.reduce((acc: Vendor[], product) => {
     if (!acc.find((v) => v._id === product.vendor._id)) {
@@ -147,6 +162,75 @@ export default function ProductsPage() {
   const handleProductDetails = (product: any) => {
     setSelectedProduct(product);
     setIsDialogOpen(true);
+    fetchProductReviews(product._id);
+  };
+
+  const fetchProductReviews = (productId: string) => {
+    setLoadingReviews(true);
+    axios
+      .get(`${process.env.NEXT_PUBLIC_API_URL}/reviews/product/${productId}`)
+      .then((res) => {
+        setProductReviews(res.data.reviews ?? []);
+      })
+      .catch((error) => {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load reviews",
+        });
+      })
+      .finally(() => setLoadingReviews(false));
+  };
+
+  // Stacking this AlertDialog on top of the still-open product details
+  // Dialog confuses Radix's body pointer-events lock, so the details
+  // Dialog is closed first and the AlertDialog only opens once its close
+  // animation (duration-200) has finished, instead of running both at once.
+  const DIALOG_TRANSITION_MS = 200;
+
+  const confirmDeleteReview = (reviewId: string) => {
+    setReviewToDelete(reviewId);
+    setIsDialogOpen(false);
+    setTimeout(() => {
+      setIsDeleteReviewDialogOpen(true);
+    }, DIALOG_TRANSITION_MS);
+  };
+
+  const closeDeleteReviewDialog = () => {
+    setReviewToDelete(null);
+    setIsDeleteReviewDialogOpen(false);
+    setTimeout(() => {
+      setIsDialogOpen(true);
+    }, DIALOG_TRANSITION_MS);
+  };
+
+  const handleDeleteReview = () => {
+    if (!reviewToDelete) return;
+
+    axios
+      .delete(
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/reviews/${reviewToDelete}`,
+      )
+      .then(() => {
+        setProductReviews((prev) =>
+          prev.filter((review) => review._id !== reviewToDelete),
+        );
+        toast({
+          variant: "default",
+          title: "Success",
+          description: "Review deleted successfully",
+        });
+      })
+      .catch((error) => {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+        });
+      })
+      .finally(() => {
+        closeDeleteReviewDialog();
+      });
   };
 
   const fetchProducts = (): Promise<Product[]> => {
@@ -427,6 +511,70 @@ export default function ProductsPage() {
                   )}
                 </div>
               </div>
+
+              <Separator />
+
+              <div>
+                <Label>
+                  Reviews
+                  {productReviews.length > 0 && ` (${productReviews.length})`}
+                </Label>
+                <div className="mt-2 space-y-3 max-h-64 overflow-y-auto">
+                  {loadingReviews ? (
+                    <div className="text-sm text-gray-500">
+                      Loading reviews...
+                    </div>
+                  ) : productReviews.length === 0 ? (
+                    <div className="text-sm text-gray-500">
+                      No reviews yet
+                    </div>
+                  ) : (
+                    productReviews.map((review) => (
+                      <div
+                        key={review._id}
+                        className="flex items-start justify-between gap-4 border rounded-md p-3"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">
+                              {review.user?.name || "Anonymous"}
+                            </span>
+                            <div className="flex">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  className={`h-3.5 w-3.5 ${
+                                    star <= review.rating
+                                      ? "fill-yellow-400 text-yellow-400"
+                                      : "text-gray-300"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          {review.comment && (
+                            <p className="text-sm text-gray-600">
+                              {review.comment}
+                            </p>
+                          )}
+                          <div className="text-xs text-gray-400">
+                            {new Date(review.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 shrink-0"
+                          onClick={() => confirmDeleteReview(review._id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete review</span>
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -437,6 +585,41 @@ export default function ProductsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete review confirmation dialog */}
+      <AlertDialog
+        open={isDeleteReviewDialogOpen}
+        onOpenChange={(open) => {
+          if (open) {
+            setIsDeleteReviewDialogOpen(true);
+          } else {
+            closeDeleteReviewDialog();
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this review?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This hides the review from customers and vendors and
+              recalculates the product's rating as if it were never left. It
+              stays in the database for audit purposes and isn't shown
+              anywhere.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={closeDeleteReviewDialog}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteReview}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

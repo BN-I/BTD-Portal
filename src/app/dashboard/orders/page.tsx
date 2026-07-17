@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Package2, Search, Edit2, Info } from "lucide-react";
+import { Package2, Search, Edit2, Info, Download } from "lucide-react";
 import axios from "axios";
 import type { User } from "@/lib/auth-types";
 import type { Gift, Order } from "@/app/types";
@@ -455,11 +455,28 @@ export default function OrdersPage() {
       {/* Order Details Modal */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Order Details</DialogTitle>
-            <DialogDescription>
-              Complete information about this order
-            </DialogDescription>
+          <DialogHeader className="flex-row items-center justify-between space-y-0 pr-8 text-left">
+            <div>
+              <DialogTitle>Order Details</DialogTitle>
+              <DialogDescription>
+                Complete information about this order
+              </DialogDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              onClick={() =>
+                selectedOrder &&
+                window.open(
+                  `${process.env.NEXT_PUBLIC_API_URL}/orders/${selectedOrder._id}/shipping-invoice`,
+                  "_blank",
+                )
+              }
+            >
+              <Download className="h-4 w-4 mr-1.5" />
+              Download
+            </Button>
           </DialogHeader>
 
           {selectedOrder && (
@@ -785,6 +802,19 @@ export default function OrdersPage() {
           )}
 
           <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() =>
+                selectedOrder &&
+                window.open(
+                  `${process.env.NEXT_PUBLIC_API_URL}/orders/${selectedOrder._id}/shipping-invoice`,
+                  "_blank",
+                )
+              }
+            >
+              <Download className="h-4 w-4 mr-1.5" />
+              Download
+            </Button>
             <Button
               variant="outline"
               onClick={() => setIsDetailsDialogOpen(false)}
