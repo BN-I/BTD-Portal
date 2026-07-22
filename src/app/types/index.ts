@@ -1,5 +1,10 @@
 import { User } from "@/lib/auth-types";
 
+export interface OutOfStockVariant {
+  color: string;
+  size: string;
+}
+
 export interface Product {
   _id: string;
   title: string;
@@ -11,6 +16,7 @@ export interface Product {
   isFeatured: boolean;
   colorVariations: string[];
   sizeVariations: string[];
+  outOfStockVariants?: OutOfStockVariant[];
   vendor: Vendor;
   status: ProductStatus;
   link: string;
@@ -75,6 +81,7 @@ export interface productForm {
   orderMaxDays: number;
   colorVariations?: string[];
   sizeVariations?: string[];
+  outOfStockVariants?: OutOfStockVariant[];
   images?: string[];
   files?: File[];
   weight: number;
@@ -95,6 +102,7 @@ export interface ProductForm {
   orderMaxDays: number;
   colorVariations?: string[];
   sizeVariations?: string[];
+  outOfStockVariants?: OutOfStockVariant[];
   images?: string[];
   files?: File[];
   weight: number;

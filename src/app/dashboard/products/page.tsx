@@ -88,6 +88,12 @@ export default function ProductsPage() {
     newProduct.colorVariations?.forEach((color) =>
       formData.append("colorVariations", color),
     );
+    if (newProduct.outOfStockVariants?.length) {
+      formData.append(
+        "outOfStockVariants",
+        JSON.stringify(newProduct.outOfStockVariants),
+      );
+    }
     newProduct.files?.forEach((image) => formData.append("files", image));
     formData.append("category", newProduct.category);
     formData.append("weight", newProduct.weight?.toString() || "0");
@@ -142,6 +148,11 @@ export default function ProductsPage() {
     );
     updatedProduct.colorVariations?.forEach((color) =>
       formData.append("colorVariations", color),
+    );
+    // Always sent (even empty) so clearing the last out-of-stock mark persists.
+    formData.append(
+      "outOfStockVariants",
+      JSON.stringify(updatedProduct.outOfStockVariants ?? []),
     );
     updatedProduct.files?.forEach((image) => formData.append("files", image));
     formData.append("category", updatedProduct.category);

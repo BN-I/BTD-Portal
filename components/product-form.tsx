@@ -29,8 +29,9 @@ import {
   X,
   Maximize2,
   RotateCw,
+  Ban,
 } from "lucide-react";
-import type { Product, ProductForm } from "@/app/types";
+import type { Product, ProductForm, OutOfStockVariant } from "@/app/types";
 import { Block } from "@uiw/react-color";
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -358,6 +359,11 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
   const [customSizes, setCustomSizes] = useState<string[]>(
     product?.sizeVariations?.length ? product.sizeVariations : [""],
   );
+  const [outOfStock, setOutOfStock] = useState<Set<string>>(() => {
+    const set = new Set<string>();
+    product?.outOfStockVariants?.forEach((v) => set.add(`${v.color}|${v.size}`));
+    return set;
+  });
 
   /* ── Image state ───────────────────────────────────────────────── */
   const [existingImgs, setExistingImgs] = useState<ExistingImage[]>(() =>
@@ -415,6 +421,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       if (d.customSizes?.length) setCustomSizes(d.customSizes);
       if (d.colors?.length)
         setColors(d.colors.map((hex: string) => ({ hex, isOpen: false })));
+      if (d.outOfStock?.length) setOutOfStock(new Set(d.outOfStock));
       setDraftRestored(true);
     } catch {
       /* ignore */
@@ -440,6 +447,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         height,
         customSizes,
         colors: colors.map((c) => c.hex),
+        outOfStock: Array.from(outOfStock),
       }),
     );
   }, [
@@ -456,6 +464,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     height,
     customSizes,
     colors,
+    outOfStock,
     product,
   ]);
 
@@ -669,6 +678,17 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
       setCustomSizes((p) => p.filter((_, i) => i !== index));
   };
 
+  /* ── Stock availability ────────────────────────────────────────── */
+  const toggleStock = (colorHex: string, size: string) => {
+    const key = `${colorHex}|${size}`;
+    setOutOfStock((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
   /* ── Submit ────────────────────────────────────────────────────── */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -717,6 +737,15 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
     if (!product) localStorage.removeItem(DRAFT_KEY);
 
+    const colorHexes = colors.map((c) => c.hex);
+    const finalSizes = customSizes.filter((s) => s.trim() !== "");
+    const outOfStockVariants: OutOfStockVariant[] = Array.from(outOfStock)
+      .map((key) => {
+        const [color, size] = key.split("|");
+        return { color, size };
+      })
+      .filter((v) => colorHexes.includes(v.color) && finalSizes.includes(v.size));
+
     setIsSubmitting(true);
     try {
       await onSubmit({
@@ -728,8 +757,9 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         category,
         orderMinDays,
         orderMaxDays,
-        colorVariations: colors.map((c) => c.hex),
-        sizeVariations: customSizes.filter((s) => s.trim() !== ""),
+        colorVariations: colorHexes,
+        sizeVariations: finalSizes,
+        outOfStockVariants,
         files: newImgs.map((n) => n.file),
         crossedImages: existingImgs.filter((e) => e.crossed).map((e) => e.url),
         weight: parseFloat(weight),
@@ -1297,6 +1327,114 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
             </div>
           </Section>
         </div>
+
+        {/* Stock Availability */}
+        <Section icon={<Ban className="h-4 w-4" />} title="Stock Availability">
+          <FL tip="Mark specific color × size combinations as out of stock. Customers won't be able to select them at checkout — everything else stays purchasable.">
+            Availability
+            <span className="ml-1.5 text-[10px] text-stone-400 font-normal normal-case tracking-normal">
+              (optional)
+            </span>
+          </FL>
+
+          {colors.length === 0 ||
+          customSizes.filter((s) => s.trim() !== "").length === 0 ? (
+            <p className="text-xs text-stone-400 bg-white border border-dashed border-stone-300 rounded-lg px-3 py-4 text-center">
+              Add at least one color and one size variation above to set stock
+              per combination.
+            </p>
+          ) : (
+            (() => {
+              const matrixSizes = customSizes.filter((s) => s.trim() !== "");
+              const outOfStockCount = colors.reduce(
+                (acc, c) =>
+                  acc +
+                  matrixSizes.filter((s) => outOfStock.has(`${c.hex}|${s}`))
+                    .length,
+                0,
+              );
+              return (
+                <>
+                  <div className="overflow-x-auto rounded-lg border border-stone-200">
+                    <table className="w-full border-collapse min-w-[420px]">
+                      <thead>
+                        <tr>
+                          <th className="bg-stone-50 text-[10px] font-semibold uppercase tracking-wide text-stone-400 text-left px-3 py-2 border-b border-stone-200">
+                            Size / Color
+                          </th>
+                          {colors.map((color, ci) => (
+                            <th
+                              key={ci}
+                              className="bg-stone-50 border-b border-l border-stone-200 px-2 py-2"
+                            >
+                              <span
+                                className="inline-block w-4 h-4 rounded-full ring-2 ring-stone-200"
+                                style={{ backgroundColor: color.hex }}
+                              />
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {matrixSizes.map((size, si) => (
+                          <tr key={si}>
+                            <td className="bg-stone-50 border-t border-stone-200 px-3 py-2 text-xs font-semibold text-stone-600 whitespace-nowrap">
+                              {size}
+                            </td>
+                            {colors.map((color, ci) => {
+                              const isOut = outOfStock.has(
+                                `${color.hex}|${size}`,
+                              );
+                              return (
+                                <td
+                                  key={ci}
+                                  className="border-t border-l border-stone-200 p-1.5 text-center"
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleStock(color.hex, size)}
+                                    className={`w-full min-w-[84px] inline-flex items-center justify-center gap-1.5 text-[11px] font-semibold rounded-md px-2 py-1.5 border transition-colors ${
+                                      isOut
+                                        ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
+                                        : "bg-white border-stone-200 text-stone-500 hover:border-stone-400"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`w-1.5 h-1.5 rounded-full ${
+                                        isOut ? "bg-red-500" : "bg-emerald-500"
+                                      }`}
+                                    />
+                                    {isOut ? "Out of stock" : "In stock"}
+                                  </button>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex items-center justify-between flex-wrap gap-2 text-[11px] text-stone-400 mt-2">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        In stock
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        Out of stock
+                      </span>
+                    </div>
+                    <span>
+                      {outOfStockCount} of {colors.length * matrixSizes.length}{" "}
+                      combinations out of stock
+                    </span>
+                  </div>
+                </>
+              );
+            })()
+          )}
+        </Section>
 
         {/* Submit */}
         <div className="pt-1 space-y-3">
