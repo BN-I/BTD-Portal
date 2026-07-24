@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import { login } from "@/lib/auth-service";
 import axios from "axios";
 import { getStoreData } from "@/lib/http/getStoreData";
 import { useFacebookPixel } from "@/hooks/use-facebook-pixel";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function SignInPage() {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const [videoError, setVideoError] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -86,7 +88,7 @@ export default function SignInPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-4xl mx-auto space-y-10">
+      <div className="w-full max-w-6xl mx-auto space-y-10">
         {/* Brand */}
         <div className="text-center">
           <div className="flex items-center justify-center gap-3 mb-3">
@@ -107,9 +109,9 @@ export default function SignInPage() {
         </div>
 
         {/* Two-panel grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-[1.3fr_1fr] gap-6 items-stretch">
           {/* Form panel */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-stone-200/60 shadow-[0_8px_40px_rgba(0,0,0,0.07)] p-8 flex flex-col justify-center">
+          <div className="md:order-2 bg-white/80 backdrop-blur-sm rounded-3xl border border-stone-200/60 shadow-[0_8px_40px_rgba(0,0,0,0.07)] p-8 flex flex-col justify-center">
             <div className="mb-7">
               <h2 className="text-xl font-semibold text-stone-800">
                 Welcome back
@@ -228,7 +230,7 @@ export default function SignInPage() {
 
           {/* Tutorial panel */}
           <div
-            className={`bg-white/80 backdrop-blur-sm rounded-3xl border border-stone-200/60 shadow-[0_8px_40px_rgba(0,0,0,0.07)] overflow-hidden flex flex-col transition-all duration-700 ${
+            className={`md:order-1 bg-white/80 backdrop-blur-sm rounded-3xl border border-stone-200/60 shadow-[0_8px_40px_rgba(0,0,0,0.07)] overflow-hidden flex flex-col transition-all duration-700 ${
               showVideo
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-6"
@@ -244,17 +246,29 @@ export default function SignInPage() {
                 </p>
               </div>
 
-              <div className="flex-1 relative rounded-2xl overflow-hidden bg-stone-900 min-h-[230px]">
+              <div className="flex-1 relative rounded-2xl overflow-hidden bg-stone-400 min-h-[230px]">
                 {!videoError ? (
-                  <video
-                    className="w-full h-full object-contain"
-                    controls
-                    poster="/logo.png"
-                    preload="auto"
-                    onError={() => setVideoError(true)}
+                  <button
+                    type="button"
+                    onClick={() => setIsVideoModalOpen(true)}
+                    className="group absolute inset-0 w-full h-full cursor-pointer"
+                    aria-label="Play tutorial video"
                   >
-                    <source src="/tutorial-video-2.MP4" type="video/mp4" />
-                  </video>
+                    <video
+                      className="w-full h-full object-contain pointer-events-none"
+                      poster="/logo.png"
+                      preload="metadata"
+                      muted
+                      onError={() => setVideoError(true)}
+                    >
+                      <source src="/tutorial-video-2.MP4" type="video/mp4" />
+                    </video>
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/35 transition-colors">
+                      <div className="w-14 h-14 rounded-full bg-white/90 group-hover:bg-white flex items-center justify-center shadow-lg transition-all group-hover:scale-105">
+                        <Play className="h-6 w-6 text-brand-600 ml-0.5" fill="currentColor" />
+                      </div>
+                    </div>
+                  </button>
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-brand-500 to-brand-700">
                     <Image
@@ -281,6 +295,23 @@ export default function SignInPage() {
           </div>
         </div>
       </div>
+
+      {/* Video Modal */}
+      <Dialog open={isVideoModalOpen} onOpenChange={setIsVideoModalOpen}>
+        <DialogContent className="w-screen h-screen max-w-none max-h-none top-0 left-0 translate-x-0 translate-y-0 rounded-none p-0 bg-black border-none overflow-hidden text-white flex items-center justify-center">
+          <DialogTitle className="sr-only">Platform Tutorial Video</DialogTitle>
+          {isVideoModalOpen && (
+            <video
+              className="max-w-full max-h-full"
+              controls
+              autoPlay
+              poster="/logo.png"
+            >
+              <source src="/tutorial-video-2.MP4" type="video/mp4" />
+            </video>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
