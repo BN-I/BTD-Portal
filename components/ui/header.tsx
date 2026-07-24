@@ -83,7 +83,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           {userName ? (
             <>
               <span className="hidden sm:inline">Good day, </span>
-              <span className="text-teal-600 font-semibold">{firstName}</span>
+              <span className="text-brand-600 font-semibold">{firstName}</span>
               <span className="hidden sm:inline"> 👋</span>
             </>
           ) : (
@@ -110,7 +110,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           className="rounded-xl border-stone-200 shadow-sm"
         >
           <Link href="/dashboard/account" className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full bg-teal-500 flex items-center justify-center">
+            <div className="w-5 h-5 rounded-full bg-brand-500 flex items-center justify-center">
               <span className="text-[9px] font-bold text-white">{initials}</span>
             </div>
             <span className="hidden sm:inline text-stone-600">Profile</span>

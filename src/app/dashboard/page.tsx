@@ -145,7 +145,7 @@ export default function DashboardPage() {
         </div>
         <button
           onClick={() => window.location.reload()}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-stone-200 bg-white/80 text-xs sm:text-sm text-stone-500 hover:text-teal-600 hover:border-teal-200 hover:bg-teal-50/50 transition-all duration-150 shadow-sm self-start sm:self-auto shrink-0"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-stone-200 bg-white/80 text-xs sm:text-sm text-stone-500 hover:text-brand-600 hover:border-brand-200 hover:bg-brand-50/50 transition-all duration-150 shadow-sm self-start sm:self-auto shrink-0"
         >
           <RefreshCcw className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate">
@@ -166,8 +166,8 @@ export default function DashboardPage() {
         <div className="rounded-2xl bg-white/90 backdrop-blur-sm border border-stone-200/60 shadow-[0_1px_6px_rgba(0,0,0,0.06)] p-5 hover:shadow-[0_4px_14px_rgba(0,0,0,0.08)] transition-shadow">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-stone-400">Total Revenue</p>
-            <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center">
-              <Diamond className="h-4 w-4 text-teal-600" />
+            <div className="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center">
+              <Diamond className="h-4 w-4 text-brand-600" />
             </div>
           </div>
           {statsLoading
@@ -179,8 +179,8 @@ export default function DashboardPage() {
         <div className="rounded-2xl bg-white/90 backdrop-blur-sm border border-stone-200/60 shadow-[0_1px_6px_rgba(0,0,0,0.06)] p-5 hover:shadow-[0_4px_14px_rgba(0,0,0,0.08)] transition-shadow">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-stone-400">Avg Order Value</p>
-            <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center">
-              <CreditCard className="h-4 w-4 text-teal-600" />
+            <div className="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center">
+              <CreditCard className="h-4 w-4 text-brand-600" />
             </div>
           </div>
           {statsLoading
@@ -192,8 +192,8 @@ export default function DashboardPage() {
         <div className="rounded-2xl bg-white/90 backdrop-blur-sm border border-stone-200/60 shadow-[0_1px_6px_rgba(0,0,0,0.06)] p-5 hover:shadow-[0_4px_14px_rgba(0,0,0,0.08)] transition-shadow">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-stone-400">Total Balance</p>
-            <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center">
-              <Car className="h-4 w-4 text-teal-600" />
+            <div className="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center">
+              <Car className="h-4 w-4 text-brand-600" />
             </div>
           </div>
           {statsLoading
@@ -213,8 +213,8 @@ export default function DashboardPage() {
               <p className="text-xs font-semibold uppercase tracking-wider text-stone-400">
                 {stat.title}
               </p>
-              <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center">
-                <stat.icon className="h-4 w-4 text-teal-600" />
+              <div className="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center">
+                <stat.icon className="h-4 w-4 text-brand-600" />
               </div>
             </div>
             <p className="text-3xl font-bold text-stone-800">{stat.value}</p>
@@ -255,9 +255,9 @@ export default function DashboardPage() {
                     boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
                     fontSize: "12px",
                   }}
-                  cursor={{ fill: "rgba(20,184,166,0.04)" }}
+                  cursor={{ fill: "rgba(255,58,68,0.04)" }}
                 />
-                <Bar dataKey="revenue" fill="#14b8a6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="revenue" fill="#ff3a44" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="expense" fill="#d6d3d1" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

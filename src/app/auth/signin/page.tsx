@@ -174,7 +174,7 @@ export default function SignInPage() {
               <div className="flex justify-end">
                 <Link
                   href="/auth/change-password"
-                  className="text-xs text-teal-600 hover:text-teal-700 font-medium transition-colors"
+                  className="text-xs text-brand-600 hover:text-brand-700 font-medium transition-colors"
                 >
                   Forgot password?
                 </Link>
@@ -188,7 +188,7 @@ export default function SignInPage() {
 
               <Button
                 type="submit"
-                className="w-full h-11 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-semibold shadow-lg shadow-teal-500/20 border-0 transition-all"
+                className="w-full h-11 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white font-semibold shadow-lg shadow-brand-500/20 border-0 transition-all"
                 disabled={isLoading || isRedirecting}
               >
                 {isRedirecting ? (
@@ -207,8 +207,8 @@ export default function SignInPage() {
               </Button>
 
               {isRedirecting && (
-                <p className="text-xs text-teal-600 text-center flex items-center justify-center gap-1.5 animate-pulse">
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500 inline-block" />
+                <p className="text-xs text-brand-600 text-center flex items-center justify-center gap-1.5 animate-pulse">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-500 inline-block" />
                   You're in — taking you there now
                 </p>
               )}
@@ -218,7 +218,7 @@ export default function SignInPage() {
               New vendor?{" "}
               <Link
                 href="/auth/register"
-                className="text-teal-600 hover:text-teal-700 font-semibold transition-colors"
+                className="text-brand-600 hover:text-brand-700 font-semibold transition-colors"
                 onClick={() => trackCTA("register_link", "login_page")}
               >
                 Create an account
@@ -256,7 +256,7 @@ export default function SignInPage() {
                     <source src="/tutorial-video-2.MP4" type="video/mp4" />
                   </video>
                 ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-teal-500 to-teal-700">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-brand-500 to-brand-700">
                     <Image
                       src="/logo.png"
                       alt="Tutorial"

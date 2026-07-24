@@ -277,8 +277,8 @@ export default function OrdersPage() {
 
   const statCardStyles = [
     {
-      bg: "bg-gradient-to-br from-teal-500 to-teal-600",
-      shadow: "shadow-[0_4px_14px_rgba(20,184,166,0.25)]",
+      bg: "bg-gradient-to-br from-brand-500 to-brand-600",
+      shadow: "shadow-[0_4px_14px_rgba(255,58,68,0.25)]",
     },
     {
       bg: "bg-gradient-to-br from-blue-500 to-blue-600",
@@ -339,9 +339,9 @@ export default function OrdersPage() {
       </div>
 
       {/* Tip */}
-      <div className="flex items-start gap-2.5 px-4 py-3 bg-teal-50/60 border border-teal-100 rounded-xl">
-        <Info className="h-4 w-4 text-teal-500 mt-0.5 shrink-0" />
-        <p className="text-xs text-teal-700">
+      <div className="flex items-start gap-2.5 px-4 py-3 bg-brand-50/60 border border-brand-100 rounded-xl">
+        <Info className="h-4 w-4 text-brand-500 mt-0.5 shrink-0" />
+        <p className="text-xs text-brand-700">
           <strong>Tip:</strong> Click any status badge to update it. Add tracking info when marking an order as &ldquo;shipped&rdquo;.
         </p>
       </div>

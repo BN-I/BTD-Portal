@@ -33,8 +33,8 @@ export default function HomePage() {
       title: "Order Tracking",
       description:
         "View every incoming order, update statuses in real time, and add tracking details when you ship.",
-      color: "bg-teal-50 text-teal-600",
-      border: "border-teal-100",
+      color: "bg-brand-50 text-brand-600",
+      border: "border-brand-100",
     },
     {
       icon: BarChart3,
@@ -85,14 +85,14 @@ export default function HomePage() {
             <Link
               href="/auth/signin"
               onClick={() => trackCTA("login", "main_page")}
-              className="text-sm font-semibold text-teal-600 hover:text-teal-700 transition-colors"
+              className="text-sm font-semibold text-brand-600 hover:text-brand-700 transition-colors"
             >
               Log in
             </Link>
             <Link
               href="/auth/register"
               onClick={() => trackCTA("register", "main_page")}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white text-sm font-semibold shadow-md shadow-teal-500/20 transition-all"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white text-sm font-semibold shadow-md shadow-brand-500/20 transition-all"
             >
               Get started
             </Link>
@@ -132,7 +132,7 @@ export default function HomePage() {
                   trackCTA("login", "main_page");
                   closeMobileMenu();
                 }}
-                className="px-3 py-3 rounded-xl text-sm font-semibold text-teal-600 hover:bg-teal-50 transition-colors"
+                className="px-3 py-3 rounded-xl text-sm font-semibold text-brand-600 hover:bg-brand-50 transition-colors"
               >
                 Log in
               </Link>
@@ -142,7 +142,7 @@ export default function HomePage() {
                   trackCTA("register", "main_page");
                   closeMobileMenu();
                 }}
-                className="mt-2 inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 text-white text-sm font-semibold shadow-md shadow-teal-500/20 transition-all"
+                className="mt-2 inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 text-white text-sm font-semibold shadow-md shadow-brand-500/20 transition-all"
               >
                 Get started
               </Link>
@@ -162,9 +162,9 @@ export default function HomePage() {
               {pills.map((pill) => (
                 <span
                   key={pill}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 border border-teal-100 text-xs font-semibold text-teal-600"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 border border-brand-100 text-xs font-semibold text-brand-600"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-400" />
                   {pill}
                 </span>
               ))}
@@ -173,7 +173,7 @@ export default function HomePage() {
             {/* Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-stone-900 leading-[1.15] sm:leading-[1.1]">
               Your store.{" "}
-              <span className="bg-gradient-to-r from-teal-500 via-teal-600 to-teal-700 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-brand-500 via-brand-600 to-brand-700 bg-clip-text text-transparent">
                 Fully in control.
               </span>
             </h1>
@@ -187,7 +187,7 @@ export default function HomePage() {
               <Link
                 href="/auth/register"
                 onClick={() => trackCTA("register", "main_page")}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-semibold shadow-lg shadow-teal-500/25 transition-all hover:-translate-y-px w-full sm:w-auto"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white font-semibold shadow-lg shadow-brand-500/25 transition-all hover:-translate-y-px w-full sm:w-auto"
               >
                 Get started
                 <ArrowRight className="h-4 w-4" />
@@ -230,7 +230,7 @@ export default function HomePage() {
                     </div>
                     <div className="flex-1 min-w-0 h-3 bg-stone-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-teal-400 to-teal-500"
+                        className="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-500"
                         style={{ width: `${w}%` }}
                       />
                     </div>
@@ -250,7 +250,7 @@ export default function HomePage() {
         <section className="py-12 sm:py-20 px-4 sm:px-6">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-8 sm:mb-12">
-              <p className="text-xs font-semibold uppercase tracking-widest text-teal-500 mb-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-brand-500 mb-3">
                 Everything you need
               </p>
               <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 px-2">
@@ -281,21 +281,21 @@ export default function HomePage() {
         {/* CTA band */}
         <section className="py-10 sm:py-16 px-4 sm:px-6">
           <div className="max-w-2xl mx-auto text-center">
-            <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-teal-500 to-teal-700 p-6 sm:p-10 shadow-[0_20px_60px_rgba(20,184,166,0.25)]">
+            <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-brand-500 to-brand-700 p-6 sm:p-10 shadow-[0_20px_60px_rgba(255,58,68,0.25)]">
               <div className="flex items-center justify-center gap-2 mb-3">
-                <Shield className="h-4 w-4 text-teal-200 shrink-0" />
-                <span className="text-xs font-semibold text-teal-200 uppercase tracking-wider">Secure & reliable</span>
+                <Shield className="h-4 w-4 text-brand-200 shrink-0" />
+                <span className="text-xs font-semibold text-brand-200 uppercase tracking-wider">Secure & reliable</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
                 Ready to start selling?
               </h2>
-              <p className="text-sm sm:text-base text-teal-100 mb-6 sm:mb-7 px-1">
+              <p className="text-sm sm:text-base text-brand-100 mb-6 sm:mb-7 px-1">
                 Join vendors already growing their business on Before the Dates.
               </p>
               <Link
                 href="/auth/register"
                 onClick={() => trackCTA("register_cta_band", "main_page")}
-                className="inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl bg-white text-teal-700 font-semibold hover:bg-teal-50 shadow-lg transition-all hover:-translate-y-px w-full sm:w-auto"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl bg-white text-brand-700 font-semibold hover:bg-brand-50 shadow-lg transition-all hover:-translate-y-px w-full sm:w-auto"
               >
                 Create your account
                 <ArrowRight className="h-4 w-4" />

@@ -336,8 +336,8 @@ export default function PaymentsPage() {
       label: "Total Earnings",
       value: formatCurrency(stats.subtotal),
       icon: DollarSign,
-      bg: "bg-gradient-to-br from-teal-500 to-teal-600",
-      shadow: "shadow-[0_4px_14px_rgba(20,184,166,0.25)]",
+      bg: "bg-gradient-to-br from-brand-500 to-brand-600",
+      shadow: "shadow-[0_4px_14px_rgba(255,58,68,0.25)]",
     },
     {
       label: "Pending Amount",
